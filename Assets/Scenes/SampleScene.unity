@@ -187,7 +187,7 @@ Terrain:
   m_StaticShadowCaster: 0
   m_IgnoreQualitySettings: 0
   m_ReflectionProbeUsage: 1
-  m_MaterialTemplate: {fileID: 10652, guid: 0000000000000000f000000000000000, type: 0}
+  m_MaterialTemplate: {fileID: 2100000, guid: a6743515c84913a468d53e0ef98cf6fe, type: 2}
   m_BakeLightProbesForTrees: 1
   m_PreserveTreePrototypeLayers: 0
   m_DeringLightProbesForTrees: 1
@@ -318,7 +318,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 730686320}
-  - component: {fileID: 730686321}
+  - component: {fileID: 730686322}
   m_Layer: 0
   m_Name: terrainEditorTester
   m_TagString: Untagged
@@ -341,7 +341,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &730686321
+--- !u!114 &730686322
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -350,17 +350,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 730686318}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d2bac6f7f6e6254692bca20ffd56290, type: 3}
+  m_Script: {fileID: 11500000, guid: 856d329d2dc71314cb9aa66f6cac8e3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetTerrain: {fileID: 567552746}
-  heightmapTexture: {fileID: 2800000, guid: c3b8045e6ff0ce14aaf140e0fa39ed24, type: 3}
-  flipVertically: 0
-  flipHorizontally: 0
-  maxHeight: 1
-  minHeight: 0
-  enableLogging: 1
-  previewInEditor: 0
+  basePath: map
+  filePrefix: terrain5_
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0

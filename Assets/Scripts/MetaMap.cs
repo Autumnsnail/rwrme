@@ -1,10 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class MetaMap : MonoBehaviour
 {
-    MetaTerrain m_metaTerrain;
+
+    public int mapSizeX;
+    public int mapSizeY;
+    public MetaTerrain m_metaTerrain;
 
     // Start is called before the first frame update
     void Start()
@@ -69,12 +73,17 @@ public class MetaTerrain : MonoBehaviour
     GrayScaleImage data;
     int resolutionX;
     int resolutionY;
-    int mapSizeX;
-    int mapSizeY;
     int mapHeight;
     int waterHeight;
+    public int maxHeight;
     public MetaTerrain()
     {
         data = new GrayScaleImage(0, 0);
+    }
+    public void setData(GrayScaleImage igsi)
+    {
+        resolutionY = igsi.Height;
+        resolutionX = igsi.Width;
+        data = igsi;
     }
 }

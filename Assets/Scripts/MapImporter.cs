@@ -1,13 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
+using UnityEngine;
+using static MapImporter;
 
 public class MapImporter : MonoBehaviour
 {
     public enum MapType
     {
-        heightmap,
         alpha_sand
     }
 
@@ -22,8 +22,36 @@ public class MapImporter : MonoBehaviour
         ImportAllMaps();
     }
 
+    public void importTerrain()
+    {
+        TerrainConfigReader tcr = new TerrainConfigReader();
+        tcr.LoadTerrainConfig();
+        tcr.PrintConfigValues();
+        string mapName = "terrain5_heightmap.png";
+        int maxHeight = 25;
+        /*
+        PageWorldX = 1536
+        PageWorldZ = 1536
+        MaxHeight = 25
+        */
+        if (tcr.GetValue("Heightmap.image")!=null)
+        {
+            mapName = tcr.GetValue("Heightmap.image");
+            Debug.Log("get heightmap name as "+mapName);
+        }
+        if(tcr.GetValue("MaxHeight")!=null)
+        {
+            maxHeight = tcr.GetInt("MaxHeight");
+        }
+        
+        GrayScaleImage grayImage = LoadGrayScaleImage(Path.Combine(Application.persistentDataPath, basePath, mapName));
+        gameObject.GetComponent<MetaMap>().m_metaTerrain.setData(grayImage);
+        gameObject.GetComponent<MetaMap>().m_metaTerrain.maxHeight = maxHeight;
+    }
+
     public void ImportAllMaps()
     {
+        importTerrain();
         foreach (MapType mapType in System.Enum.GetValues(typeof(MapType)))
         {
             string fileName = filePrefix + mapType.ToString().ToLower() + ".png";
@@ -31,7 +59,7 @@ public class MapImporter : MonoBehaviour
 
             if (File.Exists(filePath))
             {
-                GrayScaleImage grayImage = LoadGrayScaleImage(filePath, mapType);
+                GrayScaleImage grayImage = LoadGrayScaleImage(filePath);
                 if (grayImage != null)
                 {
                     loadedMaps[mapType] = grayImage;
@@ -47,7 +75,7 @@ public class MapImporter : MonoBehaviour
         Debug.Log($"导入完成，共加载 {loadedMaps.Count} 张灰度图");
     }
 
-    private GrayScaleImage LoadGrayScaleImage(string filePath, MapType mapType)
+    private GrayScaleImage LoadGrayScaleImage(string filePath)
     {
         try
         {
@@ -61,7 +89,7 @@ public class MapImporter : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"加载失败 {filePath}: {e.Message}");
+            Debug.LogError($"加载失败: {e.Message}");
         }
 
         return null;
@@ -117,5 +145,89 @@ public class MapImporter : MonoBehaviour
         {
             Debug.Log($"{pair.Key}: {pair.Value.Width}x{pair.Value.Height}");
         }
+    }
+}
+
+
+public class TerrainConfigReader : MonoBehaviour
+{
+    public string configFilePath = "map/terrain.cfg";
+
+    private Dictionary<string, string> configData = new Dictionary<string, string>();
+
+    void Start()
+    {
+        //LoadTerrainConfig();
+    }
+
+    public void LoadTerrainConfig()
+    {
+        string fullPath = Path.Combine(Application.dataPath, configFilePath);
+
+        if (!File.Exists(fullPath))
+        {
+            Debug.LogError("配置文件不存在: " + fullPath);
+            return;
+        }
+
+        try
+        {
+            string[] lines = File.ReadAllLines(fullPath);
+
+            foreach (string line in lines)
+            {
+                if (string.IsNullOrEmpty(line) || line.StartsWith("//") || !line.Contains("="))
+                    continue;
+
+                string[] parts = line.Split('=');
+                if (parts.Length == 2)
+                {
+                    string key = parts[0].Trim();
+                    string value = parts[1].Trim();
+                    configData[key] = value;
+                }
+            }
+
+            Debug.Log("地形配置加载完成，共 " + configData.Count + " 个参数");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("读取配置文件失败: " + e.Message);
+        }
+    }
+
+    // 获取配置值的方法
+    public string GetValue(string key)
+    {
+        return configData.ContainsKey(key) ? configData[key] : null;
+    }
+
+    public int GetInt(string key, int defaultValue = 0)
+    {
+        return configData.ContainsKey(key) && int.TryParse(configData[key], out int result) ? result : defaultValue;
+    }
+
+    public float GetFloat(string key, float defaultValue = 0f)
+    {
+        return configData.ContainsKey(key) && float.TryParse(configData[key], out float result) ? result : defaultValue;
+    }
+
+    public bool GetBool(string key, bool defaultValue = false)
+    {
+        if (!configData.ContainsKey(key)) return defaultValue;
+
+        string value = configData[key].ToLower();
+        return value == "yes" || value == "true" || value == "1";
+    }
+
+    // 使用示例
+   public void PrintConfigValues()
+    {
+        Debug.Log($"DetailTile: {GetInt("DetailTile")}");
+        Debug.Log($"PageSource: {GetValue("PageSource")}");
+        Debug.Log($"Heightmap: {GetValue("Heightmap.image")}");
+        Debug.Log($"PageSize: {GetInt("PageSize")}");
+        Debug.Log($"MaxHeight: {GetFloat("MaxHeight")}");
+        Debug.Log($"VertexNormals: {GetBool("VertexNormals")}");
     }
 }

@@ -70,9 +70,9 @@ public class GrayScaleImage
 }
 public class MetaTerrain : MonoBehaviour
 {
-    GrayScaleImage data;
-    int resolutionX;
-    int resolutionY;
+    public GrayScaleImage data;
+    public int resolutionX;
+    public int resolutionY;
     int mapHeight;
     int waterHeight;
     public int maxHeight;

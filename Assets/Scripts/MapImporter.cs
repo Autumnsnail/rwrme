@@ -44,7 +44,7 @@ public class MapImporter : MonoBehaviour
             maxHeight = tcr.GetInt("MaxHeight");
         }
         
-        GrayScaleImage grayImage = LoadGrayScaleImage(Path.Combine(Application.persistentDataPath, basePath, mapName));
+        GrayScaleImage grayImage = LoadGrayScaleImage(Path.Combine(Application.dataPath, basePath, mapName));
         gameObject.GetComponent<MetaMap>().m_metaTerrain.setData(grayImage);
         gameObject.GetComponent<MetaMap>().m_metaTerrain.maxHeight = maxHeight;
     }
@@ -55,7 +55,7 @@ public class MapImporter : MonoBehaviour
         foreach (MapType mapType in System.Enum.GetValues(typeof(MapType)))
         {
             string fileName = filePrefix + mapType.ToString().ToLower() + ".png";
-            string filePath = Path.Combine(Application.persistentDataPath, basePath, fileName);
+            string filePath = Path.Combine(Application.dataPath, basePath, fileName);
 
             if (File.Exists(filePath))
             {

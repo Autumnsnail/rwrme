@@ -11,7 +11,10 @@ public class Syncer : MonoBehaviour
     void Start()
     {
         // 启动协程
-        StartCoroutine(StartupRoutine());
+        //StartCoroutine(StartupRoutine());
+        runToInit();
+        updateMap();
+        Debug.Log("所有初始化操作完成！");
     }
 
     IEnumerator StartupRoutine()
@@ -31,7 +34,6 @@ public class Syncer : MonoBehaviour
 
         // 如果需要，可以在这里添加更多等待和操作
 
-        Debug.Log("所有初始化操作完成！");
     }
 
     private void runToInit()

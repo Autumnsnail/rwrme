@@ -28,7 +28,7 @@ public class MapImporter : MonoBehaviour
         tcr.LoadTerrainConfig();
         tcr.PrintConfigValues();
         string mapName = "terrain5_heightmap.png";
-        int maxHeight = 25;
+        float maxHeight = 25.0f;
         /*
         PageWorldX = 1536
         PageWorldZ = 1536
@@ -41,12 +41,14 @@ public class MapImporter : MonoBehaviour
         }
         if(tcr.GetValue("MaxHeight")!=null)
         {
-            maxHeight = tcr.GetInt("MaxHeight");
+            maxHeight = tcr.GetFloat("MaxHeight");
         }
-        
+   
         GrayScaleImage grayImage = LoadGrayScaleImage(Path.Combine(Application.dataPath, basePath, mapName));
         gameObject.GetComponent<MetaMap>().m_metaTerrain.setData(grayImage);
         gameObject.GetComponent<MetaMap>().m_metaTerrain.maxHeight = maxHeight;
+        gameObject.GetComponent<MetaMap>().m_metaTerrain.fileName = mapName;
+
     }
 
     public void ImportAllMaps()

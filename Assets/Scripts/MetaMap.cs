@@ -1,7 +1,10 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
 public class MetaMap : MonoBehaviour
 {
@@ -67,15 +70,32 @@ public class GrayScaleImage
 
         data = newData;
     }
+
+    public byte[] convToPng()
+    {
+        Debug.Log("convGSItoPngBytes");
+        byte[] pngInfo = null;
+        Texture2D texture = new Texture2D(Width, Height, GraphicsFormat.B8G8R8A8_UNorm, TextureCreationFlags.None);
+        for(int y = 0; y < Height;y++)
+        {
+            for(int x = 0;x < Width;x++)
+            {
+                Color color = new Color(this[y,x], this[y, x], this[y, x], 1f);
+                texture.SetPixel(x, y, color);
+            }
+        }
+        pngInfo = texture.EncodeToPNG();
+        return pngInfo;
+    }
 }
 public class MetaTerrain : MonoBehaviour
 {
     public GrayScaleImage data;
     public int resolutionX;
     public int resolutionY;
-    int mapHeight;
-    int waterHeight;
-    public int maxHeight;
+    public float waterHeight=2.0f;
+    public float maxHeight=25.0f;
+    public string fileName = "terrain5_heightmap.png";
     public MetaTerrain()
     {
         data = new GrayScaleImage(0, 0);

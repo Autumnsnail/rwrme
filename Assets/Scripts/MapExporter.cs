@@ -11,13 +11,14 @@ public class MapExporter : MonoBehaviour
         if (m_mm == null)
         {
             m_mm = gameObject.GetComponent<MetaMap>();
-            Debug.Log("get MM for mapExporter");
         }
+        Debug.Log("MapExporter Init");
     }
 
     public void exportMap()
     {
-        string fullPath = System.IO.Path.Combine(Application.dataPath, m_mm.m_metaTerrain.fileName);
+        Debug.Log("MapExport");
+        string fullPath = System.IO.Path.Combine(Application.dataPath+"/map/", m_mm.m_metaTerrain.fileName);
         System.IO.File.WriteAllBytes(fullPath, m_mm.m_metaTerrain.data.convToPng());
     }
 

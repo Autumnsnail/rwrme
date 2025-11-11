@@ -20,6 +20,7 @@ public class MapImporter : MonoBehaviour
     void Start()
     {
         ImportAllMaps();
+        Debug.Log("MapInporter Init");
     }
 
     public void importTerrain()
@@ -47,6 +48,7 @@ public class MapImporter : MonoBehaviour
         GrayScaleImage grayImage = LoadGrayScaleImage(Path.Combine(Application.dataPath, basePath, mapName));
         gameObject.GetComponent<MetaMap>().m_metaTerrain.setData(grayImage);
         gameObject.GetComponent<MetaMap>().m_metaTerrain.maxHeight = maxHeight;
+        Debug.Log($"set Height {maxHeight}");
         gameObject.GetComponent<MetaMap>().m_metaTerrain.fileName = mapName;
 
     }
@@ -151,16 +153,11 @@ public class MapImporter : MonoBehaviour
 }
 
 
-public class TerrainConfigReader : MonoBehaviour
+public class TerrainConfigReader
 {
     public string configFilePath = "map/terrain.cfg";
 
     private Dictionary<string, string> configData = new Dictionary<string, string>();
-
-    void Start()
-    {
-        //LoadTerrainConfig();
-    }
 
     public void LoadTerrainConfig()
     {

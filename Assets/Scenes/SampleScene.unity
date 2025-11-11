@@ -706,7 +706,7 @@ MonoBehaviour:
   invertY: 0
   topDownMoveSpeed: 10
   topDownDragSpeed: 1
-  topDownHeight: 10
+  topDownHeight: 100
   orthographicSize: 1
   minOrthoSize: 1
   maxOrthoSize: 2000
@@ -848,7 +848,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapSizeX: 0
   mapSizeY: 0
-  m_metaTerrain: {fileID: 0}
 --- !u!114 &1307524967
 MonoBehaviour:
   m_ObjectHideFlags: 0

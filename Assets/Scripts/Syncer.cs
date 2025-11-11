@@ -14,7 +14,7 @@ public class Syncer : MonoBehaviour
         //StartCoroutine(StartupRoutine());
         runToInit();
         updateMap();
-        Debug.Log("所有初始化操作完成！");
+        Debug.Log("SyncerInit");
     }
 
     IEnumerator StartupRoutine()
@@ -95,7 +95,7 @@ public class Syncer : MonoBehaviour
             }
         }
 
-        Debug.Log("she zhi di xing gao du ");
+        teerainData.size = new Vector3(teerainData.size.x,m_mm.m_metaTerrain.maxHeight, teerainData.size.z);
         teerainData.SetHeights(0, 0, heights);
 
     }

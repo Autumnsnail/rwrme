@@ -17,6 +17,7 @@ public class MetaMap : MonoBehaviour
     void Start()
     {
         m_metaTerrain = new MetaTerrain();
+        Debug.Log("MetaMapInit");
     }
 
     // Update is called once per frame
@@ -75,7 +76,7 @@ public class GrayScaleImage
     {
         Debug.Log("convGSItoPngBytes");
         byte[] pngInfo = null;
-        Texture2D texture = new Texture2D(Width, Height, GraphicsFormat.B8G8R8A8_UNorm, TextureCreationFlags.None);
+        Texture2D texture = new Texture2D(Width, Height, GraphicsFormat.R8_UNorm, TextureCreationFlags.None);
         for(int y = 0; y < Height;y++)
         {
             for(int x = 0;x < Width;x++)
@@ -88,7 +89,7 @@ public class GrayScaleImage
         return pngInfo;
     }
 }
-public class MetaTerrain : MonoBehaviour
+public class MetaTerrain
 {
     public GrayScaleImage data;
     public int resolutionX;

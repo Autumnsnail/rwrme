@@ -91,7 +91,7 @@ public class Syncer : MonoBehaviour
             for(int x=0; x<resolution; x++)
             {
                 //Debug.Log($"{m_mm.m_metaTerrain.data[y, x]*m_mm.m_metaTerrain.maxHeight}");
-                heights[y, x] = m_mm.m_metaTerrain.data[y,x]*m_mm.m_metaTerrain.maxHeight;
+                heights[y, x] = m_mm.m_metaTerrain.data[y,x];
             }
         }
 

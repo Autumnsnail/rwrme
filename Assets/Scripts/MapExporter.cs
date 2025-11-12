@@ -6,6 +6,7 @@ public class MapExporter : MonoBehaviour
 {
     // Start is called before the first frame update
     MetaMap m_mm;
+    
     void Start()
     {
         if (m_mm == null)

@@ -109,7 +109,7 @@ Shader "Custom/MultiLayerMask" {
                 fixed3 specular = _LightColor0.rgb * _Specular.rgb * pow(max(0, dot(tangentNormal, halfDir)), _Gloss) * specularMask * _SpecularScale;
 
                 fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz * albedo;
-                return fixed4(ambient + diffuse + specular, 1.0);
+                return fixed4(ambient + diffuse , 1.0);
             }
             ENDCG
         }

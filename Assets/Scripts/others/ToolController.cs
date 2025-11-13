@@ -14,7 +14,7 @@ public class ToolController : MonoBehaviour
     void Start()
     {
         orthographicCamera = Camera.main;
-        tools.Add(new Tool("EMPTY"));
+        tools.Add(new SelecterTool("Selecter"));
         currentTool = tools[0];
         tools.Add(new PinTool("TankPin",GameObject.Find("PinTank") ));//tool1 = Pin Tank
     }
@@ -46,6 +46,11 @@ public class ToolController : MonoBehaviour
     {
         Debug.Log("set Tool to TankPiun");
         currentTool = tools[1];
+    }
+    public void setToolSelector()
+    {
+        currentTool = tools[0];
+        UIManager.instance.disVisableAll();
     }
 }
 
@@ -90,5 +95,12 @@ public class PinTool : Tool
         base.startUse(position);
         Debug.Log("try use piner");
         pinObject.transform.position = position;
+    }
+}
+
+public class SelecterTool : Tool
+{
+    public SelecterTool(string name) : base(name)
+    {
     }
 }

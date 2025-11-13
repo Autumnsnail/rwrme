@@ -6,6 +6,7 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
     GameObject pMM;
+    GameObject rMM;
     void Start()
     {
         instance = this;    
@@ -15,6 +16,7 @@ public class UIManager : MonoBehaviour
         {
             Debug.Log("pmmNot F!");
         }
+        rMM = transform.Find("RefManager").gameObject;
     }
 
     // Update is called once per frame
@@ -29,12 +31,19 @@ public class UIManager : MonoBehaviour
         if (pMM.transform == null) { Debug.Log("pmtfn!"); }
         if (pMM.transform.localScale == null) { Debug.Log("pmtlsfn!"); }
         pMM.transform.localScale = new Vector3(0f, 0f, 0f);
+        rMM.transform.localScale = new Vector3(0f, 0f, 0f);
+
 
     }
     public void enablePinManager()
     {
-        Debug.Log("tryEnablePM");
         disVisableAll();
         pMM.transform.localScale = new Vector3(1f, 1f, 1f);
+    }
+    public void enableRefManager()
+    {
+        disVisableAll();
+        rMM.transform.localScale = new Vector3(1f, 1f, 1f);
+
     }
 }

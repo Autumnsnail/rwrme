@@ -8,18 +8,26 @@ using UnityEngine.Experimental.Rendering;
 
 public class MetaMap : MonoBehaviour
 {
-
+    public static MetaMap instance; 
     public int mapSizeX;
     public int mapSizeY;
     public MetaTerrain m_metaTerrain;
+    public Layer layer1;
+
 
     // Start is called before the first frame update
     void Start()
     {
+        instance = this;
         m_metaTerrain = new MetaTerrain();
+        layer1 = new Layer();
         Debug.Log("MetaMapInit");
     }
 
+    public string getNewItemId(string startWith)
+    {
+        return startWith + layer1.buildings.Count.ToString() + "rwrme";
+    }
     // Update is called once per frame
     void Update()
     {
@@ -106,5 +114,48 @@ public class MetaTerrain
         resolutionY = igsi.Height;
         resolutionX = igsi.Width;
         data = igsi;
+    }
+}
+
+public class Layer
+{
+    public List<MapItem> buildings;
+    public Layer()
+    {
+        buildings = new List<MapItem>();
+    }
+}
+
+public class MapItem
+{
+    //can pick by selector
+    public MapItem()
+    {
+    }
+}
+public class MeRect :MapItem
+{
+    public Vector2 position;
+    public float rotation;//angle
+    public Vector2 size;//width x and height y
+    public string id;
+
+    public MeRect(Vector2 pos,float r,Vector2 s,string key)
+    {
+        position = pos;
+        rotation = r;
+        size = s;
+        id = key;
+    }
+}
+public class Building : MeRect
+{
+    public int height;
+    public string material;
+    public Building(int h,string m, Vector2 pos, float r, Vector2 s,string k) :base(pos,r,s,k)
+    {
+        //Debug.Log($"Buildingππ‘Ï: height={h}, material={m}, position={pos}, rotation={r}, scale={s}, key={k}");
+        height = h;
+        material = m;
     }
 }

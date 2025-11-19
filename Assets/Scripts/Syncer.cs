@@ -7,6 +7,8 @@ public class Syncer : MonoBehaviour
 
     MetaMap m_mm;
     Terrain m_terrain;
+
+    public GameObject buildingPrefeb; 
     // Start is called before the first frame update
     void Start()
     {
@@ -71,6 +73,7 @@ public class Syncer : MonoBehaviour
     public void updateMap()
     {
         setHeightFromMeta();
+        scatterBuildings();
     }
 
     public void setHeightFromMeta()
@@ -100,5 +103,20 @@ public class Syncer : MonoBehaviour
 
     }
 
-
+    public void scatterBuildings()
+    {
+        foreach(MapItem mapItem in m_mm.layer1.buildings)
+        {
+            if(mapItem is Building bld)
+            {
+                //Debug.Log("setBuilding as ");
+                GameObject newInstance = Instantiate(buildingPrefeb);
+                newInstance.transform.localScale = new Vector3(bld.size.x, bld.height * 3.0f, bld.size.y);
+                newInstance.transform.position = new Vector3(bld.position.x, m_terrain.SampleHeight(new Vector3(bld.position.x, 0, bld.position.y)),bld.position.y);
+                newInstance.transform.rotation = Quaternion.Euler(0f,-1*bld.rotation, 0f);
+                newInstance.GetComponent<ObjectContainer>().pointerToMapItem = bld;
+            }
+        }
+        
+    }
 }

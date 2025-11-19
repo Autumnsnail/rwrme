@@ -53,6 +53,51 @@ public class RefpManager : MonoBehaviour
         //refpp.transform.GetChild(0).GetComponent<Renderer>().material.SetColor("_BaseColor", new Color(1, 1, 1, alp));
         refpp.transform.GetChild(0).GetComponent<Renderer>().material.color = new Color(1, 1, 1, alp);
     }
+
+    public void setScaleX(string sx)
+    {
+        float f1 = 1.0f;
+        if (float.TryParse(sx, out float result))
+        {
+            f1 = result;
+        }
+        Vector3 ve = refpp.transform.localScale;
+        ve.x = f1;
+        refpp.transform.localScale = ve;
+    }
+    public void setScaleY(string sx)
+    {
+        float f1 = 1.0f;
+        if (float.TryParse(sx, out float result))
+        {
+            f1 = result;
+        }
+        Vector3 ve = refpp.transform.localScale;
+        ve.z = f1;
+        refpp.transform.localScale = ve;
+    }
+    public void setOffsetX(string sx)
+    {
+        float f1 = 1.0f;
+        if (float.TryParse(sx, out float result))
+        {
+            f1 = result;
+        }
+        Vector3 ve = refpp.transform.position;
+        ve.x = f1;
+        refpp.transform.position = ve;
+    }
+    public void setOffsetY(string sx)
+    {
+        float f1 = 1.0f;
+        if (float.TryParse(sx, out float result))
+        {
+            f1 = result;
+        }
+        Vector3 ve = refpp.transform.position;
+        ve.z = f1;
+        refpp.transform.position = ve;
+    }
     // Update is called once per frame
     void Update()
     {

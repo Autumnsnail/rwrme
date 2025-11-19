@@ -1,8 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 using UnityEngine;
 using static MapImporter;
+using System.Linq;
+using static UnityEditor.PlayerSettings;
+
 
 public class MapImporter : MonoBehaviour
 {
@@ -53,8 +57,102 @@ public class MapImporter : MonoBehaviour
 
     }
 
+    public void importObjects()
+    {
+        Debug.Log("start to Import Objects");
+        XmlDocument xmlDoc = new XmlDocument();
+        string xmlPath = Application.dataPath + "/map/"+ "objects.svg";
+        Debug.Log("LoadSvg at "+xmlPath);
+        xmlDoc.Load(xmlPath);
+        
+        XmlElement root = xmlDoc.DocumentElement;
+        foreach (XmlNode node in root.ChildNodes)
+        {
+            if(node.Name=="g")
+            {
+                if (node is XmlElement ele)
+                {
+                    Debug.Log(ele.GetAttribute("inkscape:label"));
+                    if(ele.GetAttribute("inkscape:label") == "layer1")
+                    {
+                        foreach (XmlNode snode in node.ChildNodes)
+                        {
+                            if(snode.Name == "g")
+                            {
+                                if(snode is XmlElement sele)
+                                {
+                                    Debug.Log("_"+sele.GetAttribute("inkscape:label"));
+                                    if(sele.GetAttribute("inkscape:label")== "buildings")
+                                    {
+                                        foreach (XmlNode r in snode.ChildNodes)
+                                        {
+                                            if(r.Name == "rect")
+                                            {
+                                                if(r is XmlElement bRect)
+                                                {
+                                                    float cWidth = float.Parse(bRect.GetAttribute("width"));
+                                                    float cHeight = float.Parse(bRect.GetAttribute("height"));
+                                                    float cX = float.Parse(bRect.GetAttribute("x"));
+                                                    float cY = float.Parse(bRect.GetAttribute("y"));
+                                                    string trans = bRect.GetAttribute("transform");
+                                                    string cleanString = trans.Replace("matrix(", "").Replace(")", "");
+                                                    string[] parts = cleanString.Split(',');
+                                                    float a = float.Parse(parts[0]);
+                                                    float b = float.Parse(parts[1]); 
+                                                    float c = float.Parse(parts[2]);
+                                                    float d = float.Parse(parts[3]);
+                                                    float tx = float.Parse(parts[4]);
+                                                    float ty = float.Parse(parts[5]);
+                                                    float radians = Mathf.Atan2(c, a);
+                                                    float angle = radians * Mathf.Rad2Deg;
+                                                    Matrix2x2 ms = new Matrix2x2(a, c, b, d);
+                                                    Vector2 position = new Vector2(cX, cY);
+                                                    position = ms * position;
+                                                    position = position + new Vector2(tx, ty);
+                                                    int BheightF=0;
+                                                    string bmaterial="";
+                                                    foreach(XmlNode de in r.ChildNodes)
+                                                    {
+                                                        var properties =de.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                                        if (properties.ContainsKey("height"))
+                                                        {
+                                                            BheightF = int.Parse(properties["height"]);
+                                                        }
+                                                        else
+                                                        {
+                                                            Debug.Log("this properies Error");
+                                                            Debug.Log(bRect.OuterXml);
+                                                        }
+                                                        if (properties.ContainsKey("material"))
+                                                        {
+                                                            bmaterial = properties["material"];
+                                                        }
+                                                        else
+                                                        {
+
+                                                        }
+
+                                                    }
+                                                    MetaMap.instance.layer1.buildings.Add(new Building(BheightF, bmaterial,MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth/2, cHeight/2), MetaMap.instance.getNewItemId("building")));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public void ImportAllMaps()
     {
+        importObjects();
         importTerrain();
         foreach (MapType mapType in System.Enum.GetValues(typeof(MapType)))
         {

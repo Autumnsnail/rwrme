@@ -26845,9 +26845,9 @@ faction_index=1;</desc>
          x="-439.07104"
          y="251.89589"
          inkscape:label="#rect6406"
-         transform="matrix(-0.16400819,-0.98645898,0.98645898,-0.16400819,0,1024)">
+         transform="matrix(-0.267, -0.964, 0.964, -0.267, 0, 1034)">
         <desc
-           id="desc6462-7-9-9-40-3-562">height=2; material=BuildingVilla;</desc>
+           id="desc6462-7-9-9-40-3-562">height=8; material=BuildingVilla;</desc>
       </rect>
       <rect
          style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1;display:inline;enable-background:new"

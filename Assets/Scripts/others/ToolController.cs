@@ -26,6 +26,7 @@ public class ToolController : MonoBehaviour
         {
             if (Input.mousePosition.x / Screen.width <0.85)
             {
+                /*
                 Ray ray = orthographicCamera.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit; // 存储射线碰撞信息
                 Vector3 worldPoint = new Vector3(0, 0, 0);
@@ -34,7 +35,21 @@ public class ToolController : MonoBehaviour
                     worldPoint = hit.point;
                     Debug.Log("鼠标点击的世界坐标: " + worldPoint);
                 }
-                currentTool.startUse(worldPoint);
+                */
+
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
+                int layerMask = 1 << 6;
+                if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
+                {
+                    Vector3 hitPosition = hit.point;
+
+                    GameObject hitObject = hit.collider.gameObject;
+                    Debug.Log("鼠标点击的世界坐标: " + hitPosition);
+                    currentTool.startUse(hitPosition);
+
+                }
+
             }
         }
         if(Input.GetMouseButtonUp(0))

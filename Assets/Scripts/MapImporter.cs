@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml;
+using Unity.VisualScripting;
 using UnityEngine;
 using static MapImporter;
-using System.Linq;
 using static UnityEditor.PlayerSettings;
 
 
@@ -20,6 +22,8 @@ public class MapImporter : MonoBehaviour
     public string filePrefix = "terrain5_"; // 文件前缀
 
     private Dictionary<MapType, GrayScaleImage> loadedMaps = new Dictionary<MapType, GrayScaleImage>();
+
+    public GameObject BuildingPref;
 
     void Start()
     {
@@ -73,75 +77,108 @@ public class MapImporter : MonoBehaviour
                 if (node is XmlElement ele)
                 {
                     Debug.Log(ele.GetAttribute("inkscape:label"));
-                    if(ele.GetAttribute("inkscape:label") == "layer1")
+                    if(ele.GetAttribute("inkscape:label").StartsWith("layer"))
                     {
+                        string lnm = ele.GetAttribute("inkscape:label");
+
+
+                        int number = 0;
+
+                        // 使用正则表达式匹配 "layer" 后面跟着纯数字的情况
+                        Regex regex = new Regex(@"^layer(\d+)$");
+                        Match match = regex.Match(lnm);
+
+                        if (match.Success)
+                        {
+                            string numberString = match.Groups[1].Value;
+                            int.TryParse(numberString, out number);
+                        }
+                        else
+                        {
+                            Debug.Log("MapImporter: 混合图层：" + lnm);
+                            continue;
+                        }
+                        Debug.Log("MapImporter: 标准图层：" + lnm);
+
+
                         foreach (XmlNode snode in node.ChildNodes)
                         {
-                            if(snode.Name == "g")
+                            if (snode.Name == "g")
                             {
-                                if(snode is XmlElement sele)
+                                if (snode is XmlElement sele)
                                 {
-                                    Debug.Log("_"+sele.GetAttribute("inkscape:label"));
-                                    if(sele.GetAttribute("inkscape:label")== "buildings")
+                                    if (true)//TODO
                                     {
                                         foreach (XmlNode r in snode.ChildNodes)
                                         {
-                                            if(r.Name == "rect")
+                                            if (r.Name == "rect")
                                             {
-                                                if(r is XmlElement bRect)
+                                                if (r is XmlElement bRect)
                                                 {
-                                                    float cWidth = float.Parse(bRect.GetAttribute("width"));
-                                                    float cHeight = float.Parse(bRect.GetAttribute("height"));
-                                                    float cX = float.Parse(bRect.GetAttribute("x"));
-                                                    float cY = float.Parse(bRect.GetAttribute("y"));
-                                                    string trans = bRect.GetAttribute("transform");
-                                                    string cleanString = trans.Replace("matrix(", "").Replace(")", "");
-                                                    string[] parts = cleanString.Split(',');
-                                                    float a = float.Parse(parts[0]);
-                                                    float b = float.Parse(parts[1]); 
-                                                    float c = float.Parse(parts[2]);
-                                                    float d = float.Parse(parts[3]);
-                                                    float tx = float.Parse(parts[4]);
-                                                    float ty = float.Parse(parts[5]);
-                                                    float radians = Mathf.Atan2(c, a);
-                                                    float angle = radians * Mathf.Rad2Deg;
-                                                    Matrix2x2 ms = new Matrix2x2(a, c, b, d);
-                                                    Vector2 position = new Vector2(cX, cY);
-                                                    position = ms * position;
-                                                    position = position + new Vector2(tx, ty);
-                                                    int BheightF=0;
-                                                    string bmaterial="";
-                                                    foreach(XmlNode de in r.ChildNodes)
+                                                    if (bRect.GetAttribute("id").StartsWith("buildingrect"))
                                                     {
-                                                        var properties =de.InnerText.Split(';')
-                                                            .Where(p => p.Contains('='))
-                                                            .Select(p => p.Split('=', 2))
-                                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
-                                                        if (properties.ContainsKey("height"))
+                                                        float cWidth = float.Parse(bRect.GetAttribute("width"));
+                                                        float cHeight = float.Parse(bRect.GetAttribute("height"));
+                                                        float cX = float.Parse(bRect.GetAttribute("x"));
+                                                        float cY = float.Parse(bRect.GetAttribute("y"));
+                                                        string trans = bRect.GetAttribute("transform");
+                                                        string cleanString = trans.Replace("matrix(", "").Replace(")", "");
+                                                        string[] parts = cleanString.Split(',');
+                                                        float a = float.Parse(parts[0]);
+                                                        float b = float.Parse(parts[1]);
+                                                        float c = float.Parse(parts[2]);
+                                                        float d = float.Parse(parts[3]);
+                                                        float tx = float.Parse(parts[4]);
+                                                        float ty = float.Parse(parts[5]);
+                                                        float radians = Mathf.Atan2(c, a);
+                                                        float angle = radians * Mathf.Rad2Deg;
+                                                        Matrix2x2 ms = new Matrix2x2(a, c, b, d);
+                                                        Vector2 position = new Vector2(cX, cY);
+                                                        position = ms * position;
+                                                        position = position + new Vector2(tx, ty);
+                                                        int BheightF = 0;
+                                                        string bmaterial = "";
+                                                        foreach (XmlNode de in r.ChildNodes)
                                                         {
-                                                            BheightF = int.Parse(properties["height"]);
-                                                        }
-                                                        else
-                                                        {
-                                                            Debug.Log("this properies Error");
-                                                            Debug.Log(bRect.OuterXml);
-                                                        }
-                                                        if (properties.ContainsKey("material"))
-                                                        {
-                                                            bmaterial = properties["material"];
-                                                        }
-                                                        else
-                                                        {
+                                                            var properties = de.InnerText.Split(';')
+                                                                .Where(p => p.Contains('='))
+                                                                .Select(p => p.Split('=', 2))
+                                                                .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                                            if (properties.ContainsKey("height"))
+                                                            {
+                                                                BheightF = int.Parse(properties["height"]);
+                                                            }
+                                                            else
+                                                            {
+                                                                //Debug.Log(bRect.OuterXml);
+                                                            }
+                                                            if (properties.ContainsKey("material"))
+                                                            {
+                                                                bmaterial = properties["material"];
+                                                            }
+                                                            else
+                                                            {
+
+                                                            }
 
                                                         }
-
+                                                        GameObject go = Instantiate(BuildingPref);
+                                                        Building gc = go.GetComponent<Building>();
+                                                        //Building gc = new Building(BheightF, bmaterial, MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth / 2, cHeight / 2), MetaMap.instance.getNewItemId("buildingrect"), number);
+                                                        gc.reinit(BheightF, bmaterial, MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth / 2, cHeight / 2), MetaMap.instance.getNewItemId("buildingrect"), number);
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(gc);
                                                     }
-                                                    MetaMap.instance.layer1.buildings.Add(new Building(BheightF, bmaterial,MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth/2, cHeight/2), MetaMap.instance.getNewItemId("building")));
+
                                                 }
+                                            }
+                                            if (r.Name == "g")
+                                            {
+
                                             }
                                         }
                                     }
                                 }
+
                             }
                         }
                     }

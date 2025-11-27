@@ -8,7 +8,6 @@ public class Syncer : MonoBehaviour
     MetaMap m_mm;
     Terrain m_terrain;
 
-    public GameObject buildingPrefeb; 
     // Start is called before the first frame update
     void Start()
     {
@@ -73,7 +72,8 @@ public class Syncer : MonoBehaviour
     public void updateMap()
     {
         setHeightFromMeta();
-        scatterBuildings();
+        //scatterBuildings();
+        scatterMapItems();
     }
 
     public void setHeightFromMeta()
@@ -103,9 +103,10 @@ public class Syncer : MonoBehaviour
 
     }
 
+    /*//deuse on 2025 11 27
     public void scatterBuildings()
     {
-        foreach(MapItem mapItem in m_mm.layer1.buildings)
+        foreach(MapItem mapItem in m_mm.defaultLayer.mapItems)
         {
             if(mapItem is Building bld)
             {
@@ -118,5 +119,14 @@ public class Syncer : MonoBehaviour
             }
         }
         
+    }
+    */
+
+    public void scatterMapItems()
+    {
+        foreach(MapItem mapItem in m_mm.defaultLayer.mapItems)
+        {
+            mapItem.scatterThis();
+        }
     }
 }

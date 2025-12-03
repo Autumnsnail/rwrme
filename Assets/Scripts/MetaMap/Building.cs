@@ -20,7 +20,7 @@ public class Building : MeRect
         position = pos;
         rotation = r;
         size = s;
-        material = k;
+        id = k;
         layerIndex = layerI;
     }
     public override void scatterThis()

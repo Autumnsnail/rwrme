@@ -73,7 +73,7 @@ public class Syncer : MonoBehaviour
     {
         setHeightFromMeta();
         //scatterBuildings();
-        scatterMapItems();
+        StartCoroutine(ScatterMapItems());
     }
 
     public void setHeightFromMeta()
@@ -122,11 +122,12 @@ public class Syncer : MonoBehaviour
     }
     */
 
-    public void scatterMapItems()
+    public IEnumerator ScatterMapItems()
     {
         foreach(MapItem mapItem in m_mm.defaultLayer.mapItems)
         {
             mapItem.scatterThis();
+            yield return null;
         }
     }
 }

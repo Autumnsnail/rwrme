@@ -1,11 +1,14 @@
+using Palmmedia.ReportGenerator.Core.Reporting.Builders.Rendering;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.LowLevel;
 using static MapImporter;
 using static UnityEditor.PlayerSettings;
 
@@ -24,6 +27,7 @@ public class MapImporter : MonoBehaviour
     private Dictionary<MapType, GrayScaleImage> loadedMaps = new Dictionary<MapType, GrayScaleImage>();
 
     public GameObject BuildingPref;
+    public GameObject PlatformPref;
 
     void Start()
     {
@@ -173,7 +177,66 @@ public class MapImporter : MonoBehaviour
                                             }
                                             if (r.Name == "g")
                                             {
+                                                //List<XmlNode> pnl = r.ChildNodes;
+                                                List<XmlNode> pnl = new List<XmlNode>();
+                                                XmlNodeList pnlls = r.ChildNodes;
+                                                foreach (XmlNode pnlli in pnlls)
+                                                {
+                                                    pnl.Add(pnlli);
+                                                }
 
+
+
+                                                if (pnl.Count == 2)
+                                                {
+                                                    string id2 = pnl[1].Attributes["id"].Value;
+                                                    if(id2.StartsWith("platform"))
+                                                    {
+                                                        pnl.Insert(0, pnl[1]);
+                                                        pnl.RemoveAt(2);
+                                                    }
+                                                    string id1 = pnl[0].Attributes["id"].Value;
+                                                    if (id1.StartsWith("platform"))
+                                                    {
+                                                        //Debug.Log("MapImporter:getA platform");
+
+                                                        GameObject go = Instantiate(PlatformPref);
+                                                        Platform pf = go.GetComponent<Platform>();
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(pf);
+
+
+                                                        pf.id = MetaMap.instance.getNewItemId("platform");
+                                                        
+                                                        string pathData1 = pnl[0].Attributes["d"].Value;
+                                                        pf.positinLineL = pf.ParsePathData(pathData1);
+                                                        for(int i=0;i<pf.positinLineL.Count;i++)
+                                                        {
+                                                            pf.positinLineL[i] = MathOfRwrme.SvgPosToU3dPos(pf.positinLineL[i]); 
+                                                        }
+
+                                                        string pathData2 = pnl[1].Attributes["d"].Value;
+                                                        pf.positinLineR = pf.ParsePathData(pathData2);
+                                                        for (int i = 0; i < pf.positinLineR.Count; i++)
+                                                        {
+                                                            pf.positinLineR[i] = MathOfRwrme.SvgPosToU3dPos(pf.positinLineR[i]);
+                                                        }
+
+                                                        pf.layerIndex = number;
+
+                                                        XmlNode descNode = pnl[0].FirstChild;
+                                                        Debug.Log("MapImporter: " + descNode.InnerText);
+                                                        var properties = descNode.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                            .ToDictionary(g => g.Key, g => g.First());
+
+                                                        if (properties.ContainsKey("base_wall_template")) pf.base_wall_template = properties["base_wall_template"];
+                                                        if (properties.ContainsKey("top_material")) pf.top_material = properties["top_material"];
+                                                        if (properties.ContainsKey("wall_height")) pf.wall_height =  float.Parse(properties["wall_height"]);
+
+                                                    }
+                                                }
                                             }
                                         }
                                     }

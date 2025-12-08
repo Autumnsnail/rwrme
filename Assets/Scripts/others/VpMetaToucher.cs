@@ -46,7 +46,7 @@ public class VpMetaToucher
         RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, Mathf.Infinity);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-        string result = string.Join(" | ", hits.Select((hit, index) => $"#{index}:{hit.collider.name}({hit.distance:F1})")); Debug.Log("碰撞结果: " + result);
+        //string result = string.Join(" | ", hits.Select((hit, index) => $"#{index}:{hit.collider.name}({hit.distance:F1})")); Debug.Log("碰撞结果: " + result);
         // 从最高点开始检查，找到第一个层级低于物体的可踩踏表面
         for (int i=0;i<hits.Length;i++)
         //for (int i = hits.Length-1; i>=0; i--)
@@ -61,7 +61,7 @@ public class VpMetaToucher
                 //Debug.Log(hit.collider.gameObject.name);
                 if(mi != null)
                 {
-                    Debug.Log("fundAPlacenot ground");
+                    //Debug.Log("fundAPlacenot ground");
                     if(mi.layerIndex  < objectLayer)
                     {
                         placementPosition = hit.point;

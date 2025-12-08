@@ -142,6 +142,9 @@ public class MapItem:MonoBehaviour
         Debug.Log("MetaMap:WrongScatte");
     }
 }
+
+
+
 public class MeRect :MapItem//this class won,t use directly
 {
     public Vector2 position;
@@ -156,4 +159,10 @@ public class MeRect :MapItem//this class won,t use directly
         id = key;
         layerIndex = lI;
     }
+}
+
+public class PathPair:MapItem
+{
+    public List<Vector2> positinLineL;
+    public List<Vector2> positinLineR;
 }

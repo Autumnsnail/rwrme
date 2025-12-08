@@ -86,5 +86,17 @@ public class VpMetaToucher
         return false;
     }
 
+    public static MapItem GetMapItemUnderPosition(Vector2 xyp)
+    {
+        // 将2D坐标转换为3D坐标
+        Vector3 rayStart = new Vector3(xyp.x, 100f, xyp.y);
+        RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, Mathf.Infinity);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        if (hits[0].collider.transform.root.GetComponent<MapItem>() != null)
+        {
+            return hits[0].collider.transform.root.GetComponent<MapItem>();
+        }
+        return null;
+    }
 
 }

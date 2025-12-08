@@ -115,7 +115,16 @@ public class PinTool : Tool
 
 public class SelecterTool : Tool
 {
+    MapItem currentMapItem;
     public SelecterTool(string name) : base(name)
     {
+        
+    }
+    public override void startUse(Vector3 position)
+    {
+        base.startUse(position);
+        Debug.Log("try use selecter");
+        Vector2 vectorTransformer = new Vector2(position.x, position.z);
+        currentMapItem = VpMetaToucher.GetMapItemUnderPosition(vectorTransformer);
     }
 }

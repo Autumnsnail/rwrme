@@ -4,13 +4,14 @@ using UnityEngine;
 
 public class Syncer : MonoBehaviour
 {
-
+    public static Syncer instance;
     MetaMap m_mm;
     Terrain m_terrain;
 
     // Start is called before the first frame update
     void Start()
     {
+        instance = this;
         // Æô¶¯Ð­³Ì
         //StartCoroutine(StartupRoutine());
         runToInit();

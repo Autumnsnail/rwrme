@@ -7,18 +7,27 @@ using UnityEngine.UI;
 
 public class ToolController : MonoBehaviour
 {
-    // Start is called before the first frame update
+    public static ToolController instance;
     public List<Tool> tools = new List<Tool>();
     Tool currentTool;
     public Camera orthographicCamera;
+
+    public MapItem currentMapItem;
+
+    Vector3 lastMousePosition;
+    float shaftSpeed = 1f;//鼠标移动对应物体移动速度缩放
+    private bool jButtonIdentifier;
+    // Start is called before the first frame update
     void Start()
     {
+        instance = this;
         orthographicCamera = Camera.main;
         tools.Add(new SelecterTool("Selecter"));
         currentTool = tools[0];
         tools.Add(new PinTool("TankPin",GameObject.Find("PinTank") ));//tool1 = Pin Tank
+
     }
-    
+
     // Update is called once per frame
     void Update()
     {
@@ -55,6 +64,50 @@ public class ToolController : MonoBehaviour
         if(Input.GetMouseButtonUp(0))
         {
             currentTool.EndUse();
+        }
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            if (currentMapItem != null)
+            {
+                if (jButtonIdentifier == false)
+                {
+                    jButtonIdentifier = true;
+                    lastMousePosition = Input.mousePosition;
+                }
+                else
+                {
+                    jButtonIdentifier = false;
+                    Syncer.instance.ScatterMapItems();
+                }
+
+            }
+        }
+        if (jButtonIdentifier == true)
+        {
+            if (Input.mousePosition != lastMousePosition)
+            {
+                Vector3 delta = Input.mousePosition - lastMousePosition;
+                //Debug.Log($"鼠标移动了: {delta}");
+                lastMousePosition = Input.mousePosition;
+                if (currentMapItem.gameObject.GetComponent<MeRect>() != null)
+                {
+                    currentMapItem.gameObject.GetComponent<MeRect>().position += new Vector2(delta.x, delta.y) * shaftSpeed;
+                    currentMapItem.scatterThis();
+                }
+                if (currentMapItem.gameObject.GetComponent<Platform>() != null) 
+                {
+                    for (int i = 0; i < currentMapItem.gameObject.GetComponent<Platform>().positinLineL.Count; i++) 
+                    {
+                        currentMapItem.gameObject.GetComponent<Platform>().positinLineL[i] += new Vector2(delta.x, delta.y) * shaftSpeed;
+                    }
+                    for (int i = 0; i < currentMapItem.gameObject.GetComponent<Platform>().positinLineR.Count; i++)
+                    {
+                        currentMapItem.gameObject.GetComponent<Platform>().positinLineR[i] += new Vector2(delta.x, delta.y) * shaftSpeed;
+                    }
+                    currentMapItem.scatterThis();
+                }
+                //Debug.Log($"currentMapItem Postion: {currentMapItem.gameObject.GetComponent<MeRect>().position}");
+            }
         }
     }
     public void setToolPinTank()
@@ -115,7 +168,6 @@ public class PinTool : Tool
 
 public class SelecterTool : Tool
 {
-    MapItem currentMapItem;
     public SelecterTool(string name) : base(name)
     {
         
@@ -125,6 +177,6 @@ public class SelecterTool : Tool
         base.startUse(position);
         Debug.Log("try use selecter");
         Vector2 vectorTransformer = new Vector2(position.x, position.z);
-        currentMapItem = VpMetaToucher.GetMapItemUnderPosition(vectorTransformer);
+        ToolController.instance.currentMapItem = VpMetaToucher.GetMapItemUnderPosition(vectorTransformer);
     }
 }

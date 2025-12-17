@@ -1,4 +1,5 @@
 using Palmmedia.ReportGenerator.Core.Reporting.Builders.Rendering;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design.Serialization;
@@ -28,6 +29,8 @@ public class MapImporter : MonoBehaviour
 
     public GameObject BuildingPref;
     public GameObject PlatformPref;
+    public GameObject WallPref;
+    public GameObject SubWallPref;
 
     void Start()
     {
@@ -236,6 +239,32 @@ public class MapImporter : MonoBehaviour
                                                         if (properties.ContainsKey("wall_height")) pf.wall_height =  float.Parse(properties["wall_height"]);
 
                                                     }
+                                                }
+                                            }
+                                            if (r.Name == "path")
+                                            {
+                                                if(r is XmlElement bPath)
+                                                {
+                                                    if (bPath.GetAttribute("id").StartsWith("wall"))
+                                                    {
+
+                                                        GameObject go = Instantiate(WallPref);
+                                                        Wall gs = go.GetComponent<Wall>();
+                                                        gs.SubWallPref = SubWallPref;
+                                                        string pathData1 = bPath.Attributes["d"].Value;
+                                                        gs.positionLine = gs.ParsePathData(pathData1);
+
+
+                                                        XmlNode descNode = bPath.FirstChild;
+                                                        var properties = descNode.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                            .ToDictionary(g => g.Key, g => g.First());
+                                                        if (properties.ContainsKey("template")) gs.template = properties["template"];
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(gs);
+                                                    }
+
                                                 }
                                             }
                                         }

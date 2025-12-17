@@ -166,3 +166,7 @@ public class PathPair:MapItem
     public List<Vector2> positinLineL;
     public List<Vector2> positinLineR;
 }
+public class MePath:MapItem
+{
+    public List<Vector2> positionLine;
+}

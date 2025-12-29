@@ -21,9 +21,9 @@ public class MapImporter : MonoBehaviour
         alpha_sand
     }
 
-    [Header("µ¼ÈëÉèÖÃ")]
-    public string basePath = "map"; // »ù´¡Â·¾¶
-    public string filePrefix = "terrain5_"; // ÎÄ¼þÇ°×º
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
+    public string basePath = "map"; // ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½
+    public string filePrefix = "terrain5_"; // ï¿½Ä¼ï¿½Ç°×º
 
     private Dictionary<MapType, GrayScaleImage> loadedMaps = new Dictionary<MapType, GrayScaleImage>();
 
@@ -91,7 +91,7 @@ public class MapImporter : MonoBehaviour
 
                         int number = 0;
 
-                        // Ê¹ÓÃÕýÔò±í´ïÊ½Æ¥Åä "layer" ºóÃæ¸ú×Å´¿Êý×ÖµÄÇé¿ö
+                        // Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½Æ¥ï¿½ï¿½ "layer" ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å´ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
                         Regex regex = new Regex(@"^layer(\d+)$");
                         Match match = regex.Match(lnm);
 
@@ -102,10 +102,10 @@ public class MapImporter : MonoBehaviour
                         }
                         else
                         {
-                            Debug.Log("MapImporter: »ìºÏÍ¼²ã£º" + lnm);
+                            Debug.Log("MapImporter: ï¿½ï¿½ï¿½Í¼ï¿½ã£º" + lnm);
                             continue;
                         }
-                        Debug.Log("MapImporter: ±ê×¼Í¼²ã£º" + lnm);
+                        Debug.Log("MapImporter: ï¿½ï¿½×¼Í¼ï¿½ã£º" + lnm);
 
 
                         foreach (XmlNode snode in node.ChildNodes)
@@ -294,16 +294,16 @@ public class MapImporter : MonoBehaviour
                 if (grayImage != null)
                 {
                     loadedMaps[mapType] = grayImage;
-                    Debug.Log($"ÒÑ¼ÓÔØ: {fileName} ({grayImage.Width}x{grayImage.Height})");
+                    Debug.Log($"ï¿½Ñ¼ï¿½ï¿½ï¿½: {fileName} ({grayImage.Width}x{grayImage.Height})");
                 }
             }
             else
             {
-                Debug.LogWarning($"ÎÄ¼þ²»´æÔÚ: {filePath}");
+                Debug.LogWarning($"ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {filePath}");
             }
         }
 
-        Debug.Log($"µ¼ÈëÍê³É£¬¹²¼ÓÔØ {loadedMaps.Count} ÕÅ»Ò¶ÈÍ¼");
+        Debug.Log($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ {loadedMaps.Count} ï¿½Å»Ò¶ï¿½Í¼");
     }
 
     private GrayScaleImage LoadGrayScaleImage(string filePath)
@@ -320,7 +320,7 @@ public class MapImporter : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"¼ÓÔØÊ§°Ü: {e.Message}");
+            Debug.LogError($"ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½: {e.Message}");
         }
 
         return null;
@@ -339,37 +339,37 @@ public class MapImporter : MonoBehaviour
             for (int x = 0; x < width; x++)
             {
                 int index = y * width + x;
-                float grayValue = pixels[index].grayscale; // ×ª»»Îª»Ò¶ÈÖµ
+                float grayValue = pixels[index].grayscale; // ×ªï¿½ï¿½Îªï¿½Ò¶ï¿½Öµ
                 grayImage[y, x] = grayValue;
             }
         }
 
-        // ÇåÀíÎÆÀí
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         DestroyImmediate(texture);
 
         return grayImage;
     }
 
-    // »ñÈ¡Ö¸¶¨ÀàÐÍµÄ»Ò¶ÈÍ¼
+    // ï¿½ï¿½È¡Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ÍµÄ»Ò¶ï¿½Í¼
     public GrayScaleImage GetGrayScaleImage(MapType mapType)
     {
         loadedMaps.TryGetValue(mapType, out GrayScaleImage image);
         return image;
     }
 
-    // ¼ì²éÊÇ·ñÒÑ¼ÓÔØÄ³»Ò¶ÈÍ¼
+    // ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ñ¼ï¿½ï¿½ï¿½Ä³ï¿½Ò¶ï¿½Í¼
     public bool HasMap(MapType mapType)
     {
         return loadedMaps.ContainsKey(mapType);
     }
 
-    // »ñÈ¡ËùÓÐÒÑ¼ÓÔØµÄ»Ò¶ÈÍ¼
+    // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¼ï¿½ï¿½ØµÄ»Ò¶ï¿½Í¼
     public Dictionary<MapType, GrayScaleImage> GetAllMaps()
     {
         return new Dictionary<MapType, GrayScaleImage>(loadedMaps);
     }
 
-    // ´òÓ¡Í³¼ÆÐÅÏ¢
+    // ï¿½ï¿½Ó¡Í³ï¿½ï¿½ï¿½ï¿½Ï¢
     public void PrintStats()
     {
         foreach (var pair in loadedMaps)
@@ -392,7 +392,7 @@ public class TerrainConfigReader
 
         if (!File.Exists(fullPath))
         {
-            Debug.LogError("ÅäÖÃÎÄ¼þ²»´æÔÚ: " + fullPath);
+            Debug.LogError("ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: " + fullPath);
             return;
         }
 
@@ -414,15 +414,15 @@ public class TerrainConfigReader
                 }
             }
 
-            Debug.Log("µØÐÎÅäÖÃ¼ÓÔØÍê³É£¬¹² " + configData.Count + " ¸ö²ÎÊý");
+            Debug.Log("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ " + configData.Count + " ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
         }
         catch (System.Exception e)
         {
-            Debug.LogError("¶ÁÈ¡ÅäÖÃÎÄ¼þÊ§°Ü: " + e.Message);
+            Debug.LogError("ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Ê§ï¿½ï¿½: " + e.Message);
         }
     }
 
-    // »ñÈ¡ÅäÖÃÖµµÄ·½·¨
+    // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Öµï¿½Ä·ï¿½ï¿½ï¿½
     public string GetValue(string key)
     {
         return configData.ContainsKey(key) ? configData[key] : null;
@@ -446,7 +446,7 @@ public class TerrainConfigReader
         return value == "yes" || value == "true" || value == "1";
     }
 
-    // Ê¹ÓÃÊ¾Àý
+    // Ê¹ï¿½ï¿½Ê¾ï¿½ï¿½
    public void PrintConfigValues()
     {
         Debug.Log($"DetailTile: {GetInt("DetailTile")}");

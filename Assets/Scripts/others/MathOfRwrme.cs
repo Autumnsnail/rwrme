@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 
 public class MathOfRwrme
@@ -29,6 +30,24 @@ public class MathOfRwrme
     {
         return new Vector2(worldPos.x * 2, (worldPos.z - 1024) * 2);
     }
+
+    public static Vector2 U3dPosToSvgPos(Vector2 worldPos)
+    {
+        return new Vector2(worldPos.x * 2, (worldPos.y - 1024) * 2);
+    }
+
+    public static string angleToTransform(float angle,Vector2 posi)
+    {
+        float angleRad = -angle * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(angleRad);
+        float sin = Mathf.Sin(angleRad);
+        float a = cos;
+        float b = sin;
+        float c = -sin;
+        float d = cos;
+        return $"matrix({a},{b},{c},{d},{posi.x*2},{(1024 - posi.y) *2})";
+    }
+
 
 }
 

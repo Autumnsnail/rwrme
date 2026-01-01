@@ -5,6 +5,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using System.Linq;
 
 public class MetaMap : MonoBehaviour
 {
@@ -12,7 +13,7 @@ public class MetaMap : MonoBehaviour
     public int mapSizeX;
     public int mapSizeY;
     public MetaTerrain m_metaTerrain;
-    public Layer defaultLayer;//default: L1,L2,L3,L4
+    public Layer defaultLayer;//default: L1,L2,L3,L4...
 
 
     // Start is called before the first frame update
@@ -28,6 +29,7 @@ public class MetaMap : MonoBehaviour
     {
         return startWith + defaultLayer.mapItems.Count.ToString() + "rwrme";
     }
+
     // Update is called once per frame
     void Update()
     {
@@ -123,6 +125,11 @@ public class Layer
     public Layer()
     {
         mapItems = new List<MapItem>();
+    }
+
+    public void sortByIndex()
+    {
+        mapItems = mapItems.OrderBy(item => item.layerIndex).ToList();
     }
 }
 

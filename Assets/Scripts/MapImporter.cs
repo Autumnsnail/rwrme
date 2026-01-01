@@ -27,6 +27,8 @@ public class MapImporter : MonoBehaviour
 
     private Dictionary<MapType, GrayScaleImage> loadedMaps = new Dictionary<MapType, GrayScaleImage>();
 
+    public static MapImporter instate;
+
     public GameObject BuildingPref;
     public GameObject PlatformPref;
     public GameObject WallPref;
@@ -34,6 +36,7 @@ public class MapImporter : MonoBehaviour
 
     void Start()
     {
+        instate = this;
         ImportAllMaps();
         Debug.Log("MapInporter Init");
     }
@@ -173,13 +176,14 @@ public class MapImporter : MonoBehaviour
                                                         Building gc = go.GetComponent<Building>();
                                                         //Building gc = new Building(BheightF, bmaterial, MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth / 2, cHeight / 2), MetaMap.instance.getNewItemId("buildingrect"), number);
                                                         gc.reinit(BheightF, bmaterial, MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth / 2, cHeight / 2), MetaMap.instance.getNewItemId("buildingrect"), number);
-                                                        MetaMap.instance.defaultLayer.mapItems.Add(gc);
+                                                        //MetaMap.instance.defaultLayer.mapItems.Add(gc);
                                                     }
 
                                                 }
                                             }
                                             if (r.Name == "g")
                                             {
+                                                //import platform
                                                 //List<XmlNode> pnl = r.ChildNodes;
                                                 List<XmlNode> pnl = new List<XmlNode>();
                                                 XmlNodeList pnlls = r.ChildNodes;
@@ -263,6 +267,8 @@ public class MapImporter : MonoBehaviour
                                                             .ToDictionary(g => g.Key, g => g.First());
                                                         if (properties.ContainsKey("template")) gs.template = properties["template"];
                                                         MetaMap.instance.defaultLayer.mapItems.Add(gs);
+                                                        gs.id = MetaMap.instance.getNewItemId("wall");
+                                                        gs.layerIndex = number;
                                                     }
 
                                                 }

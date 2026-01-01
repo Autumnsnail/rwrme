@@ -1,9 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using static UnityEngine.UI.Image;
 
 public class ToolController : MonoBehaviour
 {
@@ -11,17 +14,24 @@ public class ToolController : MonoBehaviour
     public List<Tool> tools = new List<Tool>();
     Tool currentTool;
     public Camera orthographicCamera;
+    public static ToolController inste;
     
     // 用于拖选可视化的 LineRenderer
     private LineRenderer dragVisualizer;
+
+    private SideTool sdt =new SideTool();
+
+
+    public MapItem miSelected;
     
     void Start()
     {
+        inste = this;
         orthographicCamera = Camera.main;
         tools.Add(new SelecterTool("Selecter"));
         tools.Add(new PinTool("TankPin",GameObject.Find("PinTank") ));//tool1 = Pin Tank
-        tools.Add(new DragTool("DragSelect", this)); //tool2 = Drag Select
-        currentTool = tools[2];
+        tools.Add(new DrawerTool("DrawerSelect", this)); //tool2 = PainterBuilding
+        currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
     }
@@ -70,18 +80,14 @@ public class ToolController : MonoBehaviour
     {
         if(Input.GetMouseButtonDown(0))
         {
-            if (Input.mousePosition.x / Screen.width <0.85)
+            if(sdt.state!=0)
             {
-                /*
-                Ray ray = orthographicCamera.ScreenPointToRay(Input.mousePosition);
-                RaycastHit hit; // �洢������ײ��Ϣ
-                Vector3 worldPoint = new Vector3(0, 0, 0);
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity,1<<6))//Pinable
-                {
-                    worldPoint = hit.point;
-                    Debug.Log("���������������: " + worldPoint);
-                }
-                */
+                sdt.state = 0;
+            }else
+            { 
+
+            if (Input.mousePosition.x / Screen.width < 0.85)
+            {
 
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
@@ -90,12 +96,13 @@ public class ToolController : MonoBehaviour
                 {
                     Vector3 hitPosition = hit.point;
 
-                    GameObject hitObject = hit.collider.gameObject;
-                    Debug.Log("���������������: " + hitPosition);
-                    currentTool.startUse(hitPosition);
+                    GameObject hitObject = hit.collider.gameObject.transform.root.gameObject;
+                    Debug.Log("ToolManager:hit at" + hitObject.ToSafeString());
+                    currentTool.startUse(hitPosition, hitObject);
 
                 }
 
+            }
             }
         }
         
@@ -119,6 +126,28 @@ public class ToolController : MonoBehaviour
         {
             currentTool.EndUse();
         }
+
+        if(Input.GetKeyDown(KeyCode.G))
+        {
+            sdt.tChangeMode(1);
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            sdt.tChangeMode(2);
+
+        }
+
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            sdt.tChangeMode(3);
+        }
+
+        sdt.mi = miSelected;
+
+        Vector2 ofst = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+        
+        sdt.update(ofst);
     }
     public void setToolPinTank()
     {
@@ -136,7 +165,16 @@ public class ToolController : MonoBehaviour
         Debug.Log("set Tool to DragSelect");
         currentTool = tools[2];
     }
-    
+
+    public void setToolWithIndex(int ind)
+    {
+        currentTool = tools[ind];
+    }
+
+    public GameObject InsOnePref(GameObject partten)
+    {
+        return Instantiate(partten);
+    }
     // 供工具访问可视化器
     public LineRenderer GetDragVisualizer()
     {
@@ -152,7 +190,7 @@ public class Tool
         m_name = name;
     }
 
-    public virtual void startUse(Vector3 Position)
+    public virtual void startUse(Vector3 Position,GameObject hitO)
     {
         Debug.Log("tryUse");
     }
@@ -186,9 +224,8 @@ public class PinTool : Tool
         pinObject = mgo;
     }
     public GameObject pinObject;
-     public override void startUse(Vector3 position)
+     public override void startUse(Vector3 position,GameObject hitObject)
     {
-        base.startUse(position);
         Debug.Log("try use piner");
         pinObject.transform.position = position;
     }
@@ -200,6 +237,13 @@ public class SelecterTool : Tool
     {
 
     }
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (hitO.GetComponent<MapItem>()!= null) ;
+        ToolController.inste.miSelected = hitO.GetComponent<MapItem>();
+    }
+
+
 }
 
 public class DragTool : Tool
@@ -218,9 +262,8 @@ public class DragTool : Tool
         controller = toolController;
     }
     
-    public override void startUse(Vector3 position)
+    public override void startUse(Vector3 position, GameObject hitO)
     {
-        base.startUse(position);
         Debug.Log($"开始拖选，起点: {position}");
         
         startPosition = position;
@@ -336,4 +379,183 @@ public class DragTool : Tool
             // 可以修改材质颜色或添加特效
         }
     }
+}
+
+public class DrawerTool : Tool
+{
+    private ToolController controller;
+    private LineRenderer visualizer;
+    private Vector3 startPosition;
+    private Vector3 currentPosition;
+    private bool isDragging = false;
+    private GameObject hittenObject;
+
+
+    public DrawerTool(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        Debug.Log($"开始拖选，起点: {position}");
+
+        startPosition = position;
+        currentPosition = position;
+        hittenObject = hitO;
+        isDragging = true;
+
+        // 获取可视化器
+        visualizer = controller.GetDragVisualizer();
+        if (visualizer != null)
+        {
+            visualizer.enabled = true;
+            UpdateVisualizer();
+        }
+    }
+
+    public override void OnDragging(Vector3 position)
+    {
+        if (!isDragging) return;
+
+        currentPosition = position;
+        UpdateVisualizer();
+
+    }
+
+    public override void EndUse()
+    {
+        base.EndUse();
+
+        if (!isDragging) return;
+
+        Debug.Log($"拖选结束，起点: {startPosition}, 终点: {currentPosition}");
+        isDragging = false;
+
+        // 隐藏可视化器
+        if (visualizer != null)
+        {
+            visualizer.enabled = false;
+        }
+        createBuilding();
+    }
+
+    private void UpdateVisualizer()
+    {
+        if (visualizer == null) return;
+
+        float y = Mathf.Max(startPosition.y, currentPosition.y) + 10f;
+
+        Vector3 p1 = new Vector3(startPosition.x, y, startPosition.z);
+        Vector3 p2 = new Vector3(currentPosition.x, y, startPosition.z);
+        Vector3 p3 = new Vector3(currentPosition.x, y, currentPosition.z);
+        Vector3 p4 = new Vector3(startPosition.x, y, currentPosition.z);
+
+        visualizer.SetPosition(0, p1);
+        visualizer.SetPosition(1, p2);
+        visualizer.SetPosition(2, p3);
+        visualizer.SetPosition(3, p4);
+        visualizer.SetPosition(4, p1); // 闭合矩形
+
+        visualizer.startWidth = 1.5f ;
+        visualizer.endWidth = 1.5f ;
+    }
+
+    private void createBuilding()
+    {
+        GameObject go = ToolController.inste.InsOnePref(MapImporter.instate.BuildingPref);
+        Building bd = go.GetComponent<Building>();
+        bd.layerIndex = 1;
+        if(hittenObject.GetComponent<MapItem>() != null)
+        {
+            bd.layerIndex = hittenObject.GetComponent<MapItem>().layerIndex + 1;
+        }
+        bd.position = new Vector2( startPosition.x,startPosition.z);
+        Vector3 dis = currentPosition - startPosition;
+        if (Mathf.Approximately(dis.x, 0f)) dis.x = 0.001f;
+        if (Mathf.Approximately(dis.z, 0f)) dis.z = 0.001f;
+        bd.size = new Vector2 (Mathf.Abs( dis.x), Mathf.Abs(dis.z) );
+        
+        if(dis.x < 0f)
+        {
+            if (dis.z < 0f)
+            {
+                bd.rotation = 270;
+                bd.size = new Vector2(bd.size.y, bd.size.x);
+            }
+            else
+            {
+                bd.rotation = 180;
+            }
+        }
+        else
+        {
+            if(dis.z < 0f)
+            {
+                bd.rotation = 0;
+                
+            }
+            else
+            {
+                bd.rotation = 90;
+                bd.size = new Vector2(bd.size.y, bd.size.x);
+            }
+        }
+
+        bd.material = "BuildingWhite2";
+        bd.height = 2;
+        MetaMap.instance.defaultLayer.mapItems.Add(bd);
+        bd.id = MetaMap.instance.getNewItemId("building");
+        bd.scatterThis();
+        ToolController.inste.miSelected = bd;
+
+    }
+
+}
+
+public class SideTool
+{
+    public MapItem mi=null;
+    public int state = 0;//0null;1g;2r;3s
+    public SideTool()
+    {
+
+    }
+    public void tChangeMode(int i)
+    {
+        Debug.Log("ToolController:try change " + i);
+        if (i == state)
+        {
+            state = 0;
+        }
+        else 
+        {
+            state = i;
+        }
+    }
+
+    public void update(Vector2 offset )
+    {
+        if (mi == null) return;
+        if (state == 1)//g
+        {
+
+            MeRect mr = mi as MeRect;
+            if (mr != null)
+            {
+                mr.position = mr.position + offset*1;
+            }
+
+        }
+        if(state == 2)//r
+        {
+            MeRect mr = mi as MeRect;
+            if (mr != null)
+            {
+                mr.rotation = mr.rotation - offset.x * 1;
+            }
+        }
+        mi.scatterThis();
+    }
+
 }

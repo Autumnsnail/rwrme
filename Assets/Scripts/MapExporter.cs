@@ -2,15 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Xml;           // .NET 标准 XML
+using System.Xml.Linq;
+using UnityEditor.Experimental.GraphView;      // LINQ to XML（更现代）
 
 public class MapExporter : MonoBehaviour
 {
     // Start is called before the first frame update
     MetaMap m_mm;
     Terrain targetTerrain;
-    
+    public static MapExporter ins;
+
+    public XmlDocument xmlDoc;
+
     void Start()
     {
+        ins = this;
         if (m_mm == null)
         {
             m_mm = gameObject.GetComponent<MetaMap>();
@@ -38,12 +45,97 @@ public class MapExporter : MonoBehaviour
         Debug.Log("MapExporter Init");
     }
 
-    public void exportMap()
+    public void exportMap() 
     {
+        string xmlFilePath = Application.dataPath + "/map/" + "OUTobjects.svg";
+        xmlDoc = new XmlDocument();
+        XmlDeclaration xd=  xmlDoc.CreateXmlDeclaration("1.0", "UTF-8","no");
+        xmlDoc.AppendChild( xd );
+        XmlElement rootElement = xmlDoc.CreateElement("svg");
+
+        rootElement.SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/");
+        rootElement.SetAttribute("xmlns:cc", "http://creativecommons.org/ns#");
+        rootElement.SetAttribute("xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+        rootElement.SetAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
+        rootElement.SetAttribute("xmlns", "http://www.w3.org/2000/svg");
+        rootElement.SetAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        rootElement.SetAttribute("xmlns:sodipodi", "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd");
+        rootElement.SetAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
+        rootElement.SetAttribute("width", "2048");
+        rootElement.SetAttribute("height", "2048");
+        rootElement.SetAttribute("id", "svg2");
+        string inkscapeNs = "http://www.inkscape.org/namespaces/inkscape";
+        string sodipodiNs = "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd";
+        rootElement.SetAttribute("version", inkscapeNs, "0.48.5 r10040");
+        rootElement.SetAttribute("sodipodi:docname", "objects.svg");
+        rootElement.SetAttribute("export-xdpi", inkscapeNs, "90");
+        rootElement.SetAttribute("export-ydpi", inkscapeNs, "90");
+        rootElement.SetAttribute("style", "display:inline;enable-background:new");
+        rootElement.SetAttribute("export-filename", inkscapeNs, "G:\\PROGRAMMING\\cplusplus\\runningwithrifles_svn\\simplified3d\\Release\\media\\packages\\vanilla\\maps\\map2\\_rwr_height.png");
+
+
+
+        xmlDoc.AppendChild(rootElement);
+
+
+        MetaMap.instance.defaultLayer.sortByIndex();
+        int layC =  MetaMap.instance.defaultLayer.mapItems[MetaMap.instance.defaultLayer.mapItems.Count - 1].layerIndex;
+        for(int i =1;i<=layC;i++)
+        {
+            XmlElement layer = xmlDoc.CreateElement("g");
+            layer.SetAttribute("groupmode", inkscapeNs, "layer");
+            layer.SetAttribute("id", "layer"+i.ToString()+"defaultlayer");
+            layer.SetAttribute("label", inkscapeNs, "layer" +i.ToString());
+            layer.SetAttribute("style", "display:inline");
+
+            //add Building here
+
+            XmlElement buildingLayer = xmlDoc.CreateElement("g");
+            buildingLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            buildingLayer.SetAttribute("id", "layer" + i.ToString() + "buildings");
+            buildingLayer.SetAttribute("label", inkscapeNs, "buildings");
+            buildingLayer.SetAttribute("style", "display:inline");
+            buildingLayer.SetAttribute("sodipodi:insensitive", "true");
+
+
+            for (int j =0;j<MetaMap.instance.defaultLayer.mapItems.Count;j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Building bd = mi as Building;
+                if (bd == null) continue;
+
+                XmlElement buiE = xmlDoc.CreateElement("rect");
+                buiE.SetAttribute("style", "fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new");
+                buiE.SetAttribute("id", bd.id);
+                buiE.SetAttribute("width", (2*bd.size.x) .ToString());
+                buiE.SetAttribute("height", (2 * bd.size.y).ToString());
+
+                buiE.SetAttribute("x", "0");
+                buiE.SetAttribute("y", "0");
+                buiE.SetAttribute("label", inkscapeNs, "#rect6406" +j.ToString());
+                buiE.SetAttribute("transform", MathOfRwrme.angleToTransform(bd.rotation,bd.position));
+                XmlElement buiEDesc = xmlDoc.CreateElement("desc");
+                    buiEDesc.SetAttribute("id", "desc" + j.ToString());
+                    string baseDescStr = $"height={bd.height};material={bd.material};";
+                    buiEDesc.InnerText = baseDescStr;
+                    buiE.AppendChild(buiEDesc);
+                buildingLayer.AppendChild(buiE);
+
+            }
+            layer.AppendChild(buildingLayer);
+
+
+            rootElement.AppendChild(layer);
+        }
+
         Debug.Log("MapExport");
         string fullPath = System.IO.Path.Combine(Application.dataPath+"/map/", m_mm.m_metaTerrain.fileName);
         System.IO.File.WriteAllBytes(fullPath, m_mm.m_metaTerrain.data.convToPng());
-        
+
+
+        Debug.Log("MapExporter:exportSVG!");
+        xmlDoc.Save(xmlFilePath);
         // 同时导出地形高度图
         exportTerrainHeightmap();
     }
@@ -170,6 +262,11 @@ public class MapExporter : MonoBehaviour
         UnityEditor.AssetDatabase.Refresh();
         Debug.Log("已刷新Unity资产数据库");
 #endif
+    }
+
+    public void exportBuildings()
+    {
+
     }
 
     // Update is called once per frame

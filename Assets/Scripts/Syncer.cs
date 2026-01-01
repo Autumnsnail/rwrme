@@ -124,10 +124,16 @@ public class Syncer : MonoBehaviour
 
     public IEnumerator ScatterMapItems()
     {
+        int index = 0;
         foreach(MapItem mapItem in m_mm.defaultLayer.mapItems)
         {
+            
             mapItem.scatterThis();
-            yield return null;
+            if (index != mapItem.layerIndex)
+            {
+                index = mapItem.layerIndex;
+                yield return null;
+            }
         }
     }
 }

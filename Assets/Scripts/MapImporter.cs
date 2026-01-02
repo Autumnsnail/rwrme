@@ -148,6 +148,7 @@ public class MapImporter : MonoBehaviour
                                                         position = position + new Vector2(tx, ty);
                                                         int BheightF = 0;
                                                         string bmaterial = "";
+                                                        bool roof = false;
                                                         foreach (XmlNode de in r.ChildNodes)
                                                         {
                                                             var properties = de.InnerText.Split(';')
@@ -170,13 +171,23 @@ public class MapImporter : MonoBehaviour
                                                             {
 
                                                             }
+                                                            if(properties.ContainsKey("roof_type"))
+                                                            {
+                                                                
+                                                                roof = (properties["roof_type"]== "elevated");
+                                                            }
+                                                            else if(BheightF==2)
+                                                            {
+                                                                roof = true;
+                                                            }
 
                                                         }
                                                         GameObject go = Instantiate(BuildingPref);
                                                         Building gc = go.GetComponent<Building>();
                                                         //Building gc = new Building(BheightF, bmaterial, MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth / 2, cHeight / 2), MetaMap.instance.getNewItemId("buildingrect"), number);
                                                         gc.reinit(BheightF, bmaterial, MathOfRwrme.SvgPosToU3dPos(position), angle, new Vector2(cWidth / 2, cHeight / 2), MetaMap.instance.getNewItemId("buildingrect"), number);
-                                                        //MetaMap.instance.defaultLayer.mapItems.Add(gc);
+                                                        gc.roof = roof;
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(gc);
                                                     }
 
                                                 }

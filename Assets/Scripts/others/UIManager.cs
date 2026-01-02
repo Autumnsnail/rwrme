@@ -1,6 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -8,6 +11,8 @@ public class UIManager : MonoBehaviour
     GameObject pMM;
     GameObject rMM;
     GameObject bMM;
+    GameObject bEM;
+    GameObject ddBT;
     void Start()
     {
         instance = this;    
@@ -19,6 +24,8 @@ public class UIManager : MonoBehaviour
         }
         rMM = transform.Find("RefManager").gameObject;
         bMM = transform.Find("BuilderManager").gameObject;
+        bEM = transform.Find("BuildingEditor").gameObject;
+        ddBT = transform.Find("BuildingEditor/BuildingTypes").gameObject;
     }
 
     // Update is called once per frame
@@ -35,7 +42,7 @@ public class UIManager : MonoBehaviour
         pMM.transform.localScale = new Vector3(0f, 0f, 0f);
         rMM.transform.localScale = new Vector3(0f, 0f, 0f);
         bMM.transform.localScale = Vector3.zero;
-
+        bEM.transform.localScale = Vector3.zero;
 
     }
     public void enablePinManager()
@@ -55,4 +62,33 @@ public class UIManager : MonoBehaviour
         disVisableAll();
         bMM.transform.localScale = Vector3.one;
     }
+    public void enableBuildingEditor()
+    {
+        disVisableAll();
+        bEM.transform.localScale = Vector3.one;
+    }
+    public void updatebBT()
+    {
+        Debug.Log("UIManager:update bBt");
+        TMP_Dropdown dd =        ddBT.GetComponent<TMP_Dropdown>();
+        dd.ClearOptions();
+        List<BuildingType> btp = MetaMap.instance.buildingTypes;
+        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
+        dd.AddOptions(optionTexts);
+    }
+
+    public void changebtc(int ind)
+    {
+        BuildingType bt = MetaMap.instance.buildingTypes[ind];
+        if (bt != null)
+        {
+            MaterialChangerTool uci =  ToolController.inste.tools[4]as MaterialChangerTool;
+            if(uci!=null)
+            {
+                uci.setMat(bt);
+                ToolController.inste.setToolWithIndex(4);
+            }
+        }
+    }
+
 }

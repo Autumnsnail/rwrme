@@ -2,11 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.UI;
 using UnityEngine;
+using System.Linq;
+using UnityEditor.Profiling;
 
 public class Building : MeRect
 {
     public int height;
     public string material;
+    public bool roof=false;
     public Building(int h, string m, Vector2 pos, float r, Vector2 s, string k, int layerI) : base(pos, r, s, k, layerI)
     {
         //Debug.Log($"Building¹¹Ôì: height={h}, material={m}, position={pos}, rotation={r}, scale={s}, key={k}");
@@ -40,6 +43,32 @@ public class Building : MeRect
             VpMetaToucher.getXYHeightWithLayer(position, layerIndex,ref troPos);
             go.transform.localPosition = troPos;
             go.transform.rotation = Quaternion.Euler(0f, -1 * rotation, 0f);
+            GameObject rf = go.transform.GetChild(1).gameObject;
+            if(rf != null)
+            {
+                if (roof) rf.transform.localScale = Vector3.one;
+                if (!roof) rf.transform.localScale = Vector3.zero;
+            }
+            BuildingType bt = MetaMap.instance.buildingTypes.FirstOrDefault(type => type.name.Equals(material));
+            if(bt!= null)
+            {
+                if (rf != null)
+                {
+                    GameObject rfv = rf.transform.GetChild(0).gameObject;
+                    Renderer renderer = rfv.GetComponent<Renderer>();
+                    if(renderer != null)
+                    {
+                        renderer.material = bt.materialTop;
+                    }   
+                }
+                GameObject body = go.transform.GetChild(0).gameObject;
+                Renderer bdr = body.GetComponent<Renderer>();
+                if (bdr != null)
+                {
+                    bdr.material = bt.materialSide;
+                }
+
+            }
         }
     }
 }

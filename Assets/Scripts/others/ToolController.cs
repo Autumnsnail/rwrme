@@ -31,6 +31,8 @@ public class ToolController : MonoBehaviour
         tools.Add(new SelecterTool("Selecter"));
         tools.Add(new PinTool("TankPin",GameObject.Find("PinTank") ));//tool1 = Pin Tank
         tools.Add(new DrawerTool("DrawerSelect", this)); //tool2 = PainterBuilding
+        tools.Add(new RoofChangerTool("RoofChanger", this)); //tool3 = roof changer
+        tools.Add(new MaterialChangerTool("BuildingMaterialChanger", this)); //tool4 = material changer
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -239,7 +241,7 @@ public class SelecterTool : Tool
     }
     public override void startUse(Vector3 position, GameObject hitO)
     {
-        if (hitO.GetComponent<MapItem>()!= null) ;
+        if (hitO.GetComponent<MapItem>()!= null)
         ToolController.inste.miSelected = hitO.GetComponent<MapItem>();
     }
 
@@ -513,9 +515,67 @@ public class DrawerTool : Tool
 
 }
 
+public class RoofChangerTool : Tool
+{
+    private ToolController controller;
+    public bool buserstat = false;
+    public RoofChangerTool(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (hitO != null)
+        {
+            Building bd = hitO.GetComponent<Building>();
+            if (bd != null)
+            {
+                bd.roof = !bd.roof;
+                bd.scatterThis();
+            }
+
+        }
+    }
+}
+
+public class MaterialChangerTool : Tool
+{
+    private ToolController controller;
+    public BuildingType bt;
+    public MaterialChangerTool(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public void setMat(BuildingType material)
+    {
+        Debug.Log("ToolController:mt set as "+material.name);
+
+        bt = material;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (hitO != null&& bt != null)
+        {
+            Building bd = hitO.GetComponent<Building>();
+            if (bd != null)
+            {
+
+                Debug.Log("ToolController:tryUse tcs");
+                bd.material = bt.name;
+                bd.scatterThis();
+            }
+
+        }
+    }
+}
+
+
 public class SideTool
 {
-    public MapItem mi=null;
+    public MapItem mi = null;
     public int state = 0;//0null;1g;2r;3s
     public SideTool()
     {
@@ -528,13 +588,13 @@ public class SideTool
         {
             state = 0;
         }
-        else 
+        else
         {
             state = i;
         }
     }
 
-    public void update(Vector2 offset )
+    public void update(Vector2 offset)
     {
         if (mi == null) return;
         if (state == 1)//g
@@ -543,11 +603,11 @@ public class SideTool
             MeRect mr = mi as MeRect;
             if (mr != null)
             {
-                mr.position = mr.position + offset*1;
+                mr.position = mr.position + offset * 1;
             }
 
         }
-        if(state == 2)//r
+        if (state == 2)//r
         {
             MeRect mr = mi as MeRect;
             if (mr != null)
@@ -555,7 +615,15 @@ public class SideTool
                 mr.rotation = mr.rotation - offset.x * 1;
             }
         }
+        if (state == 3)
+        {
+            MeRect mr = mi as MeRect;
+            if (mr != null)
+            {
+                mr.size = mr.size * (1 + 0.03f * offset.x);
+            }
+
+        }
         mi.scatterThis();
     }
-
 }

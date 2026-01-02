@@ -1,11 +1,12 @@
 using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
-using System.Linq;
 
 public class MetaMap : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class MetaMap : MonoBehaviour
     public MetaTerrain m_metaTerrain;
     public Layer defaultLayer;//default: L1,L2,L3,L4...
 
+    public List<BuildingType> buildingTypes;
 
     // Start is called before the first frame update
     void Start()
@@ -22,12 +24,37 @@ public class MetaMap : MonoBehaviour
         instance = this;
         m_metaTerrain = new MetaTerrain();
         defaultLayer = new Layer();
+        buildingTypes = new List<BuildingType>();
+        setBts();
         Debug.Log("MetaMapInit");
     }
 
     public string getNewItemId(string startWith)
     {
         return startWith + defaultLayer.mapItems.Count.ToString() + "rwrme";
+    }
+
+    private void setBts()
+    {
+        //for tests until we get way import this
+        buildingTypes.Add(new BuildingType("BuildingWhite1", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingRoofStory1", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite1Empty1stFloor", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite1Busy", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite1Brick", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingShop1", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingShop2", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingShop1End", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite2", new Color(0.29f, 0.314f, 0.267f, 1f), Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite2Busy", new Color(0.29f, 0.314f, 0.267f, 1f), Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite2RoofStory1", Color.white, Color.gray));
+        buildingTypes.Add(new BuildingType("BuildingWhite3", new Color(0.29f, 0.314f, 0.267f, 1f), Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite3RoofStory1", new Color(0.29f, 0.314f, 0.267f, 1f), Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite3Busy", new Color(0.29f,0.314f,0.267f,1f), Color.white));
+        buildingTypes.Add(new BuildingType("BuildingWhite4", Color.green, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingHouse", Color.gray, Color.white));
+        buildingTypes.Add(new BuildingType("BuildingVilla", Color.red, Color.white));
+
     }
 
     // Update is called once per frame
@@ -176,4 +203,20 @@ public class PathPair:MapItem
 public class MePath:MapItem
 {
     public List<Vector2> positionLine;
+}
+
+public class BuildingType
+{
+    public string name="";
+    public Material materialTop;
+    public Material materialSide;
+
+    public BuildingType(string n,Color c,Color c1)
+    {
+        materialTop = new Material(Shader.Find("Standard"));
+        materialTop.color = c;
+        materialSide = new Material(Shader.Find("Standard"));
+        materialSide.color = c1;
+        name = n;
+    }
 }

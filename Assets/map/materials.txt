@@ -1,0 +1,17 @@
+BuildingWhite1
+BuildingRoofStory1
+BuildingWhite1Empty1stFloor
+BuildingWhite1Busy
+BuildingWhite1Brick
+BuildingShop1
+BuildingShop2
+BuildingShop1End
+BuildingWhite2
+BuildingWhite2Busy
+BuildingWhite2RoofStory1
+BuildingWhite3
+BuildingWhite3RoofStory1
+BuildingWhite3Busy
+BuildingWhite4
+BuildingHouse
+BuildingVilla

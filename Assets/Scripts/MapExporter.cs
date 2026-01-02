@@ -118,6 +118,15 @@ public class MapExporter : MonoBehaviour
                 XmlElement buiEDesc = xmlDoc.CreateElement("desc");
                     buiEDesc.SetAttribute("id", "desc" + j.ToString());
                     string baseDescStr = $"height={bd.height};material={bd.material};";
+                    if(bd.roof)
+                    {
+                    baseDescStr = baseDescStr + "roof_type = elevated;";
+                    }
+                    else
+                    {
+                    baseDescStr = baseDescStr + "roof_type = flat;";
+
+                     }
                     buiEDesc.InnerText = baseDescStr;
                     buiE.AppendChild(buiEDesc);
                 buildingLayer.AppendChild(buiE);

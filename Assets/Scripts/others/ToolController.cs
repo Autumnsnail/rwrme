@@ -33,6 +33,7 @@ public class ToolController : MonoBehaviour
         tools.Add(new DrawerTool("DrawerSelect", this)); //tool2 = PainterBuilding
         tools.Add(new RoofChangerTool("RoofChanger", this)); //tool3 = roof changer
         tools.Add(new MaterialChangerTool("BuildingMaterialChanger", this)); //tool4 = material changer
+        tools.Add(new heightChanger("heightChanger", this)); //tool5 = material changer
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -173,6 +174,12 @@ public class ToolController : MonoBehaviour
         currentTool = tools[ind];
     }
 
+    public void setHeightSetter(int offset)
+    {
+        currentTool = tools[5];
+        heightChanger hc = tools[5] as heightChanger;
+        hc.offcc = offset;
+    }
     public GameObject InsOnePref(GameObject partten)
     {
         return Instantiate(partten);
@@ -565,6 +572,30 @@ public class MaterialChangerTool : Tool
 
                 Debug.Log("ToolController:tryUse tcs");
                 bd.material = bt.name;
+                bd.scatterThis();
+            }
+
+        }
+    }
+}
+
+public class heightChanger : Tool
+{
+    private ToolController controller;
+    public int offcc = 1;
+    public heightChanger(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (hitO != null)
+        {
+            Building bd = hitO.GetComponent<Building>();
+            if (bd != null)
+            {
+                bd.height = bd.height+ offcc*2;
                 bd.scatterThis();
             }
 

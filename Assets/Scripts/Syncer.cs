@@ -7,10 +7,12 @@ public class Syncer : MonoBehaviour
 
     MetaMap m_mm;
     Terrain m_terrain;
+    static public Syncer instence; 
 
     // Start is called before the first frame update
     void Start()
     {
+        instence = this;
         // 启动协程
         //StartCoroutine(StartupRoutine());
         runToInit();
@@ -72,7 +74,6 @@ public class Syncer : MonoBehaviour
     public void updateMap()
     {
         setHeightFromMeta();
-        //scatterBuildings();
         StartCoroutine(ScatterMapItems());
     }
 
@@ -124,8 +125,9 @@ public class Syncer : MonoBehaviour
 
     public IEnumerator ScatterMapItems()
     {
-        int index = 0;
-        foreach(MapItem mapItem in m_mm.defaultLayer.mapItems)
+        m_mm.defaultLayer.sortByIndex();
+        int index = 0; 
+        foreach (MapItem mapItem in m_mm.defaultLayer.mapItems)
         {
             
             mapItem.scatterThis();
@@ -133,6 +135,19 @@ public class Syncer : MonoBehaviour
             {
                 index = mapItem.layerIndex;
                 yield return null;
+            }
+        }
+    }
+
+    public void destroyAllOutMapitems()
+    {
+        MapItem[] allItems = FindObjectsOfType<MapItem>(true);
+        foreach (MapItem item in allItems)
+        {
+            // 关键：检查 gameObject 是否在场景中
+            if (!MetaMap.instance.defaultLayer.mapItems.Contains(item))
+            {
+                Destroy(item.gameObject);
             }
         }
     }

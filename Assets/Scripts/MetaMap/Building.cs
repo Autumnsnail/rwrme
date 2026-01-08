@@ -37,10 +37,10 @@ public class Building : MeRect
         GameObject go = this.gameObject;
         if (go != null)
         {
-            go.transform.localScale = new Vector3(size.x, height * 3.0f, size.y);
+            go.transform.localScale = new Vector3(size.x/2, height * 1.5f, size.y/2);
             //go.transform.localPosition = new Vector3(bld.position.x, m_terrain.SampleHeight(new Vector3(bld.position.x, 0, bld.position.y)), bld.position.y);
             Vector3 troPos=new Vector3(0,0,0);
-            VpMetaToucher.getXYHeightWithLayer(position, layerIndex,ref troPos);
+            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex,ref troPos);
             go.transform.localPosition = troPos;
             go.transform.rotation = Quaternion.Euler(0f, -1 * rotation, 0f);
             GameObject rf = go.transform.GetChild(1).gameObject;

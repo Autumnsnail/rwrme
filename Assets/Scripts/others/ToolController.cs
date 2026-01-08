@@ -108,7 +108,6 @@ public class ToolController : MonoBehaviour
             }
             }
         }
-        
         // 拖动过程中更新工具
         if (Input.GetMouseButton(0))
         {
@@ -146,6 +145,12 @@ public class ToolController : MonoBehaviour
             sdt.tChangeMode(3);
         }
 
+        if(Input.GetKeyDown(KeyCode.Delete))
+        {
+            MetaMap.instance.defaultLayer.mapItems.Remove(miSelected);
+            Destroy(miSelected.gameObject.transform.root.gameObject);
+        }
+
         sdt.mi = miSelected;
 
         Vector2 ofst = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
@@ -162,18 +167,15 @@ public class ToolController : MonoBehaviour
         currentTool = tools[0];
         UIManager.instance.disVisableAll();
     }
-    
     public void setToolDrag()
     {
         Debug.Log("set Tool to DragSelect");
         currentTool = tools[2];
     }
-
     public void setToolWithIndex(int ind)
     {
         currentTool = tools[ind];
     }
-
     public void setHeightSetter(int offset)
     {
         currentTool = tools[5];
@@ -190,7 +192,6 @@ public class ToolController : MonoBehaviour
         return dragVisualizer;
     }
 }
-
 public class Tool
 {
     public string m_name;
@@ -214,15 +215,13 @@ public class Tool
         Debug.Log("EndUse");
     }
 }
-
-public class emptyTool : Tool
+public class emptyTool: Tool
 {
     public emptyTool(string name) : base(name)
     {
     }
 }
-
-public class PinTool : Tool
+public class PinTool: Tool
 {
     public PinTool(string name) : base(name)
     {
@@ -239,8 +238,7 @@ public class PinTool : Tool
         pinObject.transform.position = position;
     }
 }
-
-public class SelecterTool : Tool
+public class SelecterTool: Tool
 {
     public SelecterTool(string name) : base(name)
     {
@@ -254,8 +252,7 @@ public class SelecterTool : Tool
 
 
 }
-
-public class DragTool : Tool
+public class DragTool: Tool
 {
     private ToolController controller;
     private LineRenderer visualizer;
@@ -389,8 +386,7 @@ public class DragTool : Tool
         }
     }
 }
-
-public class DrawerTool : Tool
+public class DrawerTool: Tool
 {
     private ToolController controller;
     private LineRenderer visualizer;
@@ -513,6 +509,7 @@ public class DrawerTool : Tool
 
         bd.material = "BuildingWhite2";
         bd.height = 2;
+        CtrlZer.instance.checkPoint();
         MetaMap.instance.defaultLayer.mapItems.Add(bd);
         bd.id = MetaMap.instance.getNewItemId("building");
         bd.scatterThis();
@@ -521,8 +518,7 @@ public class DrawerTool : Tool
     }
 
 }
-
-public class RoofChangerTool : Tool
+public class RoofChangerTool: Tool
 {
     private ToolController controller;
     public bool buserstat = false;
@@ -538,15 +534,16 @@ public class RoofChangerTool : Tool
             Building bd = hitO.GetComponent<Building>();
             if (bd != null)
             {
+                CtrlZer.instance.checkPoint();
                 bd.roof = !bd.roof;
                 bd.scatterThis();
             }
 
         }
     }
-}
 
-public class MaterialChangerTool : Tool
+}
+public class MaterialChangerTool: Tool
 {
     private ToolController controller;
     public BuildingType bt;
@@ -569,17 +566,18 @@ public class MaterialChangerTool : Tool
             Building bd = hitO.GetComponent<Building>();
             if (bd != null)
             {
+                CtrlZer.instance.checkPoint();
 
                 Debug.Log("ToolController:tryUse tcs");
                 bd.material = bt.name;
                 bd.scatterThis();
+
             }
 
         }
     }
 }
-
-public class heightChanger : Tool
+public class heightChanger: Tool
 {
     private ToolController controller;
     public int offcc = 1;
@@ -595,15 +593,15 @@ public class heightChanger : Tool
             Building bd = hitO.GetComponent<Building>();
             if (bd != null)
             {
+                CtrlZer.instance.checkPoint();
                 bd.height = bd.height+ offcc*2;
                 bd.scatterThis();
+
             }
 
         }
     }
 }
-
-
 public class SideTool
 {
     public MapItem mi = null;

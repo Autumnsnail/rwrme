@@ -18,6 +18,8 @@ public class MetaMap : MonoBehaviour
 
     public List<BuildingType> buildingTypes;
 
+    public List<string> allowedExtensions = new List<string> { "default"};//import later
+
     // Start is called before the first frame update
     void Start()
     {
@@ -63,7 +65,6 @@ public class MetaMap : MonoBehaviour
         
     }
 }
-
 public class GrayScaleImage
 {
     [SerializeField] private float[,] data;
@@ -145,7 +146,6 @@ public class MetaTerrain
         data = igsi;
     }
 }
-
 public class Layer
 {
     public List<MapItem> mapItems;
@@ -159,7 +159,6 @@ public class Layer
         mapItems = mapItems.OrderBy(item => item.layerIndex).ToList();
     }
 }
-
 public class MapItem:MonoBehaviour
 {
     public string id;
@@ -176,9 +175,6 @@ public class MapItem:MonoBehaviour
         Debug.Log("MetaMap:WrongScatte");
     }
 }
-
-
-
 public class MeRect :MapItem//this class won,t use directly
 {
     public Vector2 position;
@@ -194,7 +190,6 @@ public class MeRect :MapItem//this class won,t use directly
         layerIndex = lI;
     }
 }
-
 public class PathPair:MapItem
 {
     public List<Vector2> positinLineL;
@@ -204,7 +199,6 @@ public class MePath:MapItem
 {
     public List<Vector2> positionLine;
 }
-
 public class BuildingType
 {
     public string name="";

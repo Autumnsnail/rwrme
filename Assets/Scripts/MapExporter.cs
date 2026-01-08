@@ -103,33 +103,36 @@ public class MapExporter : MonoBehaviour
                 MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
                 if (mi.layerIndex != i) continue;
                 Building bd = mi as Building;
-                if (bd == null) continue;
+                if (bd != null)
+                {
+                    XmlElement buiE = xmlDoc.CreateElement("rect");
+                    buiE.SetAttribute("style", "fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new");
+                    buiE.SetAttribute("id", bd.id);
+                    buiE.SetAttribute("width", (2 * bd.size.x).ToString());
+                    buiE.SetAttribute("height", (2 * bd.size.y).ToString());
 
-                XmlElement buiE = xmlDoc.CreateElement("rect");
-                buiE.SetAttribute("style", "fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new");
-                buiE.SetAttribute("id", bd.id);
-                buiE.SetAttribute("width", (2*bd.size.x) .ToString());
-                buiE.SetAttribute("height", (2 * bd.size.y).ToString());
-
-                buiE.SetAttribute("x", "0");
-                buiE.SetAttribute("y", "0");
-                buiE.SetAttribute("label", inkscapeNs, "#rect6406" +j.ToString());
-                buiE.SetAttribute("transform", MathOfRwrme.angleToTransform(bd.rotation,bd.position));
-                XmlElement buiEDesc = xmlDoc.CreateElement("desc");
+                    buiE.SetAttribute("x", "0");
+                    buiE.SetAttribute("y", "0");
+                    buiE.SetAttribute("label", inkscapeNs, "#rect6406" + j.ToString());
+                    buiE.SetAttribute("transform", MathOfRwrme.angleToTransform(bd.rotation, bd.position));
+                    XmlElement buiEDesc = xmlDoc.CreateElement("desc");
                     buiEDesc.SetAttribute("id", "desc" + j.ToString());
                     string baseDescStr = $"height={bd.height};material={bd.material};";
-                    if(bd.roof)
+                    if (bd.roof)
                     {
-                    baseDescStr = baseDescStr + "roof_type = elevated;";
+                        baseDescStr = baseDescStr + "roof_type = elevated;";
                     }
                     else
                     {
-                    baseDescStr = baseDescStr + "roof_type = flat;";
+                        baseDescStr = baseDescStr + "roof_type = flat;";
 
-                     }
+                    }
                     buiEDesc.InnerText = baseDescStr;
                     buiE.AppendChild(buiEDesc);
-                buildingLayer.AppendChild(buiE);
+                    buildingLayer.AppendChild(buiE);
+                }
+
+
 
             }
             layer.AppendChild(buildingLayer);

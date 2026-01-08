@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net;
+using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,7 +13,6 @@ public class Wall : MePath
     // Start is called before the first frame update
     public List<Vector2> ParsePathData(string pathData)
     {
-        List<Vector2> points = new List<Vector2>();
 
         // 清理数据
         pathData = pathData.Trim().ToLower();
@@ -21,8 +21,11 @@ public class Wall : MePath
         string[] parts = pathData.Split(new char[] { ' ', ',', '\t', '\n' },
                                         StringSplitOptions.RemoveEmptyEntries);
 
-        Vector2 currentPoint = Vector2.zero;
+        //Debug.Log("Wall.cs " + pathData);
+
         bool isRelative = false;
+        Vector2 currentPoint = Vector2.zero;
+        List<Vector2> points = new List<Vector2>();
 
         for (int i = 0; i < parts.Length; i++)
         {
@@ -32,31 +35,36 @@ public class Wall : MePath
             if (char.IsLetter(token[0]))
             {
                 char command = token[0];
+                isRelative = char.IsLower(command); // 小写是相对坐标
+                command = char.ToLower(command); // 统一转换为小写处理
 
                 switch (command)
                 {
-                    case 'm': // 移动命令（相对）
-                        isRelative = true;
+                    case 'm': // 移动命令
                         if (i + 2 < parts.Length)
                         {
                             float x = float.Parse(parts[++i]);
                             float y = float.Parse(parts[++i]);
 
-                            if (points.Count == 0) // 第一个点
-                            {
-                                currentPoint = new Vector2(x, y);
-                                points.Add(currentPoint);
-                            }
-                            else // 后续点
+                            if (isRelative)
                             {
                                 currentPoint += new Vector2(x, y);
+                            }
+                            else
+                            {
+                                currentPoint = new Vector2(x, y);
+                            }
+
+                            // 如果是第一个点或者移动命令，添加到点列表
+                            if (points.Count == 0)
+                            {
                                 points.Add(currentPoint);
                             }
+                            // 注意：SVG规范中，移动命令后的第一个点实际上是隐式的直线命令
                         }
                         break;
 
-                    case 'l': // 直线命令（相对）
-                        isRelative = true;
+                    case 'l': // 直线命令
                         if (i + 2 < parts.Length)
                         {
                             float x = float.Parse(parts[++i]);
@@ -74,39 +82,93 @@ public class Wall : MePath
                         }
                         break;
 
-                    case 'c': // 贝塞尔曲线（这里简化为直线）
+                    case 'v': // 垂直直线命令（只改变Y坐标）
+                        if (i + 1 < parts.Length)
+                        {
+                            float dy = float.Parse(parts[++i]);
+
+                            if (isRelative)
+                            {
+                                currentPoint += new Vector2(0, dy);
+                            }
+                            else
+                            {
+                                currentPoint = new Vector2(currentPoint.x, dy);
+                            }
+                            points.Add(currentPoint);
+                        }
+                        break;
+
+                    case 'h': // 水平直线命令（只改变X坐标）
+                        if (i + 1 < parts.Length)
+                        {
+                            float dx = float.Parse(parts[++i]);
+
+                            if (isRelative)
+                            {
+                                currentPoint += new Vector2(dx, 0);
+                            }
+                            else
+                            {
+                                currentPoint = new Vector2(dx, currentPoint.y);
+                            }
+                            points.Add(currentPoint);
+                        }
+                        break;
+
+                    case 'c': // 贝塞尔曲线
                     case 's':
                     case 'q':
                     case 't':
                     case 'a':
                         // 跳过曲线参数
-                        //int paramCount = GetParameterCount(command);
-                        //i += paramCount;
+                        int paramCount = GetParameterCount(command);
+                        i += paramCount;
                         break;
+
+                        // 添加其他命令的处理...
                 }
             }
-            else // 是坐标值（隐式重复上一个命令）
+            else // 隐式命令延续
             {
-                // 假设是 l 命令的延续
-                float x = float.Parse(token);
-                if (i + 1 < parts.Length)
+                // 需要知道当前最后一个命令是什么
+                // 这里假设是直线命令的延续
+                try
                 {
-                    float y = float.Parse(parts[++i]);
+                    float x = float.Parse(token);
+                    float y = 0;
 
-                    if (isRelative)
+                    // 尝试获取Y坐标
+                    if (i + 1 < parts.Length && !char.IsLetter(parts[i + 1][0]))
                     {
+                        y = float.Parse(parts[++i]);
+
+                        // 处理为相对坐标（这是最常见的情况）
                         currentPoint += new Vector2(x, y);
+                        points.Add(currentPoint);
                     }
-                    else
-                    {
-                        currentPoint = new Vector2(x, y);
-                    }
-                    points.Add(currentPoint);
+                }
+                catch (FormatException)
+                {
+                    // 解析失败，跳过
+                    continue;
                 }
             }
         }
 
         return points;
+    }
+    private int GetParameterCount(char command)
+    {
+        switch (command)
+        {
+            case 'c': return 6; // 三次贝塞尔：x1 y1 x2 y2 x y
+            case 's': return 4; // 平滑三次贝塞尔：x2 y2 x y
+            case 'q': return 4; // 二次贝塞尔：x1 y1 x y
+            case 't': return 2; // 平滑二次贝塞尔：x y
+            case 'a': return 7; // 椭圆弧：rx ry x-axis-rotation large-arc-flag sweep-flag x y
+            default: return 0;
+        }
     }
 
     public GameObject SubWallPref;
@@ -135,22 +197,20 @@ public class Wall : MePath
         for (int i = 0;i<positionLine.Count-1;i++)
         {
             Vector2 start2 = MathOfRwrme.SvgPosToU3dPos(positionLine[i]);
-            Vector3 start = new Vector3(start2.x, 0, start2.y);
+            Vector3 start=Vector3.zero;int ind = 0;
+            VpMetaToucher.getXYHeight(start2, ref start, ref ind);
             Vector2 end2 = MathOfRwrme.SvgPosToU3dPos(positionLine[i+1]);
-            Vector3 end = new Vector3(end2.x, 0, end2.y);
+            Vector3 end = Vector3.zero;
+            VpMetaToucher.getXYHeight(end2, ref end, ref ind);
+
             float segmentLength = Vector3.Distance(start, end);
             Vector3 direction = (end - start).normalized;
-            float angle = Mathf.Atan2(direction.z, direction.x) * Mathf.Rad2Deg;
+
             GameObject wall = Instantiate(SubWallPref, this.transform);
             wall.transform.localPosition = start;
-            wall.transform.localRotation = Quaternion.Euler(0, -angle, 0);
+            wall.transform.localRotation = Quaternion.FromToRotation(Vector3.right, direction);
             wall.transform.localScale = new Vector3(segmentLength, 1, 1);
         }
-        Vector2 hp2 = MathOfRwrme.SvgPosToU3dPos(positionLine[0]);
-        Vector3 Position = Vector3.zero;
-        int ind = 0;
-        VpMetaToucher.getXYHeight(hp2,ref Position, ref ind);
-        gameObject.transform.localPosition = new Vector3(0, Position.y, 0);
     }
 
 

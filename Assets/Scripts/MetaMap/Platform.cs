@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Platform : PathPair
 {
@@ -126,8 +127,10 @@ public class Platform : PathPair
     public override void scatterThis()
     {   
         Vector3 pot = new Vector3();
-        VpMetaToucher.getXYHeightWithLayer(positinLineR[0], this.layerIndex,ref pot);
-        GeneratePathGeometry(positinLineL, positinLineR, pot.y+this.wall_height);
+        VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(positinLineR[0]) , this.layerIndex,ref pot);
+        List<Vector2> u3dpll = positinLineL.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
+        List<Vector2> u3dplr = positinLineR.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
+        GeneratePathGeometry(u3dpll, u3dplr, pot.y+this.wall_height);
     }
 
 

@@ -18,23 +18,19 @@ public class MathOfRwrme
         
     }
     
-    public static Vector2 SvgPosToU3dPos(float x,float y)
+    //svg pos save in metadata
+    //u3d pos is where it locate in unity ipos
+    //game pos is not used
+    //svg pos/2 = game pos = u3d post reverse y
+    public static Vector2 SvgPosToU3dPos(Vector2 svgV2)
     {
-        return new Vector2(x/2.0f, 1024 - (y /2.0f));
-    }
-    public static Vector2 SvgPosToU3dPos(Vector2 pos)
-    {
-        return new Vector2(pos.x / 2.0f, 1024 - (pos.y / 2.0f));
-    }
-    public static Vector2 U3dPosToSvgPos(Vector3 worldPos)
-    {
-        return new Vector2(worldPos.x * 2, (worldPos.z - 1024) * 2);
+        Vector2 u3dV2 = new Vector2(2048.0f, 2048.0f);
+        u3dV2.x = svgV2.x;
+        u3dV2.y = u3dV2.y - svgV2.y;
+        u3dV2 = u3dV2 / 2;
+        return u3dV2;
     }
 
-    public static Vector2 U3dPosToSvgPos(Vector2 worldPos)
-    {
-        return new Vector2(worldPos.x * 2, (worldPos.y - 1024) * 2);
-    }
 
     public static string angleToTransform(float angle,Vector2 posi)
     {

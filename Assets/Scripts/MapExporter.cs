@@ -80,7 +80,8 @@ public class MapExporter : MonoBehaviour
 
         MetaMap.instance.defaultLayer.sortByIndex();
         int layC =  MetaMap.instance.defaultLayer.mapItems[MetaMap.instance.defaultLayer.mapItems.Count - 1].layerIndex;
-        for(int i =1;i<=layC;i++)
+        int mic = MetaMap.instance.defaultLayer.mapItems.Count;
+        for (int i =1;i<=layC;i++)
         {
             XmlElement layer = xmlDoc.CreateElement("g");
             layer.SetAttribute("groupmode", inkscapeNs, "layer");
@@ -97,7 +98,6 @@ public class MapExporter : MonoBehaviour
             buildingLayer.SetAttribute("style", "display:inline");
             buildingLayer.SetAttribute("sodipodi:insensitive", "true");
 
-
             for (int j =0;j<MetaMap.instance.defaultLayer.mapItems.Count;j++)
             {
                 MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
@@ -108,8 +108,8 @@ public class MapExporter : MonoBehaviour
                     XmlElement buiE = xmlDoc.CreateElement("rect");
                     buiE.SetAttribute("style", "fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new");
                     buiE.SetAttribute("id", bd.id);
-                    buiE.SetAttribute("width", (2 * bd.size.x).ToString());
-                    buiE.SetAttribute("height", (2 * bd.size.y).ToString());
+                    buiE.SetAttribute("width", ( bd.size.x).ToString());
+                    buiE.SetAttribute("height", ( bd.size.y).ToString());
 
                     buiE.SetAttribute("x", "0");
                     buiE.SetAttribute("y", "0");
@@ -132,10 +132,50 @@ public class MapExporter : MonoBehaviour
                     buildingLayer.AppendChild(buiE);
                 }
 
-
-
             }
             layer.AppendChild(buildingLayer);
+
+            XmlElement WallLayer = xmlDoc.CreateElement("g");
+            WallLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            WallLayer.SetAttribute("id", "layer" + i.ToString() + "walls");
+            WallLayer.SetAttribute("label", inkscapeNs, "walls");
+            WallLayer.SetAttribute("style", "display:inline");
+
+            for(int j = 0;j<MetaMap.instance.defaultLayer.mapItems.Count;j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Wall wl = mi as Wall;
+                if(wl != null)
+                {
+                    XmlElement wlE = xmlDoc.CreateElement("path");
+
+                    string cmds = new string('c', wl.positionLine.Count);
+                    wlE.SetAttribute("nodetypes", sodipodiNs, cmds);
+                    wlE.SetAttribute("label", inkscapeNs, "");
+                    wlE.SetAttribute("connector-curvature", inkscapeNs, "0");
+                    wlE.SetAttribute("id", wl.id);
+
+                    string pcd = "m";
+                    Vector2 pos = Vector2.zero;
+                    for(int step=0; step < wl.positionLine.Count;step++)
+                    {
+                        Vector2 shownPos = wl.positionLine[step] - pos;
+                        pos = wl.positionLine[step];
+                        pcd += (" " + shownPos.ToString().Trim('(', ')'));
+                    }
+                    wlE.SetAttribute("d", pcd);
+                    wlE.SetAttribute("style", "fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new");
+
+                    XmlElement wlEDesc = xmlDoc.CreateElement("desc");
+                    wlEDesc.SetAttribute("id", "desc" + (mic+j).ToString());
+                    wlEDesc.InnerText = "template = "+ wl.material;
+                    wlE.AppendChild(wlEDesc);
+                    WallLayer.AppendChild(wlE);
+
+                }
+            }
+            layer.AppendChild(WallLayer);
 
 
             rootElement.AppendChild(layer);

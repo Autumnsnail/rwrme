@@ -8,7 +8,6 @@ using UnityEditor.Profiling;
 public class Building : MeRect
 {
     public int height;
-    public string material;
     public bool roof=false;
     public Building(int h, string m, Vector2 pos, float r, Vector2 s, string k, int layerI) : base(pos, r, s, k, layerI)
     {

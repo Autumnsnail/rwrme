@@ -2,11 +2,13 @@ using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using static UnityEngine.Terrain;
 
 public class MetaMap : MonoBehaviour
 {
@@ -17,6 +19,7 @@ public class MetaMap : MonoBehaviour
     public Layer defaultLayer;//default: L1,L2,L3,L4...
 
     public List<BuildingType> buildingTypes;
+    public List<WallType> wallTypes;
 
     public List<string> allowedExtensions = new List<string> { "default"};//import later
 
@@ -26,8 +29,11 @@ public class MetaMap : MonoBehaviour
         instance = this;
         m_metaTerrain = new MetaTerrain();
         defaultLayer = new Layer();
+
         buildingTypes = new List<BuildingType>();
+        wallTypes = new List<WallType>();
         setBts();
+        setWts();
         Debug.Log("MetaMapInit");
     }
 
@@ -58,6 +64,30 @@ public class MetaMap : MonoBehaviour
         buildingTypes.Add(new BuildingType("BuildingVilla", Color.red, Color.white));
 
     }
+
+    private void setWts()
+    {
+        wallTypes.Add(new WallType("SandbagWall1", Color.gray, 0.6f, 1.325f));
+        wallTypes.Add(new WallType("TrenchWall1", Color.gray, 0.5f, 1.35f));
+        wallTypes.Add(new WallType("StoneWall1", Color.black, 0.6f, 1.3f));
+        wallTypes.Add(new WallType("StoneWallCastle1", Color.black, 0.6f, 1.3f));
+        wallTypes.Add(new WallType("PoolWall", Color.blue, 0.6f, 1.1f));
+        wallTypes.Add(new WallType("BrickWall1", Color.gray, 0.6f, 2.5f));
+        wallTypes.Add(new WallType("GardenWall1", Color.green, 0.7f, 1.2f));
+        wallTypes.Add(new WallType("DummyWall1", Color.gray, 0.4f, 0.0f));
+        wallTypes.Add(new WallType("CliffWall1", Color.gray, 0.4f, 1.3f));
+        wallTypes.Add(new WallType("CliffWall2", Color.green, 0.4f, 1.3f));
+        wallTypes.Add(new WallType("FarmFence1", Color.gray, -1.0f, 1.2f));
+        wallTypes.Add(new WallType("FarmFence2", Color.gray, -1.0f, 1.2f));
+        wallTypes.Add(new WallType("SecurityFence1", Color.gray, -1.0f, 2.5f));
+        wallTypes.Add(new WallType("PlatformFence1", Color.black, -1.0f, 1.2f));
+        wallTypes.Add(new WallType("PlatformFence2", Color.gray, -1.0f, 1.2f));
+        //wallTypes.Add(new WallType("FarmFence2", Color.gray, -1.0f, 1.2f)); // ÷ÿ∏¥œÓ
+        wallTypes.Add(new WallType("InvisibleWall1", Color.cyan, 1.2f, 2.5f));
+        wallTypes.Add(new WallType("ChurchWall1", Color.gray, 0.2f, 2.5f));
+        wallTypes.Add(new WallType("RuinWall1", Color.gray, 0.8f, 3.0f));
+    }
+
 
     // Update is called once per frame
     void Update()
@@ -163,6 +193,7 @@ public class MapItem:MonoBehaviour
 {
     public string id;
     public int layerIndex;
+    public string material;
     //can pick by selector
     public MapItem()
     {
@@ -173,6 +204,11 @@ public class MapItem:MonoBehaviour
     public virtual void scatterThis()
     {
         Debug.Log("MetaMap:WrongScatte");
+    }
+
+    public virtual void toXmlEle(ref XmlElement ele)
+    {
+
     }
 }
 public class MeRect :MapItem//this class won,t use directly
@@ -199,9 +235,13 @@ public class MePath:MapItem
 {
     public List<Vector2> positionLine;
 }
-public class BuildingType
+
+public class mapItemType
 {
     public string name="";
+}
+public class BuildingType:mapItemType
+{
     public Material materialTop;
     public Material materialSide;
 
@@ -212,5 +252,20 @@ public class BuildingType
         materialSide = new Material(Shader.Find("Standard"));
         materialSide.color = c1;
         name = n;
+    }
+}
+public class WallType:mapItemType
+{
+    public Material material;
+    public float depth;
+    public float height;
+
+    public WallType(string name,Color c, float depth, float height)
+    {
+        this.name = name;
+        material = new Material(Shader.Find("Standard"));
+        material.color = c;
+        this.depth = depth;
+        this.height = height;
     }
 }

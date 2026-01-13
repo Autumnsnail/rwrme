@@ -8,24 +8,36 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
-    GameObject pMM;
-    GameObject rMM;
-    GameObject bMM;
-    GameObject bEM;
-    GameObject ddBT;
+
+    GameObject pMM;//pin manager menu
+    GameObject rMM;//refpic
+    GameObject bEM;//building 
+    GameObject ddBT;//building drop down
+
+    GameObject wEM;//wall
+    GameObject ddWT;//wall dd
+
+    List<GameObject> mms;
     void Start()
     {
+        mms = new List<GameObject>();
         instance = this;    
         Debug.Log("UI Manager init");
         pMM =  transform.Find("PinManager").gameObject;
-        if(pMM == null )
+        mms.Add(pMM);//0
+        if (pMM == null )
         {
             Debug.Log("pmmNot F!");
         }
         rMM = transform.Find("RefManager").gameObject;
-        bMM = transform.Find("BuilderManager").gameObject;
+        mms.Add(rMM);//1
         bEM = transform.Find("BuildingEditor").gameObject;
+        mms.Add(bEM);//2
         ddBT = transform.Find("BuildingEditor/BuildingTypes").gameObject;
+        wEM = transform.Find("WallEditor").gameObject;
+        mms.Add(wEM);//3
+        ddWT = transform.Find("WallEditor/WallTypes").gameObject;
+
     }
 
     // Update is called once per frame
@@ -33,17 +45,28 @@ public class UIManager : MonoBehaviour
     {
         
     }
+
+    public void showMenuUseIndex(int index)
+    {
+        disVisableAll();
+        mms[index].transform.localScale = Vector3.one;
+    }
     public void disVisableAll()
     {
+        for (int i = 0; i < mms.Count; i++)
+        {
+            mms[i].transform.localScale = Vector3.zero;
+        }
+        /*
         Debug.Log("tryDisableAll");
         if (pMM == null) { Debug.Log("pmf!"); }
         if (pMM.transform == null) { Debug.Log("pmtfn!"); }
         if (pMM.transform.localScale == null) { Debug.Log("pmtlsfn!"); }
         pMM.transform.localScale = new Vector3(0f, 0f, 0f);
         rMM.transform.localScale = new Vector3(0f, 0f, 0f);
-        bMM.transform.localScale = Vector3.zero;
         bEM.transform.localScale = Vector3.zero;
-
+        wEM.transform.localScale = Vector3.zero;
+        */
     }
     public void enablePinManager()
     {
@@ -57,11 +80,6 @@ public class UIManager : MonoBehaviour
 
     }
 
-    public void enableBuilderManager()
-    {
-        disVisableAll();
-        bMM.transform.localScale = Vector3.one;
-    }
     public void enableBuildingEditor()
     {
         disVisableAll();
@@ -76,7 +94,6 @@ public class UIManager : MonoBehaviour
         List<string> optionTexts = btp.Select(bt => bt.name).ToList();
         dd.AddOptions(optionTexts);
     }
-
     public void changebtc(int ind)
     {
         BuildingType bt = MetaMap.instance.buildingTypes[ind];
@@ -91,4 +108,25 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void updateWT()
+    {
+        TMP_Dropdown dd = ddWT.GetComponent<TMP_Dropdown>();
+        dd.ClearOptions();
+        List<WallType> btp = MetaMap.instance.wallTypes;
+        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
+        dd.AddOptions(optionTexts);
+    }
+    public void changewtc(int ind)
+    {
+        WallType wt = MetaMap.instance.wallTypes[ind];
+        if (wt != null)
+        {
+            MaterialChangerTool uci = ToolController.inste.tools[4] as MaterialChangerTool;
+            if (uci != null)
+            {
+                uci.setMat(wt);
+                ToolController.inste.setToolWithIndex(4);
+            }
+        }
+    }
 }

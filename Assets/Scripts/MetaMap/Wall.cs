@@ -7,6 +7,7 @@ using System.Net;
 using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Xml;           // .NET 标准 XML
 
 public class Wall : MePath
 {
@@ -173,9 +174,7 @@ public class Wall : MePath
 
     public GameObject SubWallPref;
 
-    public string template;
     
-
     void Start()
     {
         
@@ -206,12 +205,39 @@ public class Wall : MePath
             float segmentLength = Vector3.Distance(start, end);
             Vector3 direction = (end - start).normalized;
 
+            float dep = 1;
+            float hei = 1;
+            Material mtl = new Material(Shader.Find("Standard"));
+            WallType wt = MetaMap.instance.wallTypes.FirstOrDefault(type => type.name.Equals(material));
+            if (wt != null)
+            {
+                dep = wt.depth;
+                if(wt.depth == -1f)
+                {
+                    dep = 0.1f;
+                }
+                hei = wt.height;
+                mtl = wt.material;
+            }
+
+
             GameObject wall = Instantiate(SubWallPref, this.transform);
             wall.transform.localPosition = start;
-            wall.transform.localRotation = Quaternion.FromToRotation(Vector3.right, direction);
-            wall.transform.localScale = new Vector3(segmentLength, 1, 1);
+            wall.transform.localScale = new Vector3(segmentLength, hei, dep);
+
+            Vector3 horizontalProjection = new Vector3(direction.x, 0, direction.z).normalized;
+            float yawAngle = Mathf.Atan2(horizontalProjection.z, horizontalProjection.x) * Mathf.Rad2Deg;
+            wall.transform.localRotation = Quaternion.AngleAxis(-yawAngle, Vector3.up);
+            Vector3 currentRight = wall.transform.right; // 应用Y轴旋转后的X轴
+            float rollAngle = Vector3.SignedAngle(currentRight, direction, wall.transform.forward);
+            wall.transform.localRotation *= Quaternion.AngleAxis(rollAngle, Vector3.forward);
+
+
+
+            //wall.transform.localRotation = Quaternion.FromToRotation(Vector3.right, direction);
+            //wall.transform.localRotation = Quaternion.LookRotation(Vector3.Cross(direction, Vector3.up) , Vector3.forward);
+            wall.transform.GetChild(0).gameObject.GetComponent<Renderer>().material = mtl;
         }
     }
-
 
 }

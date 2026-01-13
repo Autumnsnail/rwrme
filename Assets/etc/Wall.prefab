@@ -46,8 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 
   layerIndex: 0
+  material: 
   positionLine: []
-  base_wall_template: 
-  top_material: 
-  wall_height: 0
-  isBridge: 0
+  SubWallPref: {fileID: 3285096346257649693, guid: 61d824d85c826194ea25fb2fd9b56067, type: 3}

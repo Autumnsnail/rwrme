@@ -31,6 +31,17 @@ public class MathOfRwrme
         return u3dV2;
     }
 
+    public static Vector2 U3dPosToSvgPos(Vector2 u3dV2)
+    {
+        u3dV2 *= 2;
+        u3dV2.y = 2048 - u3dV2.y;
+        return u3dV2;
+    }
+
+    public static Vector2 U3dPosToSvgPos(Vector3 u3dV3)
+    {
+        return U3dPosToSvgPos(new Vector2(u3dV3.x, u3dV3.z));
+    }
 
     public static string angleToTransform(float angle,Vector2 posi)
     {
@@ -41,7 +52,7 @@ public class MathOfRwrme
         float b = sin;
         float c = -sin;
         float d = cos;
-        return $"matrix({a},{b},{c},{d},{posi.x*2},{(1024 - posi.y) *2})";
+        return $"matrix({a},{b},{c},{d},{posi.x},{posi.y})";
     }
 
 

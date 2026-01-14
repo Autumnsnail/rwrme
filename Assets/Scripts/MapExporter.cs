@@ -162,14 +162,15 @@ public class MapExporter : MonoBehaviour
                     {
                         Vector2 shownPos = wl.positionLine[step] - pos;
                         pos = wl.positionLine[step];
-                        pcd += (" " + shownPos.ToString().Trim('(', ')'));
+                        pcd += " " + shownPos.x.ToString() + "," + shownPos.y.ToString();
+                        //pcd += (" " + shownPos.ToString().Trim('(', ')'));
                     }
                     wlE.SetAttribute("d", pcd);
                     wlE.SetAttribute("style", "fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new");
 
                     XmlElement wlEDesc = xmlDoc.CreateElement("desc");
                     wlEDesc.SetAttribute("id", "desc" + (mic+j).ToString());
-                    wlEDesc.InnerText = "template = "+ wl.material;
+                    wlEDesc.InnerText = "template = "+ wl.material+";";
                     wlE.AppendChild(wlEDesc);
                     WallLayer.AppendChild(wlE);
 

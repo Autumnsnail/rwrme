@@ -21,6 +21,8 @@ public class MetaMap : MonoBehaviour
     public List<BuildingType> buildingTypes;
     public List<WallType> wallTypes;
 
+    public List<PlatformSerfaceType> PST;
+
     public List<string> allowedExtensions = new List<string> { "default"};//import later
 
     // Start is called before the first frame update
@@ -32,8 +34,12 @@ public class MetaMap : MonoBehaviour
 
         buildingTypes = new List<BuildingType>();
         wallTypes = new List<WallType>();
+
+        PST = new List<PlatformSerfaceType>();
         setBts();
         setWts();
+
+        setPsts();
         Debug.Log("MetaMapInit");
     }
 
@@ -88,6 +94,15 @@ public class MetaMap : MonoBehaviour
         wallTypes.Add(new WallType("RuinWall1", Color.gray, 0.8f, 3.0f));
     }
 
+    private void setPsts()
+    {
+        PST.Add(new PlatformSerfaceType("terrain", Color.grey * 0.6f));
+        PST.Add(new PlatformSerfaceType("pavement", Color.yellow * 0.6f));
+        PST.Add(new PlatformSerfaceType("wood", Color.yellow * 0.8f+Color.red*0.2f));
+        PST.Add(new PlatformSerfaceType("grass", Color.green * 0.6f));
+        PST.Add(new PlatformSerfaceType("none", Color.cyan * 0.6f));
+
+    }
 
     // Update is called once per frame
     void Update()
@@ -206,10 +221,12 @@ public class MapItem:MonoBehaviour
         Debug.Log("MetaMap:WrongScatte");
     }
 
-    public virtual void toXmlEle(ref XmlElement ele)
+    public virtual string getInfoText()
     {
-
+        return this.GetType().Name+"\n" + "empty info";
     }
+
+
 }
 public class MeRect :MapItem//this class won,t use directly
 {
@@ -267,5 +284,17 @@ public class WallType:mapItemType
         material.color = c;
         this.depth = depth;
         this.height = height;
+    }
+}
+
+public class PlatformSerfaceType
+{
+    public Material material;
+    public string name;
+    public PlatformSerfaceType(string name, Color c)
+    {
+        this.name = name;
+        material = new Material(Shader.Find("Standard"));
+        material.color = c;
     }
 }

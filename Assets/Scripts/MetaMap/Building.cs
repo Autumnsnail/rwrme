@@ -9,6 +9,19 @@ public class Building : MeRect
 {
     public int height;
     public bool roof=false;
+
+    public override string getInfoText()
+    {
+        string info = "";
+        info += "building\n";
+        info += "id = " + id + "\n";
+        info += "layer = " + layerIndex.ToString() + "\n";
+        info += "roof = " + roof.ToString() + "\n";
+        info += "template = " + material + "\n";
+        info += "height = " + height+" ("+height*3.0f+")" ;
+
+        return info;
+    }
     public Building(int h, string m, Vector2 pos, float r, Vector2 s, string k, int layerI) : base(pos, r, s, k, layerI)
     {
         //Debug.Log($"Buildingππ‘Ï: height={h}, material={m}, position={pos}, rotation={r}, scale={s}, key={k}");

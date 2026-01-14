@@ -227,64 +227,82 @@ public class MapImporter : MonoBehaviour
 
                                             if (pnl.Count == 2)
                                             {
-                                                string id2 = pnl[1].Attributes["id"].Value;
-                                                if (id2.StartsWith("platform"))
+                                                Debug.Log("MapImporter: may be a platform:" + pnl[1].Attributes["id"].Value);
+
+                                                XmlNode descNode = pnl[0].FirstChild;
+                                                var properties = descNode.InnerText.Split(';')
+                                                    .Where(p => p.Contains('='))
+                                                    .Select(p => p.Split('=', 2))
+                                                    .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                    .ToDictionary(g => g.Key, g => g.First());
+                                                if (properties.ContainsKey("type"))
                                                 {
-                                                    pnl.Insert(0, pnl[1]);
-                                                    pnl.RemoveAt(2);
+                                                    if (properties["type"] == "start" || properties["type"] == "deck_start")
+                                                    {
+                                                        pnl.Insert(0, pnl[1]);
+                                                        pnl.RemoveAt(2);
+                                                        descNode = pnl[0].FirstChild;
+                                                        properties = descNode.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                            .ToDictionary(g => g.Key, g => g.First());
+                                                    }
                                                 }
-                                                string id1 = pnl[0].Attributes["id"].Value;
-                                                if (id1.StartsWith("platform"))
+
+                                                GameObject go = Instantiate(PlatformPref);
+                                                Platform pf = go.GetComponent<Platform>();
+                                                MetaMap.instance.defaultLayer.mapItems.Add(pf);
+
+                                                pf.id = MetaMap.instance.getNewItemId("platform");
+
+                                                string pathData1 = pnl[0].Attributes["d"].Value;
+                                                pf.positinLineL = pf.ParsePathData(pathData1);
+                                                for (int i = 0; i < pf.positinLineL.Count; i++)
                                                 {
-                                                    //Debug.Log("MapImporter:getA platform");
+                                                    pf.positinLineL[i] = rmPair * pf.positinLineL[i];
+                                                    pf.positinLineL[i] += ovPair;
+                                                    pf.positinLineL[i] = rmGroup * pf.positinLineL[i];
+                                                    pf.positinLineL[i] += ovGroup;
+                                                    pf.positinLineL[i] = rmLayer * pf.positinLineL[i];
+                                                    pf.positinLineL[i] += ovLayer;
+                                                }
 
-                                                    GameObject go = Instantiate(PlatformPref);
-                                                    Platform pf = go.GetComponent<Platform>();
-                                                    MetaMap.instance.defaultLayer.mapItems.Add(pf);
-
-
-                                                    pf.id = MetaMap.instance.getNewItemId("platform");
-
-                                                    string pathData1 = pnl[0].Attributes["d"].Value;
-                                                    pf.positinLineL = pf.ParsePathData(pathData1);
-                                                    for (int i = 0; i < pf.positinLineL.Count; i++)
-                                                    {
-                                                        pf.positinLineL[i] = rmPair * pf.positinLineL[i];
-                                                        pf.positinLineL[i] += ovPair;
-                                                        pf.positinLineL[i] = rmGroup * pf.positinLineL[i];
-                                                        pf.positinLineL[i] += ovGroup;
-                                                        pf.positinLineL[i] = rmLayer * pf.positinLineL[i];
-                                                        pf.positinLineL[i] += ovLayer;
-                                                    }
-
-                                                    string pathData2 = pnl[1].Attributes["d"].Value;
-                                                    pf.positinLineR = pf.ParsePathData(pathData2);
-                                                    for (int i = 0; i < pf.positinLineR.Count; i++)
-                                                    {
-                                                        pf.positinLineR[i] = rmPair * pf.positinLineR[i];
-                                                        pf.positinLineR[i] += ovPair;
-                                                        pf.positinLineR[i] = rmGroup * pf.positinLineR[i];
-                                                        pf.positinLineR[i] += ovGroup;
-                                                        pf.positinLineR[i] = rmLayer * pf.positinLineR[i];
-                                                        pf.positinLineR[i] += ovLayer;
-
-                                                    }
-
-                                                    pf.layerIndex = number;
-
-                                                    XmlNode descNode = pnl[0].FirstChild;
-                                                    //Debug.Log("MapImporter: " + descNode.InnerText);
-                                                    var properties = descNode.InnerText.Split(';')
-                                                        .Where(p => p.Contains('='))
-                                                        .Select(p => p.Split('=', 2))
-                                                        .GroupBy(k => k[0].Trim(), v => v[1].Trim())
-                                                        .ToDictionary(g => g.Key, g => g.First());
-
-                                                    if (properties.ContainsKey("base_wall_template")) pf.base_wall_template = properties["base_wall_template"];
-                                                    if (properties.ContainsKey("top_material")) pf.top_material = properties["top_material"];
-                                                    if (properties.ContainsKey("wall_height")) pf.wall_height = float.Parse(properties["wall_height"]);
+                                                string pathData2 = pnl[1].Attributes["d"].Value;
+                                                pf.positinLineR = pf.ParsePathData(pathData2);
+                                                for (int i = 0; i < pf.positinLineR.Count; i++)
+                                                {
+                                                    pf.positinLineR[i] = rmPair * pf.positinLineR[i];
+                                                    pf.positinLineR[i] += ovPair;
+                                                    pf.positinLineR[i] = rmGroup * pf.positinLineR[i];
+                                                    pf.positinLineR[i] += ovGroup;
+                                                    pf.positinLineR[i] = rmLayer * pf.positinLineR[i];
+                                                    pf.positinLineR[i] += ovLayer;
 
                                                 }
+
+                                                pf.layerIndex = number;
+
+                                                if (properties.ContainsKey("type"))
+                                                {
+                                                    if(properties["type"].StartsWith("deck"))
+                                                    {
+                                                        pf.isDeck = true;
+                                                    }
+                                                }
+                                                if (properties.ContainsKey("mode"))
+                                                {
+                                                    if (properties["mode"].StartsWith("bridge"))
+                                                    {
+                                                        pf.isDeck = true;
+                                                        
+                                                    }
+                                                }
+                                                if (properties.ContainsKey("base_wall_template")) pf.base_wall_template = properties["base_wall_template"];
+                                                if (properties.ContainsKey("top_material")) pf.top_material = properties["top_material"];
+                                                if (properties.ContainsKey("wall_height")) pf.wall_height = float.Parse(properties["wall_height"]);
+                                                if (properties.ContainsKey("height")) pf.height = float.Parse( properties["height"]);
+
                                             }
                                         }
                                         if (r.Name == "path")

@@ -2777,7 +2777,7 @@ Terrain:
   m_StaticShadowCaster: 0
   m_IgnoreQualitySettings: 0
   m_ReflectionProbeUsage: 1
-  m_MaterialTemplate: {fileID: 2100000, guid: a6743515c84913a468d53e0ef98cf6fe, type: 2}
+  m_MaterialTemplate: {fileID: 2100000, guid: 47377dcccbbaa33489c1125d53b7739f, type: 2}
   m_BakeLightProbesForTrees: 1
   m_PreserveTreePrototypeLayers: 0
   m_DeringLightProbesForTrees: 1
@@ -6782,6 +6782,7 @@ GameObject:
   - component: {fileID: 1307524971}
   - component: {fileID: 1307524972}
   - component: {fileID: 1307524973}
+  - component: {fileID: 1307524974}
   m_Layer: 0
   m_Name: scriptRoot
   m_TagString: Untagged
@@ -6875,6 +6876,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   orthographicCamera: {fileID: 0}
+  dragVisualizer: {fileID: 0}
   miSelected: {fileID: 0}
 --- !u!114 &1307524972
 MonoBehaviour:
@@ -6901,6 +6903,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapItems: []
+--- !u!114 &1307524974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1307524965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a633cc433881cd74e9793f250fa0ddf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1316877302
 GameObject:
   m_ObjectHideFlags: 0

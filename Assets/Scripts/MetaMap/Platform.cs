@@ -106,12 +106,12 @@ public class Platform : PathPair
         return points;
     }
 
-
-
     public string base_wall_template;
     public string top_material;
     public float wall_height;
     public bool isBridge=false;
+    public bool isDeck = false;//upHeight
+    public float height=0.0f;
 
     void Start()
     {
@@ -124,19 +124,38 @@ public class Platform : PathPair
         
     }
 
+    public override string getInfoText()
+    {
+        string info = "";
+        info += "platform\n";
+        info += "id = " + id + "\n";
+        info += "layer = " + layerIndex.ToString() + "\n";
+        info += "top_material = " + top_material + "\n";
+        info += "base_wall_template = " + base_wall_template + "\n";
+
+        return info;
+    }
+
     public override void scatterThis()
     {   
         Vector3 pot = new Vector3();
         VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(positinLineR[0]) , this.layerIndex,ref pot);
         List<Vector2> u3dpll = positinLineL.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
         List<Vector2> u3dplr = positinLineR.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
-        GeneratePathGeometry(u3dpll, u3dplr, pot.y+this.wall_height);
+        GeneratePathGeometry(u3dpll, u3dplr, pot.y+this.height);
+        PlatformSerfaceType pst = MetaMap.instance.PST.FirstOrDefault(type => type.name.Equals(top_material));
+        if (pst != null)
+        {
+            this.GetComponent<Renderer>().material = pst.material;
+            this.transform.GetChild(0).gameObject.GetComponent<Renderer>().material = pst.material;
+        }
     }
 
 
     void GeneratePathGeometry(List<Vector2> leftPath, List<Vector2> rightPath,float pathHeight)
     {
         List<Vector3> vertices = new List<Vector3>();
+        List<Vector3> sides = new List<Vector3>();
 
         // 生成地板/平台
         for (int i = 0; i < leftPath.Count; i++)
@@ -146,7 +165,26 @@ public class Platform : PathPair
             vertices.Add(p1);
             vertices.Add(p2);
         }
+
+        for (int i = 0; i < leftPath.Count; i++)
+        {
+            Vector3 p1 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+            Vector3 p2 = new Vector3(leftPath[i].x, 0, leftPath[i].y);
+            sides.Add(p2);
+            sides.Add(p1);
+        }
+        for (int i = leftPath.Count-1; i >= 0; i--)
+        {
+            Vector3 p1 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+            Vector3 p2 = new Vector3(rightPath[i].x, 0, rightPath[i].y);
+            sides.Add(p2);
+            sides.Add(p1);
+        }
+        sides.Add(new Vector3(leftPath[0].x, pathHeight, leftPath[0].y));
+        sides.Add(new Vector3(leftPath[0].x, 0, leftPath[0].y));
+
         GenerateQuadFloor(vertices);
+        GenerateQuadSide(sides);
     }
 
     void GenerateQuadFloor(List<Vector3> vps)
@@ -179,6 +217,36 @@ public class Platform : PathPair
         GetComponent<MeshFilter>().mesh = mesh;
         GetComponent<MeshCollider>().sharedMesh = mesh;
 
+    }
+    void GenerateQuadSide(List<Vector3> vps)
+    {
+
+        // 创建网格
+        Mesh mesh = new Mesh();
+
+        List<int> triangles = new List<int>();
+        for (int i = 0; i < vps.Count / 2 - 1; i++)
+        {
+            int baseIndex = i * 2;
+
+            // 第一个三角形（左下、、右下左上）
+            triangles.Add(baseIndex);         // column1[i]
+            triangles.Add(baseIndex + 1);     // column2[i]
+            triangles.Add(baseIndex + 2);     // column1[i+1]
+
+            // 第二个三角形（左上、、右下右上）
+            triangles.Add(baseIndex + 1);     // column2[i]
+            triangles.Add(baseIndex + 3);     // column2[i+1]
+            triangles.Add(baseIndex + 2);     // column1[i+1]
+        }
+
+        mesh.vertices = vps.ToArray();
+        mesh.triangles = triangles.ToArray();
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        gameObject.transform.GetChild(0).gameObject.GetComponent<MeshFilter>().mesh = mesh;
+        gameObject.transform.GetChild(0).gameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
     }
 
 }

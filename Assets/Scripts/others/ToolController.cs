@@ -18,7 +18,7 @@ public class ToolController : MonoBehaviour
     public static ToolController inste;
 
     // 用于拖选可视化的 LineRenderer
-    private LineRenderer dragVisualizer;
+    public LineRenderer dragVisualizer;
 
     private SideTool sdt = new SideTool();
 
@@ -52,7 +52,7 @@ public class ToolController : MonoBehaviour
         dragVisualizer.startWidth = 1.5f; // 增加线宽
         dragVisualizer.endWidth = 1.5f;
         dragVisualizer.useWorldSpace = true;
-        dragVisualizer.loop = true;
+        dragVisualizer.loop = false;
 
         // 创建一个不受深度影响的材质（始终显示在最前面）
         Shader shader = Shader.Find("Hidden/Internal-Colored");
@@ -341,8 +341,9 @@ public class DragTool : Tool
 
     private void UpdateVisualizer()
     {
-        if (visualizer == null) return;
 
+        if (visualizer == null) return;
+        visualizer.positionCount = 0;
         // 创建矩形的四个角点（在较高的位置，确保可见）
         // 使用固定高度，保证始终在地形上方
         float y = Mathf.Max(startPosition.y, currentPosition.y) + 10f; // 抬高10单位，确保可见
@@ -351,7 +352,7 @@ public class DragTool : Tool
         Vector3 p2 = new Vector3(currentPosition.x, y, startPosition.z);
         Vector3 p3 = new Vector3(currentPosition.x, y, currentPosition.z);
         Vector3 p4 = new Vector3(startPosition.x, y, currentPosition.z);
-
+        visualizer.positionCount = 5;
         // 设置矩形的5个点（首尾相连）
         visualizer.SetPosition(0, p1);
         visualizer.SetPosition(1, p2);
@@ -695,6 +696,7 @@ public class WallDrawer : Tool
     {
         if(drawing == false)
         {
+            ToolController.inste.dragVisualizer.enabled = true;
             lid = 1;
             if(hitO.GetComponent<MapItem>() != null)
             {
@@ -704,10 +706,11 @@ public class WallDrawer : Tool
         drawing =true;
         PointSelected.Add(Position);
         PathDrawed.Add(MathOfRwrme.U3dPosToSvgPos(Position));
-
+        UpdateVisualizer();
     }
     public override void escape()
     {
+            ToolController.inste.dragVisualizer.enabled = false;
         drawing = false;
         PathDrawed.Clear();
         PointSelected.Clear();
@@ -715,6 +718,7 @@ public class WallDrawer : Tool
 
     public override void space()
     {
+        ToolController.inste.dragVisualizer.enabled = false;
         if (drawing)
         {
             drawing = false;
@@ -723,10 +727,26 @@ public class WallDrawer : Tool
             wl.positionLine = new List<Vector2>(PathDrawed) ;
             wl.material = "GardenWall1";
             wl.id = MetaMap.instance.getNewItemId("wall");
+            wl.layerIndex = lid;
             PathDrawed.Clear();
             PointSelected.Clear();
+            MetaMap.instance.defaultLayer.mapItems.Add(wl);
             wl.scatterThis();
+            
         }
+    }
+
+    private void UpdateVisualizer()
+    {
+
+        if (ToolController.inste.dragVisualizer == null) return;
+        ToolController.inste.dragVisualizer.positionCount = 0;
+        for (int i = 0; i < PointSelected.Count; i++)
+        {
+            ToolController.inste.dragVisualizer.positionCount++;
+            ToolController.inste.dragVisualizer.SetPosition(i, PointSelected[i]+Vector3.up*5);
+        }
+
     }
 
 }

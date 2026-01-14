@@ -185,7 +185,15 @@ public class Wall : MePath
     {
         
     }
-
+    public override string getInfoText()
+    {
+        string info = "";
+        info += "wall\n";
+        info += "id = "+id +"\n";
+        info += "layer = " + layerIndex.ToString() + "\n";
+        info += "template = " + material;
+        return info;
+    }
     public override void scatterThis()
     {
         GameObject go = this.gameObject;

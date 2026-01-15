@@ -178,6 +178,30 @@ public class MapExporter : MonoBehaviour
             }
             layer.AppendChild(WallLayer);
 
+            XmlElement platformLayer = xmlDoc.CreateElement("g");
+            platformLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            platformLayer.SetAttribute("id", "layer" + i.ToString() + "platforms");
+            platformLayer.SetAttribute("label", inkscapeNs, "platforms");
+            platformLayer.SetAttribute("style", "display:inline");
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Platform plt = mi as Platform;
+                if (plt != null)
+                {
+                    XmlElement pair = xmlDoc.CreateElement("g");
+
+                    XmlElement stp = xmlDoc.CreateElement("path");
+                    pair.AppendChild(stp);
+                    XmlElement end = xmlDoc.CreateElement("path");
+                    pair.AppendChild(end);
+
+
+                    WallLayer.AppendChild(pair);
+                }
+            }
+            layer.AppendChild(platformLayer);
 
             rootElement.AppendChild(layer);
         }

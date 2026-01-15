@@ -298,7 +298,10 @@ public class MapImporter : MonoBehaviour
                                                         
                                                     }
                                                 }
-                                                if (properties.ContainsKey("base_wall_template")) pf.base_wall_template = properties["base_wall_template"];
+                                                if (properties.ContainsKey("base_wall_template"))
+                                                { pf.base_wall_template = properties["base_wall_template"]; }
+                                                else
+                                                { pf.base_wall_template = "StoneWall1"; } 
                                                 if (properties.ContainsKey("top_material")) pf.top_material = properties["top_material"];
                                                 if (properties.ContainsKey("wall_height")) pf.wall_height = float.Parse(properties["wall_height"]);
                                                 if (properties.ContainsKey("height")) pf.height = float.Parse( properties["height"]);

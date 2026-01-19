@@ -22,6 +22,18 @@ public class Building : MeRect
 
         return info;
     }
+    public override void scale(float scaler)
+    {
+        size = size * (1 + 0.03f * scaler);
+    }
+    public override void grab(Vector2 vector2)
+    {
+        position = position + vector2;
+    }
+    public override void rotate(float scaler)
+    {
+        rotation = rotation + scaler*-2;
+    }
     public Building(int h, string m, Vector2 pos, float r, Vector2 s, string k, int layerI) : base(pos, r, s, k, layerI)
     {
         //Debug.Log($"Buildingππ‘Ï: height={h}, material={m}, position={pos}, rotation={r}, scale={s}, key={k}");

@@ -167,7 +167,11 @@ public class ToolController : MonoBehaviour
 
         Vector2 ofst = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
 
-        sdt.update(ofst);
+        Vector3 pixelPos = Input.mousePosition;
+        float normalizedX = pixelPos.x / Screen.width;
+        float normalizedY = pixelPos.y / Screen.height;
+        Vector2 gv2 = new Vector2(normalizedX, normalizedY);
+        sdt.update(ofst, gv2);
     }
     public void setToolPinTank()
     {
@@ -645,7 +649,7 @@ public class SideTool
         }
     }
 
-    public void update(Vector2 offset)
+    public void update(Vector2 offset,Vector2 Pos)
     {
         if (mi == null) return;
         if (state == 1)//g
@@ -655,7 +659,7 @@ public class SideTool
             if (mr != null)
             {
                 Vector2 tof = new Vector2(offset.x, -1f * offset.y);
-                mr.position = mr.position + tof * 1;
+                mr.grab(tof);
             }
 
         }
@@ -664,7 +668,7 @@ public class SideTool
             MeRect mr = mi as MeRect;
             if (mr != null)
             {
-                mr.rotation = mr.rotation - offset.x * 1;
+                mr.rotate(  (offset.x * (Pos - new Vector2(0.5f, 0.5f)).y - offset.y * (Pos - new Vector2(0.5f, 0.5f)).x)/ (Pos - new Vector2(0.5f, 0.5f)).magnitude);
             }
         }
         if (state == 3)
@@ -672,7 +676,7 @@ public class SideTool
             MeRect mr = mi as MeRect;
             if (mr != null)
             {
-                mr.size = mr.size * (1 + 0.03f * offset.x);
+                mr.scale(offset.x);
             }
 
         }

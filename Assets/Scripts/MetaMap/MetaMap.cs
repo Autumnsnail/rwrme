@@ -226,6 +226,18 @@ public class MapItem:MonoBehaviour
         return this.GetType().Name+"\n" + "empty info";
     }
 
+    public virtual void rotate(float angle)
+    {
+
+    }
+    public virtual void grab(Vector2 offset)
+    {
+
+    }
+    public virtual void scale(float scaler)
+    {
+        
+    }
 
 }
 public class MeRect :MapItem//this class won,t use directly

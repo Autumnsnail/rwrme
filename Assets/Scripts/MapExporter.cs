@@ -191,14 +191,72 @@ public class MapExporter : MonoBehaviour
                 if (plt != null)
                 {
                     XmlElement pair = xmlDoc.CreateElement("g");
+                    pair.SetAttribute("id", "gp" + (j + mic * 2).ToString());
 
                     XmlElement stp = xmlDoc.CreateElement("path");
+                    string cmdStart = new string('c', plt.positinLineR.Count);
+                    stp.SetAttribute("nodetypes", sodipodiNs, cmdStart);
+                    stp.SetAttribute("label", inkscapeNs, plt.id+"_platform");
+                    stp.SetAttribute("connector-curvature", inkscapeNs, "0");
+                    stp.SetAttribute("id", plt.id+"_s");
+                    string pcd = "m";
+                    Vector2 pos = Vector2.zero;
+                    for (int step = 0; step < plt.positinLineR.Count; step++)
+                    {
+                        Vector2 shownPos = plt.positinLineR[step] - pos;
+                        pos = plt.positinLineR[step];
+                        pcd += " " + shownPos.x.ToString() + "," + shownPos.y.ToString();
+                    }
+                    stp.SetAttribute("d", pcd);
+                    stp.SetAttribute("style", "fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new");
+
+                    XmlElement stpDesc = xmlDoc.CreateElement("desc");
+                    stpDesc.SetAttribute("id", "desc" + (mic*2 + j).ToString());
+                    stpDesc.InnerText = "type = start;";
+                    if(plt.isDeck)stpDesc.InnerText = "type = deck_start;";
+                    stp.AppendChild(stpDesc);
+
                     pair.AppendChild(stp);
+                    
+                    
+                    
                     XmlElement end = xmlDoc.CreateElement("path");
+
+                    string cmdEnd = new string('c', plt.positinLineL.Count);
+                    end.SetAttribute("nodetypes", sodipodiNs, cmdStart);
+                    end.SetAttribute("label", "");
+                    end.SetAttribute("connector-curvature", inkscapeNs, "0");
+                    end.SetAttribute("id", plt.id );
+                    pcd = "m";
+                    pos = Vector2.zero;
+                    for (int step = 0; step < plt.positinLineL.Count; step++)
+                    {
+                        Vector2 shownPos = plt.positinLineL[step] - pos;
+                        pos = plt.positinLineL[step];
+                        pcd += " " + shownPos.x.ToString() + "," + shownPos.y.ToString();
+                    }
+                    end.SetAttribute("d", pcd);
+                    end.SetAttribute("style", "fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new");
+
+                    XmlElement endDesc = xmlDoc.CreateElement("desc");
+                    endDesc.SetAttribute("id", "desc" + (mic * 2 + j).ToString());
+                    endDesc.InnerText = "type = end;";
+                    if (plt.isDeck) { 
+                        endDesc.InnerText = "type = deck_end;";
+                        endDesc.InnerText += "height = "+plt.height.ToString()+";";
+                    }
+                    endDesc.InnerText += "top_material = " + plt.top_material + ";";
+                    if (plt.wall_template != "") endDesc.InnerText += "wall_template = " + plt.wall_template + ";";
+                    if (plt.base_wall_template != "") endDesc.InnerText += "base_wall_template = " + plt.base_wall_template + ";";
+                    if (plt.wall_height != -1) endDesc.InnerText += "wall_height = " + plt.wall_height + ";";
+                    if (plt.isBridge) endDesc.InnerText += "mode = bridge; ";
+
+                    end.AppendChild(endDesc);
+
                     pair.AppendChild(end);
 
 
-                    WallLayer.AppendChild(pair);
+                    platformLayer.AppendChild(pair);
                 }
             }
             layer.AppendChild(platformLayer);

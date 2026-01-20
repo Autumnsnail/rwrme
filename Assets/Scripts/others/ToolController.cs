@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -36,6 +37,7 @@ public class ToolController : MonoBehaviour
         tools.Add(new MaterialChangerTool("BuildingMaterialChanger", this)); //tool4 = material changer
         tools.Add(new heightChanger("heightChanger", this)); //tool5 = material changer
         tools.Add(new WallDrawer("wallDrawer"));//tool6 wall pather
+        tools.Add(new PlatformDrawer("PlatformDrawer"));//tool7 platform pather
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -749,6 +751,119 @@ public class WallDrawer : Tool
         {
             ToolController.inste.dragVisualizer.positionCount++;
             ToolController.inste.dragVisualizer.SetPosition(i, PointSelected[i]+Vector3.up*5);
+        }
+
+    }
+
+}
+
+public class PlatformDrawer : Tool
+{
+    int drawing = 0;
+    int lid;
+    List<Vector3> startLine;
+    List<Vector2> startLineDrawed;
+    List<Vector3> endLine;
+    List<Vector2> endLineDrawed;
+    //0 stop,1,drawingstart,2:drawing end;
+    public PlatformDrawer(string name) : base(name)
+    {
+        drawing = 0;
+        startLine = new List<Vector3>();
+        endLine = new List<Vector3>();
+        startLineDrawed =new List<Vector2>();
+        endLineDrawed =new List<Vector2>();
+    }
+    public override void startUse(Vector3 Position, GameObject hitO)
+    {
+        if (drawing == 0)
+        {
+            ToolController.inste.dragVisualizer.enabled = true;
+            lid = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                lid = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+            drawing = 1;
+        }
+        if (drawing == 1)
+        {
+            startLine.Add(Position);
+            startLineDrawed.Add(MathOfRwrme.U3dPosToSvgPos(Position));
+            UpdateVisualizer();
+        }
+        if(drawing==2)
+        {
+            endLine.Add(Position);
+            endLineDrawed.Add(MathOfRwrme.U3dPosToSvgPos(Position));
+            UpdateVisualizer();
+        }
+    }
+    public override void escape()
+    {
+        ToolController.inste.dragVisualizer.enabled = false;
+        drawing = 0;
+        startLineDrawed.Clear();
+        endLineDrawed.Clear();
+        startLine.Clear();
+        endLine.Clear();
+    }
+
+    public override void space()
+    {
+        
+        if (drawing == 2)
+        {
+            GameObject go = ToolController.inste.InsOnePref(MapImporter.instate.PlatformPref);
+            Platform plt = go.GetComponent<Platform>();
+            plt.id = MetaMap.instance.getNewItemId("platform");
+            plt.layerIndex = lid;
+            while(startLineDrawed.Count!=endLineDrawed.Count)
+            {
+                if(startLineDrawed.Count>endLineDrawed.Count)
+                {
+                    endLineDrawed.Add(endLineDrawed[endLineDrawed.Count - 1]);
+                }
+                else
+                {
+                    startLineDrawed.Add(startLineDrawed[startLineDrawed.Count - 1]);
+                }
+            }
+            ToolController.inste.dragVisualizer.enabled = false;
+            plt.positinLineR = new List<Vector2>(startLineDrawed);
+            plt.positinLineL = new List<Vector2>(endLineDrawed);
+            plt.top_material = "terrain";
+            plt.base_wall_template = "CliffWall2";
+            plt.wall_template = "StoneWall1";
+            plt.wall_height = -1;
+            startLineDrawed.Clear();
+            endLineDrawed.Clear();
+            startLine.Clear();
+            endLine.Clear();
+            MetaMap.instance.defaultLayer.mapItems.Add(plt);
+            plt.scatterThis();
+        }
+        if (drawing == 1)
+        {
+            drawing = 2;
+        }
+
+    }
+
+    private void UpdateVisualizer()
+    {
+
+        if (ToolController.inste.dragVisualizer == null) return;
+        ToolController.inste.dragVisualizer.positionCount = 0;
+        for (int i = startLine.Count-1; i>=0; i--)
+        {
+            ToolController.inste.dragVisualizer.positionCount++;
+            ToolController.inste.dragVisualizer.SetPosition(startLine.Count-1-i, startLine[i] + Vector3.up * 5);
+        }
+        for (int i=0;i<endLine.Count;i++)
+        {
+            ToolController.inste.dragVisualizer.positionCount++;
+            ToolController.inste.dragVisualizer.SetPosition(startLine.Count+i, endLine[i] + Vector3.up * 5);
         }
 
     }

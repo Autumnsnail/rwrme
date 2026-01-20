@@ -107,21 +107,22 @@ public class Platform : PathPair
     }
 
     public string base_wall_template;
+    public string wall_template;
     public string top_material;
-    public float wall_height;
-    public bool isBridge=false;
+    public float wall_height = -1f;
+    public bool isBridge = false;
     public bool isDeck = false;//upHeight
-    public float height=0.0f;
+    public float height = 0.0f;
 
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public override string getInfoText()
@@ -132,14 +133,16 @@ public class Platform : PathPair
         info += "layer = " + layerIndex.ToString() + "\n";
         info += "top_material = " + top_material + "\n";
         info += "base_wall_template = " + base_wall_template + "\n";
+        info += "wall_template = " + wall_template + "\n";
+        info += "wall_height = " + wall_height + "\n";
 
         return info;
     }
 
     public override void scatterThis()
-    {   
+    {
         Vector3 pot = new Vector3();
-        VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(positinLineR[0]) , this.layerIndex,ref pot);
+        VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(positinLineR[0]), this.layerIndex, ref pot);
         List<Vector2> u3dpll = positinLineL.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
         List<Vector2> u3dplr = positinLineR.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
         PlatformSerfaceType pst = MetaMap.instance.PST.FirstOrDefault(type => type.name.Equals(top_material));
@@ -147,22 +150,34 @@ public class Platform : PathPair
         {
             this.GetComponent<Renderer>().material = pst.material;
         }
-        WallType wtp = MetaMap.instance.wallTypes.FirstOrDefault(type => type.name.Equals(base_wall_template));
-        float wallHeight = wall_height;
+        WallType wtp = MetaMap.instance.wallTypes.FirstOrDefault(type => type.name.Equals(wall_template));
+        float wallHeight = 1;
         if (wtp != null)
         {
             wallHeight = wtp.height;
             this.transform.GetChild(0).gameObject.GetComponent<Renderer>().material = wtp.material;
         }
+        if (wall_height != -1)
+        {
+            wallHeight = wall_height;
+        }
+
+        WallType bwtp = MetaMap.instance.wallTypes.FirstOrDefault(type => type.name.Equals(base_wall_template));
+        if (bwtp != null)
+        {
+            this.transform.GetChild(1).gameObject.GetComponent<Renderer>().material = bwtp.material;
+        }
+
         GeneratePathGeometry(u3dpll, u3dplr, pot.y + this.height, wallHeight);
 
     }
 
 
-    void GeneratePathGeometry(List<Vector2> leftPath, List<Vector2> rightPath,float pathHeight,float wallHei)
+    void GeneratePathGeometry(List<Vector2> leftPath, List<Vector2> rightPath, float pathHeight, float wallHei)
     {
         List<Vector3> vertices = new List<Vector3>();
         List<Vector3> sides = new List<Vector3>();
+        List<Vector3> baseWall = new List<Vector3>();
 
         // 生成地板/平台
         for (int i = 0; i < leftPath.Count; i++)
@@ -173,61 +188,80 @@ public class Platform : PathPair
             vertices.Add(p2);
         }
         GenerateQuadFloor(vertices);
-        if (isDeck)
-        {
-            for (int i = 0; i < leftPath.Count; i++)
-            {
-                Vector3 p1 = new Vector3(leftPath[i].x, pathHeight+ wallHei, leftPath[i].y);
-                Vector3 p2 = new Vector3(leftPath[i].x, 0, leftPath[i].y);
-                sides.Add(p2);
-                sides.Add(p1);
-            }
-            for (int i = leftPath.Count - 1; i >= 0; i--)
-            {
-                Vector3 p1 = new Vector3(rightPath[i].x, pathHeight+ wallHei, rightPath[i].y);
-                Vector3 p2 = new Vector3(rightPath[i].x, 0, rightPath[i].y);
-                sides.Add(p2);
-                sides.Add(p1);
-            }
-            sides.Add(new Vector3(leftPath[0].x, pathHeight+ wallHei, leftPath[0].y));
-            sides.Add(new Vector3(leftPath[0].x, 0, leftPath[0].y));
-        }
-        else if(isBridge)
-        {
 
-            for (int i = 0; i < leftPath.Count; i++)
-            {
-                Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
-                Vector3 p2 = new Vector3(leftPath[i].x, 0, leftPath[i].y);
-                sides.Add(p2);
-                sides.Add(p1);
-            }
-            for (int i = 0; i < leftPath.Count; i++)
-            {
-                Vector3 p1 = new Vector3(rightPath[i].x, pathHeight + wallHei, rightPath[i].y);
-                Vector3 p2 = new Vector3(rightPath[i].x, 0, rightPath[i].y);
-                sides.Add(p2);
-                sides.Add(p1);
-            }
-        }
-        else
+        if (!string.IsNullOrEmpty(wall_template))
         {
-            sides.Add(new Vector3(rightPath[0].x, pathHeight + wallHei, rightPath[0].y));
-            sides.Add(new Vector3(rightPath[0].x, 0, rightPath[0].y));
-            for (int i = 0; i < leftPath.Count; i++)
+            if (isDeck)
             {
-                Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
-                Vector3 p2 = new Vector3(leftPath[i].x, 0, leftPath[i].y);
-                sides.Add(p2);
-                sides.Add(p1);
+                for (int i = 0; i < leftPath.Count; i++)
+                {
+                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
+                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+                    sides.Add(p1);
+                    sides.Add(p2);
+                }
+                for (int i = leftPath.Count - 1; i >= 0; i--)
+                {
+                    Vector3 p1 = new Vector3(rightPath[i].x, pathHeight + wallHei, rightPath[i].y);
+                    Vector3 p2 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+                    sides.Add(p1);
+                    sides.Add(p2);
+                }
+                sides.Add(new Vector3(leftPath[0].x, pathHeight + wallHei, leftPath[0].y));
+                sides.Add(new Vector3(leftPath[0].x, pathHeight, leftPath[0].y));
             }
-            sides.Add(new Vector3(rightPath[rightPath.Count-1].x, pathHeight + wallHei, rightPath[rightPath.Count - 1].y));
-            sides.Add(new Vector3(rightPath[rightPath.Count - 1].x, 0, rightPath[rightPath.Count - 1].y));
+            else if (isBridge)
+            {
+
+                for (int i = 0; i < leftPath.Count; i++)
+                {
+                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
+                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+                    sides.Add(p1);
+                    sides.Add(p2);
+                }
+                for (int i = 0; i < leftPath.Count; i++)
+                {
+                    Vector3 p1 = new Vector3(rightPath[i].x, pathHeight + wallHei, rightPath[i].y);
+                    Vector3 p2 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+                    sides.Add(p1);
+                    sides.Add(p2);
+                }
+            }
+            else
+            {
+                sides.Add(new Vector3(rightPath[0].x, pathHeight + wallHei, rightPath[0].y));
+                sides.Add(new Vector3(rightPath[0].x, pathHeight, rightPath[0].y));
+                for (int i = 0; i < leftPath.Count; i++)
+                {
+                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
+                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+                    sides.Add(p1);
+                    sides.Add(p2);
+                }
+                sides.Add(new Vector3(rightPath[rightPath.Count - 1].x, pathHeight + wallHei, rightPath[rightPath.Count - 1].y));
+                sides.Add(new Vector3(rightPath[rightPath.Count - 1].x, pathHeight, rightPath[rightPath.Count - 1].y));
+            }
+            GenerateQuadSide(sides);
         }
-        GenerateQuadSide(sides);
+        for (int i = 0; i < leftPath.Count; i++)
+        {
+            Vector3 p1 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+            Vector3 p2 = new Vector3(leftPath[i].x, 0, leftPath[i].y);
+            baseWall.Add(p1);
+            baseWall.Add(p2);
+        }
+        for (int i = leftPath.Count - 1; i >= 0; i--)
+        {
+            Vector3 p1 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+            Vector3 p2 = new Vector3(rightPath[i].x, 0, rightPath[i].y);
+            baseWall.Add(p1);
+            baseWall.Add(p2);
+        }
+        GenerateQuadBaseWall(baseWall);
 
 
-        
+
 
     }
 
@@ -238,7 +272,7 @@ public class Platform : PathPair
         Mesh mesh = new Mesh();
 
         List<int> triangles = new List<int>();
-        for (int i = 0; i < vps.Count/2-1; i++)
+        for (int i = 0; i < vps.Count / 2 - 1; i++)
         {
             int baseIndex = i * 2;
 
@@ -265,53 +299,36 @@ public class Platform : PathPair
     void GenerateQuadSide(List<Vector3> vps)
     {
         Mesh mesh = new Mesh();
-
         List<Vector3> allVertices = new List<Vector3>();
-
         allVertices.AddRange(vps);
 
-
-        
-        for (int i = vps.Count - 1; i >= 0; i--)
-        {
-            allVertices.Add(vps[i]);
-        }
-
-        // 2. 创建三角形索引
         List<int> triangles = new List<int>();
 
         // 正面三角形
-        for (int i = 0; i < vps.Count / 2 - 1; i++)
+        for (int i = 0; i < vps.Count - 3; i = i + 2)
         {
-            int baseIndex = i * 2;
-
             // 第一个三角形
-            triangles.Add(baseIndex);         // 左下 i
-            triangles.Add(baseIndex + 1);     // 左上 i
-            triangles.Add(baseIndex + 2);     // 右下 i+1
+            triangles.Add(i);         // 左下 i
+            triangles.Add(i + 1);     // 左上 i
+            triangles.Add(i + 2);     // 右下 i+1
 
             // 第二个三角形
-            triangles.Add(baseIndex + 1);     // 左上 i
-            triangles.Add(baseIndex + 3);     // 右上 i+1
-            triangles.Add(baseIndex + 2);     // 右下 i+1
+            triangles.Add(i + 1);     // 左上 i
+            triangles.Add(i + 3);     // 右上 i+1
+            triangles.Add(i + 2);     // 右下 i+1
         }
-
-        // 背面三角形（索引偏移，顺序反转）
-        int offset = vps.Count;
-        for (int i = 0; i < vps.Count / 2 - 1; i++)
+        for (int i = vps.Count - 1; i >= 3; i = i - 2)
         {
-            int baseIndex = offset + i * 2;
+            triangles.Add(i);         // 左下 i
+            triangles.Add(i - 2);     // 左上 i
+            triangles.Add(i - 1);     // 右下 i+1
 
-            // 第一个三角形（顺序反转）
-            triangles.Add(baseIndex);         // 原顶点i（现在是反向的）
-            triangles.Add(baseIndex + 2);     // 原顶点i+1（反向）
-            triangles.Add(baseIndex + 1);     // 原顶点i（反向的另一侧）
-
-            // 第二个三角形（顺序反转）
-            triangles.Add(baseIndex + 1);     // 原顶点i（反向的另一侧）
-            triangles.Add(baseIndex + 2);     // 原顶点i+1（反向）
-            triangles.Add(baseIndex + 3);     // 原顶点i+1（反向的另一侧）
+            // 第二个三角形
+            triangles.Add(i - 1);     // 左上 i
+            triangles.Add(i - 2);     // 右上 i+1
+            triangles.Add(i - 3);     // 右下 i+1
         }
+
 
         // 3. 设置网格数据
         mesh.vertices = allVertices.ToArray();
@@ -321,6 +338,36 @@ public class Platform : PathPair
 
         // 4. 应用网格
         gameObject.transform.GetChild(0).gameObject.GetComponent<MeshFilter>().mesh = mesh;
-        gameObject.transform.GetChild(0).gameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+        //gameObject.transform.GetChild(0).gameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+    }
+
+    void GenerateQuadBaseWall(List<Vector3> vps)
+    {
+
+        // 创建网格
+        Mesh mesh = new Mesh();
+
+        List<int> triangles = new List<int>();
+        for (int i = 0; i < vps.Count / 2 - 1; i++)
+        {
+            int baseIndex = i * 2;
+
+            triangles.Add(baseIndex + 2);
+            triangles.Add(baseIndex + 1);
+            triangles.Add(baseIndex);
+
+            triangles.Add(baseIndex + 2);
+            triangles.Add(baseIndex + 3);
+            triangles.Add(baseIndex + 1);
+        }
+
+        mesh.vertices = vps.ToArray();
+        mesh.triangles = triangles.ToArray();
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        gameObject.transform.GetChild(1).gameObject.GetComponent<MeshFilter>().mesh = mesh;
+        //gameObject.transform.GetChild(1).gameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
+
     }
 }

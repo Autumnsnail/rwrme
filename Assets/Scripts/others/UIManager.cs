@@ -17,6 +17,9 @@ public class UIManager : MonoBehaviour
     GameObject wEM;//wall
     GameObject ddWT;//wall dd
 
+    GameObject pEM;//platform
+    GameObject ddPS;//platformSerface
+
     List<GameObject> mms;
     void Start()
     {
@@ -37,6 +40,9 @@ public class UIManager : MonoBehaviour
         wEM = transform.Find("WallEditor").gameObject;
         mms.Add(wEM);//3
         ddWT = transform.Find("WallEditor/WallTypes").gameObject;
+        pEM = transform.Find("PlatformEditor").gameObject;
+        mms.Add(pEM);//4
+        ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
 
     }
 
@@ -125,6 +131,27 @@ public class UIManager : MonoBehaviour
             if (uci != null)
             {
                 uci.setMat(wt);
+                ToolController.inste.setToolWithIndex(4);
+            }
+        }
+    }
+    public void updatePT()
+    {
+        TMP_Dropdown dd = ddPS.GetComponent<TMP_Dropdown>();
+        dd.ClearOptions();
+        List<PlatformSerfaceType> btp = MetaMap.instance.PST;
+        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
+        dd.AddOptions(optionTexts);
+    }
+    public void changepsc(int ind)
+    {
+        PlatformSerfaceType wt = MetaMap.instance.PST[ind];
+        if (wt != null)
+        {
+            MaterialChangerTool uci = ToolController.inste.tools[4] as MaterialChangerTool;
+            if (uci != null)
+            {
+                //uci.setMat(wt);
                 ToolController.inste.setToolWithIndex(4);
             }
         }

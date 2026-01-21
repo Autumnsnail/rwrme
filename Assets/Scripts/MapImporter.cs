@@ -304,8 +304,13 @@ public class MapImporter : MonoBehaviour
                                                 else
                                                 { pf.base_wall_template = "StoneWall1"; } 
                                                 if (properties.ContainsKey("top_material")) pf.top_material = properties["top_material"];
-                                                if (properties.ContainsKey("wall_height")) pf.wall_height = float.Parse(properties["wall_height"]);
-                                                if (properties.ContainsKey("height")) pf.height = float.Parse( properties["height"]);
+                                                if (properties.ContainsKey("wall_height")) { pf.wall_height = float.Parse(properties["wall_height"]); }
+                                                else
+                                                {
+                                                    pf.wall_height = -1f;
+                                                }
+                                                if (properties.ContainsKey("height")) pf.height = float.Parse(properties["height"]);
+                                                if (properties.ContainsKey("wall_template")) pf.wall_template = properties["wall_template"];
 
                                             }
                                         }
@@ -504,31 +509,27 @@ public class MapImporter : MonoBehaviour
             for (int x = 0; x < width; x++)
             {
                 int index = y * width + x;
-                float grayValue = pixels[index].grayscale; // ת��Ϊ�Ҷ�ֵ
+                float grayValue = pixels[index].grayscale; 
                 grayImage[y, x] = grayValue;
             }
         }
 
-        // ��������
         DestroyImmediate(texture);
 
         return grayImage;
     }
 
-    // ��ȡָ�����͵ĻҶ�ͼ
     public GrayScaleImage GetGrayScaleImage(MapType mapType)
     {
         loadedMaps.TryGetValue(mapType, out GrayScaleImage image);
         return image;
     }
 
-    // ����Ƿ��Ѽ���ĳ�Ҷ�ͼ
     public bool HasMap(MapType mapType)
     {
         return loadedMaps.ContainsKey(mapType);
     }
 
-    // ��ȡ�����Ѽ��صĻҶ�ͼ
     public Dictionary<MapType, GrayScaleImage> GetAllMaps()
     {
         return new Dictionary<MapType, GrayScaleImage>(loadedMaps);
@@ -557,7 +558,6 @@ public class TerrainConfigReader
 
         if (!File.Exists(fullPath))
         {
-            //Debug.LogError("�����ļ�������: " + fullPath);
             return;
         }
 
@@ -579,11 +579,9 @@ public class TerrainConfigReader
                 }
             }
 
-            Debug.Log("�������ü�����ɣ��� " + configData.Count + " ������");
         }
         catch (System.Exception e)
         {
-            Debug.LogError("��ȡ�����ļ�ʧ��: " + e.Message);
         }
     }
 

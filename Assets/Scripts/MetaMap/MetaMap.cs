@@ -299,10 +299,9 @@ public class WallType:mapItemType
     }
 }
 
-public class PlatformSerfaceType
+public class PlatformSerfaceType: mapItemType
 {
     public Material material;
-    public string name;
     public PlatformSerfaceType(string name, Color c)
     {
         this.name = name;

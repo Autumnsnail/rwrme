@@ -135,7 +135,8 @@ public class Platform : PathPair
         info += "base_wall_template = " + base_wall_template + "\n";
         info += "wall_template = " + wall_template + "\n";
         info += "wall_height = " + wall_height + "\n";
-
+        if (isBridge) info += "bridge\n";
+        if (isDeck) info += "deck\n";
         return info;
     }
 
@@ -168,7 +169,7 @@ public class Platform : PathPair
             this.transform.GetChild(1).gameObject.GetComponent<Renderer>().material = bwtp.material;
         }
 
-        GeneratePathGeometry(u3dpll, u3dplr, pot.y + this.height, wallHeight);
+        GeneratePathGeometry(u3dpll, u3dplr, pot.y, wallHeight);
 
     }
 
@@ -179,7 +180,11 @@ public class Platform : PathPair
         List<Vector3> sides = new List<Vector3>();
         List<Vector3> baseWall = new List<Vector3>();
 
-        // 生成地板/平台
+        if (isDeck)
+        {
+            pathHeight += height;
+        }
+
         for (int i = 0; i < leftPath.Count; i++)
         {
             Vector3 p1 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
@@ -187,7 +192,9 @@ public class Platform : PathPair
             vertices.Add(p1);
             vertices.Add(p2);
         }
+
         GenerateQuadFloor(vertices);
+
 
         if (!string.IsNullOrEmpty(wall_template))
         {
@@ -220,6 +227,11 @@ public class Platform : PathPair
                     sides.Add(p1);
                     sides.Add(p2);
                 }
+                sides.Add(new Vector3(leftPath[leftPath.Count - 1].x, pathHeight + wallHei, leftPath[leftPath.Count - 1].y));
+                sides.Add(new Vector3(leftPath[leftPath.Count - 1].x, pathHeight + wallHei, leftPath[leftPath.Count - 1].y));
+                sides.Add(new Vector3(rightPath[0].x, pathHeight + wallHei, rightPath[0].y));
+                sides.Add(new Vector3(rightPath[0].x, pathHeight + wallHei, rightPath[0].y));
+
                 for (int i = 0; i < leftPath.Count; i++)
                 {
                     Vector3 p1 = new Vector3(rightPath[i].x, pathHeight + wallHei, rightPath[i].y);

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +20,7 @@ public class UIManager : MonoBehaviour
 
     GameObject pEM;//platform
     GameObject ddPS;//platformSerface
+    GameObject ddWTP;//platformSerface
 
     List<GameObject> mms;
     void Start()
@@ -40,6 +42,7 @@ public class UIManager : MonoBehaviour
         wEM = transform.Find("WallEditor").gameObject;
         mms.Add(wEM);//3
         ddWT = transform.Find("WallEditor/WallTypes").gameObject;
+        ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
         pEM = transform.Find("PlatformEditor").gameObject;
         mms.Add(pEM);//4
         ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
@@ -117,10 +120,13 @@ public class UIManager : MonoBehaviour
     public void updateWT()
     {
         TMP_Dropdown dd = ddWT.GetComponent<TMP_Dropdown>();
+        TMP_Dropdown dt = ddWTP.GetComponent<TMP_Dropdown>();
         dd.ClearOptions();
+        dt.ClearOptions();
         List<WallType> btp = MetaMap.instance.wallTypes;
         List<string> optionTexts = btp.Select(bt => bt.name).ToList();
         dd.AddOptions(optionTexts);
+        dt.AddOptions(optionTexts);
     }
     public void changewtc(int ind)
     {
@@ -153,7 +159,30 @@ public class UIManager : MonoBehaviour
             {
                 //uci.setMat(wt);
                 ToolController.inste.setToolWithIndex(4);
+                uci.setMat(wt);
             }
         }
+    }
+    public void changebwt(int ind)
+    {
+        WallType wt = MetaMap.instance.wallTypes[ind];
+        if (wt != null)
+        {
+            PlatformBasewallChanger uci = ToolController.inste.tools[9] as PlatformBasewallChanger;
+            if (uci != null)
+            {
+                //uci.setMat(wt);
+                ToolController.inste.setToolWithIndex(9);
+                uci.wtp = wt;
+            }
+        }
+    }
+
+    public void setPlatformHeight(string height)
+    {
+        float h = float.Parse(height);
+        PlatformHeightSetter uci = ToolController.inste.tools[10] as PlatformHeightSetter;
+        if (uci != null) uci.height = h;
+        ToolController.inste.setToolWithIndex(10);
     }
 }

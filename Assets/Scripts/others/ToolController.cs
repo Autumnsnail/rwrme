@@ -38,6 +38,9 @@ public class ToolController : MonoBehaviour
         tools.Add(new heightChanger("heightChanger", this)); //tool5 = material changer
         tools.Add(new WallDrawer("wallDrawer"));//tool6 wall pather
         tools.Add(new PlatformDrawer("PlatformDrawer"));//tool7 platform pather
+        tools.Add(new PlatformTypeChanger("PlatformTypeChanger", this)); //tool8 = pt changer
+        tools.Add(new PlatformBasewallChanger("PlatformBasewallChanger")); //tool9 = pt baseWallType changer
+        tools.Add(new PlatformHeightSetter("PlatformHeightSetter")); //tool 10 = pt heightSetter
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -542,7 +545,6 @@ public class DrawerTool : Tool
         bd.id = MetaMap.instance.getNewItemId("building");
         bd.scatterThis();
         ToolController.inste.miSelected = bd;
-
     }
 
 }
@@ -592,14 +594,30 @@ public class MaterialChangerTool : Tool
         if (hitO != null && bt != null)
         {
             MapItem mi = hitO.GetComponent<MapItem>();
-            if(mi==null)return;
-            string min = mi.GetType().Name;
-            string mtn = bt.GetType().Name;
+            if (mi == null) return;
 
-            if (min.Substring(0, 4) == mtn.Substring(0, 4))
+            if (mi is Platform plt)
             {
-                mi.material = bt.name;
+                if(this.bt is PlatformSerfaceType pst)
+                {
+                    plt.top_material = pst.name;
+                }
+                else if (this.bt is WallType wt)
+                {
+                    plt.wall_template = wt.name;
+                }
                 mi.scatterThis();
+            }
+            else
+            {
+                string min = mi.GetType().Name;
+                string mtn = bt.GetType().Name;
+
+                if (min.Substring(0, 4) == mtn.Substring(0, 4))
+                {
+                    mi.material = bt.name;
+                    mi.scatterThis();
+                }
             }
 
         }
@@ -685,7 +703,6 @@ public class SideTool
         mi.scatterThis();
     }
 }
-
 public class WallDrawer : Tool
 {
     public bool drawing = false;
@@ -756,7 +773,6 @@ public class WallDrawer : Tool
     }
 
 }
-
 public class PlatformDrawer : Tool
 {
     int drawing = 0;
@@ -869,3 +885,90 @@ public class PlatformDrawer : Tool
     }
 
 }
+public class PlatformTypeChanger : Tool
+{
+    private ToolController controller;
+    public int offcc = 1;
+    public PlatformTypeChanger(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (hitO != null)
+        {
+            Platform bd = hitO.GetComponent<Platform>();
+            if (bd != null)
+            {
+                CtrlZer.instance.checkPoint();
+                if(bd.isBridge)
+                {
+                    bd.isBridge = false;
+                    bd.isDeck = true;
+
+                }
+                else if(bd.isDeck)
+                {
+                    bd.isBridge = false;
+                    bd.isDeck = false;
+                }
+                else
+                {
+                    bd.isBridge = true;
+                    bd.isDeck = false;
+                }
+                bd.scatterThis();
+
+            }
+
+        }
+    }
+}
+public class PlatformBasewallChanger : Tool
+{
+    public WallType wtp;
+    public PlatformBasewallChanger(string name) : base(name)
+    {
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (hitO != null)
+        {
+            Platform bd = hitO.GetComponent<Platform>();
+            if (bd != null)
+            {
+                CtrlZer.instance.checkPoint();
+                bd.base_wall_template = wtp.name;
+                bd.scatterThis();
+
+            }
+
+        }
+    }
+}
+public class PlatformHeightSetter : Tool
+{
+    public float height;
+    public PlatformHeightSetter(string name) : base(name)
+    {
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (hitO != null)
+        {
+            Platform bd = hitO.GetComponent<Platform>();
+            if (bd != null)
+            {
+                CtrlZer.instance.checkPoint();
+                bd.height = height;
+                bd.scatterThis();
+
+            }
+
+        }
+    }
+}
+

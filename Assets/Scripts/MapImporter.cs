@@ -45,6 +45,7 @@ public class MapImporter : MonoBehaviour
     public void importTerrain()
     {
         TerrainConfigReader tcr = new TerrainConfigReader();
+        tcr.configFilePath = Path.Combine(basePath, "terrain.cfg");
         tcr.LoadTerrainConfig();
         tcr.PrintConfigValues();
         string mapName = "terrain5_heightmap.png";
@@ -76,7 +77,7 @@ public class MapImporter : MonoBehaviour
     {
         Debug.Log("start to Import Objects");
         XmlDocument xmlDoc = new XmlDocument();
-        string xmlPath = Application.dataPath + "/map/" + "objects.svg";
+        string xmlPath = Path.Combine(Application.dataPath, basePath, "objects.svg");
         Debug.Log("LoadSvg at " + xmlPath);
         xmlDoc.Load(xmlPath);
 

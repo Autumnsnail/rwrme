@@ -14,6 +14,9 @@ public class MapExporter : MonoBehaviour
     public static MapExporter ins;
 
     public XmlDocument xmlDoc;
+    
+    [Header("导出路径配置")]
+    public string basePath = "map"; // 基础路径
 
     void Start()
     {
@@ -47,7 +50,7 @@ public class MapExporter : MonoBehaviour
 
     public void exportMap() 
     {
-        string xmlFilePath = Application.dataPath + "/map/" + "OUTobjects.svg";
+        string xmlFilePath = Path.Combine(Application.dataPath, basePath, "OUTobjects.svg");
         xmlDoc = new XmlDocument();
         XmlDeclaration xd=  xmlDoc.CreateXmlDeclaration("1.0", "UTF-8","no");
         xmlDoc.AppendChild( xd );
@@ -207,7 +210,7 @@ public class MapExporter : MonoBehaviour
         }
 
         Debug.Log("MapExport");
-        string fullPath = System.IO.Path.Combine(Application.dataPath+"/map/", m_mm.m_metaTerrain.fileName);
+        string fullPath = System.IO.Path.Combine(Application.dataPath, basePath, m_mm.m_metaTerrain.fileName);
         System.IO.File.WriteAllBytes(fullPath, m_mm.m_metaTerrain.data.convToPng());
 
 
@@ -312,10 +315,10 @@ public class MapExporter : MonoBehaviour
 
         // 保存为PNG文件
         string fileName = $"TerrainHeightmap_{System.DateTime.Now:yyyyMMdd_HHmmss}.png";
-        string filePath = Path.Combine(Application.dataPath, "map", fileName);
+        string filePath = Path.Combine(Application.dataPath, basePath, fileName);
         
         // 确保map目录存在
-        string mapDir = Path.Combine(Application.dataPath, "map");
+        string mapDir = Path.Combine(Application.dataPath, basePath);
         if (!Directory.Exists(mapDir))
         {
             Directory.CreateDirectory(mapDir);

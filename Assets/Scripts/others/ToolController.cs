@@ -26,8 +26,8 @@ public class ToolController : MonoBehaviour
 
     public MapItem miSelected;
 
-    // 用于存储复制的建筑信息
-    private Building copiedBuilding = null;
+    // 用于存储复制的地图项信息（支持Building、Wall、Platform等）
+    private MapItem copiedMapItem = null;
 
     void Start()
     {
@@ -231,7 +231,7 @@ public class ToolController : MonoBehaviour
         return dragVisualizer;
     }
 
-    // 复制当前选中的建筑
+    // 复制当前选中的地图项（Building、Wall、Platform等）
     private void CopySelectedBuilding()
     {
         if (miSelected == null)
@@ -240,24 +240,34 @@ public class ToolController : MonoBehaviour
             return;
         }
 
-        Building selectedBuilding = miSelected as Building;
-        if (selectedBuilding == null)
+        // 保存引用
+        copiedMapItem = miSelected;
+        
+        // 根据类型显示不同的日志
+        if (copiedMapItem is Building building)
         {
-            Debug.Log("选中的对象不是建筑，无法复制");
-            return;
+            Debug.Log($"已复制建筑: {building.id}, 材质: {building.material}, 高度: {building.height}");
         }
-
-        // 复制建筑信息（深拷贝所有属性）
-        copiedBuilding = selectedBuilding;
-        Debug.Log($"已复制建筑: {copiedBuilding.id}, 材质: {copiedBuilding.material}, 高度: {copiedBuilding.height}");
+        else if (copiedMapItem is Wall wall)
+        {
+            Debug.Log($"已复制墙: {wall.id}, 材质: {wall.material}, 点数: {wall.positionLine.Count}");
+        }
+        else if (copiedMapItem is Platform platform)
+        {
+            Debug.Log($"已复制平台: {platform.id}, 类型: {platform.top_material}");
+        }
+        else
+        {
+            Debug.Log($"已复制对象: {copiedMapItem.id}");
+        }
     }
 
-    // 粘贴建筑到鼠标位置
+    // 通用粘贴方法 - 使用反射自动克隆，支持所有MapItem类型
     private void PasteBuilding()
     {
-        if (copiedBuilding == null)
+        if (copiedMapItem == null)
         {
-            Debug.Log("没有复制的建筑可以粘贴");
+            Debug.Log("没有复制的对象可以粘贴");
             return;
         }
 
@@ -276,50 +286,120 @@ public class ToolController : MonoBehaviour
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
         {
             Vector3 pastePosition3D = hit.point;
-            
-            // 创建新建筑
-            GameObject newBuildingGO = Instantiate(MapImporter.instate.BuildingPref);
-            Building newBuilding = newBuildingGO.GetComponent<Building>();
-
-            // 复制所有属性
             Vector2 pastePosition2D = MathOfRwrme.U3dPosToSvgPos(new Vector2(pastePosition3D.x, pastePosition3D.z));
             
-            newBuilding.height = copiedBuilding.height;
-            newBuilding.material = copiedBuilding.material;
-            newBuilding.position = pastePosition2D;
-            newBuilding.rotation = copiedBuilding.rotation;
-            newBuilding.size = copiedBuilding.size;
-            newBuilding.roof = copiedBuilding.roof;
-            
             // 确定图层
-            newBuilding.layerIndex = copiedBuilding.layerIndex;
+            int targetLayerIndex = copiedMapItem.layerIndex;
             if (hit.collider.gameObject.GetComponent<MapItem>() != null)
             {
                 MapItem hitItem = hit.collider.gameObject.GetComponent<MapItem>();
-                newBuilding.layerIndex = hitItem.layerIndex + 1;
+                targetLayerIndex = hitItem.layerIndex + 1;
             }
 
-            // 生成新ID
-            newBuilding.id = MetaMap.instance.getNewItemId("building");
+            // 获取合适的预制体
+            GameObject prefab = GetPrefabForMapItem(copiedMapItem);
+            if (prefab == null)
+            {
+                Debug.LogError($"无法找到类型 {copiedMapItem.GetType().Name} 的预制体");
+                return;
+            }
 
-            // 添加到地图
-            MetaMap.instance.defaultLayer.mapItems.Add(newBuilding);
+            // 使用反射自动克隆
+            MapItem newMapItem = CloneMapItemWithReflection(copiedMapItem, prefab);
             
-            // 刷新显示
-            newBuilding.scatterThis();
-            
-            // 选中新建筑
-            miSelected = newBuilding;
+            if (newMapItem != null)
+            {
+                // 设置图层
+                newMapItem.layerIndex = targetLayerIndex;
+                
+                // 自动检测并应用位置偏移
+                Vector2 sourceCenter = MapItemCloner.GetCenterPositionAuto(copiedMapItem);
+                Vector2 offset = pastePosition2D - sourceCenter;
+                MapItemCloner.ApplyPositionOffsetAuto(newMapItem, offset);
+                
+                // 生成新ID（根据类型）
+                string idPrefix = GetIdPrefixForMapItem(newMapItem);
+                newMapItem.id = MetaMap.instance.getNewItemId(idPrefix);
+                
+                // 添加到地图
+                MetaMap.instance.defaultLayer.mapItems.Add(newMapItem);
+                
+                // 刷新显示
+                newMapItem.scatterThis();
+                
+                // 选中新对象
+                miSelected = newMapItem;
 
-            // 记录撤销点
-            CtrlZer.instance.checkPoint();
+                // 记录撤销点
+                CtrlZer.instance.checkPoint();
 
-            Debug.Log($"已粘贴建筑到位置: {pastePosition2D}, ID: {newBuilding.id}");
+                Debug.Log($"✓ 已粘贴 {newMapItem.GetType().Name} 到位置: {pastePosition2D}, ID: {newMapItem.id}");
+            }
         }
         else
         {
             Debug.Log("无法确定粘贴位置");
         }
+    }
+
+    // 使用反射克隆 MapItem
+    private MapItem CloneMapItemWithReflection(MapItem source, GameObject prefab)
+    {
+        // 根据源对象的类型调用泛型方法
+        System.Type sourceType = source.GetType();
+        
+        if (sourceType == typeof(Building))
+            return MapItemCloner.CloneWithReflection((Building)source, prefab);
+        else if (sourceType == typeof(Wall))
+            return MapItemCloner.CloneWithReflection((Wall)source, prefab);
+        else if (sourceType == typeof(Platform))
+            return MapItemCloner.CloneWithReflection((Platform)source, prefab);
+        
+        // 未来添加新类型时在这里添加
+        // else if (sourceType == typeof(Tree))
+        //     return MapItemCloner.CloneWithReflection((Tree)source, prefab);
+        
+        // 默认：尝试作为 MapItem 克隆
+        return MapItemCloner.CloneWithReflection(source, prefab);
+    }
+
+    // 根据MapItem类型获取对应的预制体
+    private GameObject GetPrefabForMapItem(MapItem item)
+    {
+        if (item is Building)
+            return MapImporter.instate.BuildingPref;
+        else if (item is Wall)
+            return MapImporter.instate.WallPref;
+        else if (item is Platform)
+            return MapImporter.instate.PlatformPref;
+        
+        // 未来可以在这里添加更多类型
+        // else if (item is Tree)
+        //     return MapImporter.instate.TreePref;
+        // else if (item is Rock)
+        //     return MapImporter.instate.RockPref;
+        
+        return null;
+    }
+
+    // 根据MapItem类型获取ID前缀
+    private string GetIdPrefixForMapItem(MapItem item)
+    {
+        if (item is Building)
+            return "building";
+        else if (item is Wall)
+            return "wall";
+        else if (item is Platform)
+            return "platform";
+        
+        // 未来可以在这里添加更多类型
+        // else if (item is Tree)
+        //     return "tree";
+        // else if (item is Rock)
+        //     return "rock";
+        
+        // 默认使用类型名称
+        return item.GetType().Name.ToLower();
     }
 }
 public class Tool

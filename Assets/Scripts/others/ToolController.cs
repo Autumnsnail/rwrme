@@ -26,6 +26,9 @@ public class ToolController : MonoBehaviour
 
     public MapItem miSelected;
 
+    // 用于存储复制的建筑信息
+    private Building copiedBuilding = null;
+
     void Start()
     {
         inste = this;
@@ -159,6 +162,21 @@ public class ToolController : MonoBehaviour
             Destroy(miSelected.gameObject.transform.root.gameObject);
         }
 
+        // 复制功能 (Ctrl+C)
+        if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
+        {
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                CopySelectedBuilding();
+            }
+            
+            // 粘贴功能 (Ctrl+V)
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                PasteBuilding();
+            }
+        }
+
         if(Input.GetKeyDown(KeyCode.Space))
         {
             currentTool.space();
@@ -211,6 +229,97 @@ public class ToolController : MonoBehaviour
     public LineRenderer GetDragVisualizer()
     {
         return dragVisualizer;
+    }
+
+    // 复制当前选中的建筑
+    private void CopySelectedBuilding()
+    {
+        if (miSelected == null)
+        {
+            Debug.Log("没有选中的对象可以复制");
+            return;
+        }
+
+        Building selectedBuilding = miSelected as Building;
+        if (selectedBuilding == null)
+        {
+            Debug.Log("选中的对象不是建筑，无法复制");
+            return;
+        }
+
+        // 复制建筑信息（深拷贝所有属性）
+        copiedBuilding = selectedBuilding;
+        Debug.Log($"已复制建筑: {copiedBuilding.id}, 材质: {copiedBuilding.material}, 高度: {copiedBuilding.height}");
+    }
+
+    // 粘贴建筑到鼠标位置
+    private void PasteBuilding()
+    {
+        if (copiedBuilding == null)
+        {
+            Debug.Log("没有复制的建筑可以粘贴");
+            return;
+        }
+
+        // 获取鼠标位置（只在主画面区域粘贴）
+        if (Input.mousePosition.x / Screen.width >= 0.85)
+        {
+            Debug.Log("不能在UI区域粘贴");
+            return;
+        }
+
+        // 使用射线检测获取鼠标在世界中的位置
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        int layerMask = 1 << 6; // Layer 6 - Pinable
+
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
+        {
+            Vector3 pastePosition3D = hit.point;
+            
+            // 创建新建筑
+            GameObject newBuildingGO = Instantiate(MapImporter.instate.BuildingPref);
+            Building newBuilding = newBuildingGO.GetComponent<Building>();
+
+            // 复制所有属性
+            Vector2 pastePosition2D = MathOfRwrme.U3dPosToSvgPos(new Vector2(pastePosition3D.x, pastePosition3D.z));
+            
+            newBuilding.height = copiedBuilding.height;
+            newBuilding.material = copiedBuilding.material;
+            newBuilding.position = pastePosition2D;
+            newBuilding.rotation = copiedBuilding.rotation;
+            newBuilding.size = copiedBuilding.size;
+            newBuilding.roof = copiedBuilding.roof;
+            
+            // 确定图层
+            newBuilding.layerIndex = copiedBuilding.layerIndex;
+            if (hit.collider.gameObject.GetComponent<MapItem>() != null)
+            {
+                MapItem hitItem = hit.collider.gameObject.GetComponent<MapItem>();
+                newBuilding.layerIndex = hitItem.layerIndex + 1;
+            }
+
+            // 生成新ID
+            newBuilding.id = MetaMap.instance.getNewItemId("building");
+
+            // 添加到地图
+            MetaMap.instance.defaultLayer.mapItems.Add(newBuilding);
+            
+            // 刷新显示
+            newBuilding.scatterThis();
+            
+            // 选中新建筑
+            miSelected = newBuilding;
+
+            // 记录撤销点
+            CtrlZer.instance.checkPoint();
+
+            Debug.Log($"已粘贴建筑到位置: {pastePosition2D}, ID: {newBuilding.id}");
+        }
+        else
+        {
+            Debug.Log("无法确定粘贴位置");
+        }
     }
 }
 public class Tool

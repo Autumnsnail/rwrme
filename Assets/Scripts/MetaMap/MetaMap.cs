@@ -17,10 +17,10 @@ public class MetaMap : MonoBehaviour
     public int mapSizeY;
     public MetaTerrain m_metaTerrain;
     public Layer defaultLayer;//default: L1,L2,L3,L4...
+    public Layer baseLayer;//base.default
 
     public List<BuildingType> buildingTypes;
     public List<WallType> wallTypes;
-
     public List<PlatformSerfaceType> PST;
 
     public List<string> allowedExtensions = new List<string> { "default"};//import later
@@ -31,6 +31,7 @@ public class MetaMap : MonoBehaviour
         instance = this;
         m_metaTerrain = new MetaTerrain();
         defaultLayer = new Layer();
+        baseLayer = new Layer();
 
         buildingTypes = new List<BuildingType>();
         wallTypes = new List<WallType>();
@@ -45,7 +46,7 @@ public class MetaMap : MonoBehaviour
 
     public string getNewItemId(string startWith)
     {
-        return startWith + defaultLayer.mapItems.Count.ToString() + "rwrme";
+        return startWith + (defaultLayer.mapItems.Count+baseLayer.mapItems.Count).ToString() + "rwrme";
     }
 
     private void setBts()

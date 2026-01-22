@@ -137,6 +137,10 @@ public class Syncer : MonoBehaviour
                 yield return null;
             }
         }
+        foreach (MapItem mapItem in m_mm.baseLayer.mapItems)
+        {
+            mapItem.scatterThis();
+        }
     }
 
     public void destroyAllOutMapitems()
@@ -151,4 +155,19 @@ public class Syncer : MonoBehaviour
             }
         }
     }
+    public void changeConstructionVisState(bool stat)
+    {
+        foreach(MapItem mi in MetaMap.instance.defaultLayer.mapItems)
+        {
+            mi.gameObject.SetActive(stat);
+        }
+    }
+    public void changeBaseVisState(bool stat)
+    {
+        foreach (MapItem mi in MetaMap.instance.baseLayer.mapItems)
+        {
+            mi.gameObject.SetActive(stat);
+        }
+    }
+
 }

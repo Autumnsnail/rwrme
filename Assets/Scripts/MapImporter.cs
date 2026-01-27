@@ -117,8 +117,19 @@ public class MapImporter : MonoBehaviour
                                     position = position + offV;
                                     position.x = position.x*scale.x;
                                     position.y = position.y*scale.y;
-                                    position.x = position.x+scale.x* cWidth;
-                                    position.y = position.y+ scale.y * cHeight;
+                                    cWidth = cWidth * scale.x;
+                                    cHeight = cHeight * scale.y;
+                                    if(cWidth<0)
+                                    {
+                                        position.x += cWidth;
+                                        cWidth *= -1;
+                                    }
+                                    if (cHeight < 0)
+                                    {
+                                        position.y += cHeight;
+                                        cHeight *= -1;
+                                    }
+                                       
 
                                     //x+a(k-x)
                                     //(1-a)x+ak

@@ -37,6 +37,7 @@ public class MapImporter : MonoBehaviour
     public GameObject WallPref;
     public GameObject SubWallPref;
     public GameObject BasePref;
+    public GameObject SpawnPointPref;
 
     void Start()
     {
@@ -280,7 +281,35 @@ public class MapImporter : MonoBehaviour
                                                     gc.roof = roof;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(gc);
                                                 }
+                                                if(bRect.GetAttribute("inkscape:label").StartsWith("#spawnrect"))
+                                                {
+                                                    if(r.ChildNodes.Count==0)
+                                                    {
+                                                        //solider SpawnPoint
+                                                        SpawnPoint sp = Instantiate(SpawnPointPref).GetComponent<SpawnPoint>();
 
+                                                        sp.id = MetaMap.instance.getNewItemId("#spawnrect");
+
+                                                        float cX = float.Parse(bRect.GetAttribute("x"));
+                                                        float cY = float.Parse(bRect.GetAttribute("y"));
+                                                        Vector2 position = new Vector2(cX, cY);
+
+                                                        string trans = bRect.GetAttribute("transform");
+                                                        float angle = 0;
+                                                        Matrix2x2 rotM = Matrix2x2.CreateRotation(0);
+                                                        Vector2 offV = Vector2.zero;
+                                                        Vector2 scale = Vector2.one;
+                                                        dealWithTransform(trans, ref rotM, ref angle, ref offV, ref scale);
+                                                        position = position * scale;
+                                                        position = rotM * position;
+                                                        position = position + offV;
+                                                        sp.position = position;
+                                                        sp.size = new Vector2(5, 5);
+                                                        sp.layerIndex = number;
+
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(sp);
+                                                    }
+                                                }
                                             }
                                         }
                                         if (r.Name == "g")
@@ -451,6 +480,7 @@ public class MapImporter : MonoBehaviour
         }
 
         //CtrlZer.instance.checkPoint();
+        if (Syncer.instence != null) Syncer.instence.ScatterMapItems();
     }
 
     public int dealWithLayerLabel(string label)

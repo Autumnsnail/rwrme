@@ -35,6 +35,14 @@ public class Base : MeRect
         return ou; 
     }
 
+    public void changeName(string name)
+    {
+        _name = name;
+    }
+    public void changeFactionIndex(string i)
+    {
+        factionIndex = int.Parse(i);
+    }
     // Update is called once per frame
     void Update()
     {

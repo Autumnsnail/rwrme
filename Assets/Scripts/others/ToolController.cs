@@ -25,6 +25,7 @@ public class ToolController : MonoBehaviour
 
 
     public MapItem miSelected;
+    private MapItem lastMiS;
 
     // 用于存储复制的建筑信息
     private Building copiedBuilding = null;
@@ -92,6 +93,20 @@ public class ToolController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(lastMiS!=miSelected)
+        {
+            //selectAnothermi
+            Transform can = miSelected.transform.Find("Canvas");
+            if(can!=null)
+            {
+                UIManager.instance.changeShowingCanvas(can.gameObject.GetComponent<Canvas>());
+            }
+            else
+            {
+                UIManager.instance.changeShowingCanvas(null);
+            }
+        }
+        lastMiS = miSelected;
         if (Input.GetMouseButtonDown(0))
         {
             if (sdt.state != 0)
@@ -107,6 +122,10 @@ public class ToolController : MonoBehaviour
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                     RaycastHit hit;
                     int layerMask = 1 << 6;
+                    if(currentTool is SelecterTool)
+                    {
+                        layerMask = (1 << 6) | (1 << 7);
+                    }
                     if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
                     {
                         Vector3 hitPosition = hit.point;

@@ -1766,7 +1766,7 @@
       <desc id="desc_base2">name=East Beach;</desc>
     </rect>
     <rect style="opacity:0.26966289;fill:#ffff00;fill-opacity:1;stroke:none;display:inline" id="base3rwrme" width="181.434" height="109.4868" x="0" y="0" inkscape:label="#rect3_base" transform="matrix(1,0,0,1,849.652,1077.801)">
-      <desc id="desc_base3">name=Docks;</desc>
+      <desc id="desc_base3">name=Docky?;faction_index=1;</desc>
     </rect>
     <rect style="opacity:0.26966289;fill:#ffff00;fill-opacity:1;stroke:none;display:inline" id="base4rwrme" width="157.1175" height="189.5443" x="0" y="0" inkscape:label="#rect4_base" transform="matrix(1,0,0,1,278.4362,1343.776)">
       <desc id="desc_base4">name=Villa;faction_index=0;</desc>

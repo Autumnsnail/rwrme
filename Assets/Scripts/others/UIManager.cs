@@ -22,9 +22,12 @@ public class UIManager : MonoBehaviour
     GameObject ddPS;//platformSerface
     GameObject ddWTP;//platformSerface
 
+    Canvas showingCanvas;
+
     List<GameObject> mms;
     void Start()
     {
+        showingCanvas = null;
         mms = new List<GameObject>();
         instance = this;    
         Debug.Log("UI Manager init");
@@ -55,6 +58,16 @@ public class UIManager : MonoBehaviour
         
     }
 
+    public void changeShowingCanvas(Canvas canvas)
+    {
+        if(showingCanvas!=null)
+        {
+            showingCanvas.enabled = false;
+        }
+        showingCanvas = canvas;
+        if (showingCanvas == null) return;
+        showingCanvas.enabled = true;
+    }
     public void showMenuUseIndex(int index)
     {
         disVisableAll();

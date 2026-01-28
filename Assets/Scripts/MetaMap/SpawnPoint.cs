@@ -30,7 +30,7 @@ public class SpawnPoint : MeRect
         if (go != null)
         {
             Vector3 troPos=new Vector3(0,0,0);
-            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex,ref troPos);
+            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), 4,ref troPos);
             go.transform.localPosition = troPos+Vector3.up;
         }
     }

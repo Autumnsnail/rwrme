@@ -22,6 +22,8 @@ public class UIManager : MonoBehaviour
     GameObject ddPS;//platformSerface
     GameObject ddWTP;//platformSerface
 
+    GameObject sEM;//spawnPoints
+
     Canvas showingCanvas;
 
     List<GameObject> mms;
@@ -49,6 +51,8 @@ public class UIManager : MonoBehaviour
         pEM = transform.Find("PlatformEditor").gameObject;
         mms.Add(pEM);//4
         ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
+        sEM = transform.Find("SpawnPointEditor").gameObject;
+        mms.Add(sEM);//5
 
     }
 

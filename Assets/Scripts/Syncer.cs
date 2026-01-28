@@ -1,13 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Syncer : MonoBehaviour
 {
 
     MetaMap m_mm;
     Terrain m_terrain;
-    static public Syncer instence; 
+    static public Syncer instence;
+
+    public GameObject toggleConstructions;
+    public GameObject toggleSpawnPoints;
 
     // Start is called before the first frame update
     void Start()
@@ -19,7 +23,6 @@ public class Syncer : MonoBehaviour
         updateMap();
         Debug.Log("SyncerInit");
     }
-
     IEnumerator StartupRoutine()
     {
         // 等待一帧，让其他Start方法先执行
@@ -38,7 +41,6 @@ public class Syncer : MonoBehaviour
         // 如果需要，可以在这里添加更多等待和操作
 
     }
-
     private void runToInit()
     {
         // 如果没有指定地形，尝试获取当前地形
@@ -142,7 +144,6 @@ public class Syncer : MonoBehaviour
             mapItem.scatterThis();
         }
     }
-
     public void destroyAllOutMapitems()
     {
         MapItem[] allItems = FindObjectsOfType<MapItem>(true);
@@ -157,17 +158,32 @@ public class Syncer : MonoBehaviour
     }
     public void changeConstructionVisState(bool stat)
     {
-        foreach(MapItem mi in MetaMap.instance.defaultLayer.mapItems)
+        toggleConstructions.GetComponent<Toggle>().isOn = stat;
+        if (!stat) changeSpawnPointVisState(stat);
+        foreach (MapItem mi in MetaMap.instance.defaultLayer.mapItems)
         {
             mi.gameObject.SetActive(stat);
         }
     }
     public void changeBaseVisState(bool stat)
     {
+
         foreach (MapItem mi in MetaMap.instance.baseLayer.mapItems)
         {
             mi.gameObject.SetActive(stat);
         }
     }
 
+    public void changeSpawnPointVisState(bool stat)
+    {
+        toggleSpawnPoints.GetComponent<Toggle>().isOn = stat;
+        if (stat) changeConstructionVisState(stat);
+        foreach (MapItem mi in MetaMap.instance.defaultLayer.mapItems)
+        {
+            if(mi is SpawnPoint)
+            {
+                mi.gameObject.SetActive(stat);
+            }
+        }
+    }
 }

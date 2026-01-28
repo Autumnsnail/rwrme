@@ -265,6 +265,38 @@ public class MapExporter : MonoBehaviour
             }
             layer.AppendChild(platformLayer);
 
+            if(i==1)
+            {
+                XmlElement SpawnPointLayer = xmlDoc.CreateElement("g");
+                SpawnPointLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+                SpawnPointLayer.SetAttribute("id", "layer" + i.ToString() + "spawnpoints");
+                SpawnPointLayer.SetAttribute("label", inkscapeNs, "spawnpoints");
+                SpawnPointLayer.SetAttribute("style", "display:none");
+
+                for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+                {
+                    SpawnPoint sp = MetaMap.instance.defaultLayer.mapItems[j] as SpawnPoint;
+                    if (sp != null)
+                    {
+                        XmlElement spE = xmlDoc.CreateElement("rect");
+                        spE.SetAttribute("style", "fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new");
+                        spE.SetAttribute("id", sp.id);
+                        spE.SetAttribute("width", 4.9588485.ToString());
+                        spE.SetAttribute("height", 4.4664636.ToString());
+
+                        spE.SetAttribute("x", sp.position.x.ToString());
+                        spE.SetAttribute("y", sp.position.y.ToString());
+                        spE.SetAttribute("label", inkscapeNs, sp.id);
+                        XmlElement buiEDesc = xmlDoc.CreateElement("desc");
+                        buiEDesc.SetAttribute("id", "desc" + j.ToString());
+                        SpawnPointLayer.AppendChild(spE);
+                    }
+
+                }
+                layer.AppendChild(SpawnPointLayer);
+
+            }
+
             rootElement.AppendChild(layer);
         }
 

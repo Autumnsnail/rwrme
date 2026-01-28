@@ -115,9 +115,9 @@ public class MapImporter : MonoBehaviour
                                     dealWithTransform(trans, ref rotM, ref angle, ref offV,ref scale);
 
                                     position = rotM * position;
-                                    position = position + offV;
                                     position.x = position.x*scale.x;
                                     position.y = position.y*scale.y;
+                                    position = position + offV;
                                     cWidth = cWidth * scale.x;
                                     cHeight = cHeight * scale.y;
                                     if(cWidth<0)
@@ -305,7 +305,7 @@ public class MapImporter : MonoBehaviour
                                                         position = position + offV;
                                                         sp.position = position;
                                                         sp.size = new Vector2(5, 5);
-                                                        sp.layerIndex = number;
+                                                        sp.layerIndex = 1;
 
                                                         MetaMap.instance.defaultLayer.mapItems.Add(sp);
                                                     }

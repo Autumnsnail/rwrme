@@ -46,6 +46,8 @@ public class ToolController : MonoBehaviour
         tools.Add(new PlatformBasewallChanger("PlatformBasewallChanger")); //tool9 = pt baseWallType changer
         tools.Add(new PlatformHeightSetter("PlatformHeightSetter")); //tool 10 = pt heightSetter
         tools.Add(new BaseTool("PlatformHeightSetter",this)); //tool 11 = base drawer
+        tools.Add(new SpawnPointScatter("SP_Scatter"));//tool 12 SpawnPosition pointer
+        tools.Add(new SpawnPointEraser("SpawnPointEraser", this)); //tool 13 = SpawnerEraser
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -1211,4 +1213,121 @@ public class PlatformHeightSetter : Tool
         }
     }
 }
+public class SpawnPointScatter : Tool
+{
+    public SpawnPointScatter(string name) : base(name)
+    {
+
+    }
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        SpawnPoint sp = ToolController.inste.InsOnePref(MapImporter.instate.SpawnPointPref).GetComponent<SpawnPoint>();
+
+        sp.id = MetaMap.instance.getNewItemId("#spawnrect");
+
+        sp.position = MathOfRwrme.U3dPosToSvgPos(position);
+        sp.size = new Vector2(5, 5);
+        sp.layerIndex = 1;
+
+        MetaMap.instance.defaultLayer.mapItems.Add(sp);
+        sp.scatterThis();
+    }
+
+
+}
+public class SpawnPointEraser : Tool
+{
+    private ToolController controller;
+    private LineRenderer visualizer;
+    private Vector3 startPosition;
+    private Vector3 currentPosition;
+    private bool isDragging = false;
+
+    public SpawnPointEraser(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        Debug.Log($"开始拖选，起点: {position}");
+
+        startPosition = position;
+        currentPosition = position;
+        isDragging = true;
+
+        // 获取可视化器
+        visualizer = controller.GetDragVisualizer();
+        if (visualizer != null)
+        {
+            visualizer.enabled = true;
+            UpdateVisualizer();
+        }
+    }
+
+    public override void OnDragging(Vector3 position)
+    {
+        if (!isDragging) return;
+
+        currentPosition = position;
+        UpdateVisualizer();
+
+    }
+
+    public override void EndUse()
+    {
+        base.EndUse();
+
+        if (!isDragging) return;
+
+        isDragging = false;
+
+        if (visualizer != null)
+        {
+            visualizer.enabled = false;
+        }
+        Erase();
+    }
+
+    private void UpdateVisualizer()
+    {
+        if (visualizer == null) return;
+
+        float y = Mathf.Max(startPosition.y, currentPosition.y) + 10f;
+
+        Vector3 p1 = new Vector3(startPosition.x, y, startPosition.z);
+        Vector3 p2 = new Vector3(currentPosition.x, y, startPosition.z);
+        Vector3 p3 = new Vector3(currentPosition.x, y, currentPosition.z);
+        Vector3 p4 = new Vector3(startPosition.x, y, currentPosition.z);
+
+        visualizer.SetPosition(0, p1);
+        visualizer.SetPosition(1, p2);
+        visualizer.SetPosition(2, p3);
+        visualizer.SetPosition(3, p4);
+        visualizer.SetPosition(4, p1); // 闭合矩形
+
+        visualizer.startWidth = 1.5f;
+        visualizer.endWidth = 1.5f;
+    }
+
+    private void Erase()
+    {
+        for (int i = 0; i < MetaMap.instance.defaultLayer.mapItems.Count; i++)
+        {
+            if (MetaMap.instance.defaultLayer.mapItems[i].layerIndex > 1) break;
+            if(MetaMap.instance.defaultLayer.mapItems[i] is SpawnPoint sp)
+            {
+                if(MathOfRwrme.SvgPosToU3dPos(sp.position).x>startPosition.x && MathOfRwrme.SvgPosToU3dPos(sp.position).x < currentPosition.x && MathOfRwrme.SvgPosToU3dPos(sp.position).y < startPosition.z&& MathOfRwrme.SvgPosToU3dPos(sp.position).y > currentPosition.z)
+                {
+                    MetaMap.instance.defaultLayer.mapItems.RemoveAt(i);
+                    i--;
+                    GameObject.Destroy(sp.gameObject);
+                }
+            }
+        }
+
+    }
+
+}
+
 

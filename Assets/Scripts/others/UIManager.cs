@@ -22,9 +22,14 @@ public class UIManager : MonoBehaviour
     GameObject ddPS;//platformSerface
     GameObject ddWTP;//platformSerface
 
+    GameObject sEM;//spawnPoints
+
+    Canvas showingCanvas;
+
     List<GameObject> mms;
     void Start()
     {
+        showingCanvas = null;
         mms = new List<GameObject>();
         instance = this;    
         Debug.Log("UI Manager init");
@@ -46,6 +51,8 @@ public class UIManager : MonoBehaviour
         pEM = transform.Find("PlatformEditor").gameObject;
         mms.Add(pEM);//4
         ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
+        sEM = transform.Find("SpawnPointEditor").gameObject;
+        mms.Add(sEM);//5
 
     }
 
@@ -55,6 +62,16 @@ public class UIManager : MonoBehaviour
         
     }
 
+    public void changeShowingCanvas(Canvas canvas)
+    {
+        if(showingCanvas!=null)
+        {
+            showingCanvas.enabled = false;
+        }
+        showingCanvas = canvas;
+        if (showingCanvas == null) return;
+        showingCanvas.enabled = true;
+    }
     public void showMenuUseIndex(int index)
     {
         disVisableAll();

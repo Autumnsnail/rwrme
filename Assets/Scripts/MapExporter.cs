@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
 using System.Xml;           // .NET 标准 XML
 using System.Xml.Linq;
 using UnityEditor.Experimental.GraphView;      // LINQ to XML（更现代）
+using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class MapExporter : MonoBehaviour
 {
@@ -80,7 +81,7 @@ public class MapExporter : MonoBehaviour
 
         xmlDoc.AppendChild(rootElement);
 
-
+        //export map items(constructions)
         MetaMap.instance.defaultLayer.sortByIndex();
         int layC =  MetaMap.instance.defaultLayer.mapItems[MetaMap.instance.defaultLayer.mapItems.Count - 1].layerIndex;
         int mic = MetaMap.instance.defaultLayer.mapItems.Count;
@@ -264,8 +265,73 @@ public class MapExporter : MonoBehaviour
             }
             layer.AppendChild(platformLayer);
 
+            if(i==1)
+            {
+                XmlElement SpawnPointLayer = xmlDoc.CreateElement("g");
+                SpawnPointLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+                SpawnPointLayer.SetAttribute("id", "layer" + i.ToString() + "spawnpoints");
+                SpawnPointLayer.SetAttribute("label", inkscapeNs, "spawnpoints");
+                SpawnPointLayer.SetAttribute("style", "display:none");
+
+                for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+                {
+                    SpawnPoint sp = MetaMap.instance.defaultLayer.mapItems[j] as SpawnPoint;
+                    if (sp != null)
+                    {
+                        XmlElement spE = xmlDoc.CreateElement("rect");
+                        spE.SetAttribute("style", "fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new");
+                        spE.SetAttribute("id", sp.id);
+                        spE.SetAttribute("width", 4.9588485.ToString());
+                        spE.SetAttribute("height", 4.4664636.ToString());
+
+                        spE.SetAttribute("x", sp.position.x.ToString());
+                        spE.SetAttribute("y", sp.position.y.ToString());
+                        spE.SetAttribute("label", inkscapeNs, sp.id);
+                        XmlElement buiEDesc = xmlDoc.CreateElement("desc");
+                        buiEDesc.SetAttribute("id", "desc" + j.ToString());
+                        SpawnPointLayer.AppendChild(spE);
+                    }
+
+                }
+                layer.AppendChild(SpawnPointLayer);
+
+            }
+
             rootElement.AppendChild(layer);
         }
+
+        //export bases
+        XmlElement basesLayer = xmlDoc.CreateElement("g");
+        basesLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+        basesLayer.SetAttribute("id", "layerBases");
+        basesLayer.SetAttribute("label", inkscapeNs, "bases.default");
+        basesLayer.SetAttribute("insensitive",sodipodiNs, "true");
+        for (int i = 0; i < MetaMap.instance.baseLayer.mapItems.Count; i++)
+        {
+            Base cbsi = MetaMap.instance.baseLayer.mapItems[i] as Base;
+            XmlElement cbs = xmlDoc.CreateElement("rect");
+            cbs.SetAttribute("style", "opacity:0.26966289;fill:#ffff00;fill-opacity:1;stroke:none;display:inline");
+            cbs.SetAttribute("id", cbsi.id);
+            cbs.SetAttribute("width", (cbsi.size.x).ToString());
+            cbs.SetAttribute("height", (cbsi.size.y).ToString());
+
+            cbs.SetAttribute("x", "0");
+            cbs.SetAttribute("y", "0");
+            cbs.SetAttribute("label", inkscapeNs, "#rect"+ i.ToString() + "_base"  );
+            cbs.SetAttribute("transform", MathOfRwrme.angleToTransform(cbsi.rotation, cbsi.position));
+            XmlElement cbsEDesc = xmlDoc.CreateElement("desc");
+            cbsEDesc.SetAttribute("id", "desc_base" + i.ToString());
+            string baseDescStr = "name=" + cbsi._name + ";";
+            if(cbsi.factionIndex!=-1)
+            {
+                baseDescStr = baseDescStr + "faction_index=" + cbsi.factionIndex.ToString() + ";";
+            }
+            cbsEDesc.InnerText = baseDescStr;
+            cbs.AppendChild(cbsEDesc);
+            basesLayer.AppendChild(cbs);
+        }
+        rootElement.AppendChild(basesLayer);
+
 
         Debug.Log("MapExport");
         string fullPath = System.IO.Path.Combine(Application.dataPath, basePath, m_mm.m_metaTerrain.fileName);

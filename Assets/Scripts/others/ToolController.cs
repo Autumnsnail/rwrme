@@ -25,6 +25,7 @@ public class ToolController : MonoBehaviour
 
 
     public MapItem miSelected;
+    private MapItem lastMiS;
 
     // 用于存储复制的地图项信息（支持Building、Wall、Platform等）
     private MapItem copiedMapItem = null;
@@ -44,6 +45,9 @@ public class ToolController : MonoBehaviour
         tools.Add(new PlatformTypeChanger("PlatformTypeChanger", this)); //tool8 = pt changer
         tools.Add(new PlatformBasewallChanger("PlatformBasewallChanger")); //tool9 = pt baseWallType changer
         tools.Add(new PlatformHeightSetter("PlatformHeightSetter")); //tool 10 = pt heightSetter
+        tools.Add(new BaseTool("PlatformHeightSetter",this)); //tool 11 = base drawer
+        tools.Add(new SpawnPointScatter("SP_Scatter"));//tool 12 SpawnPosition pointer
+        tools.Add(new SpawnPointEraser("SpawnPointEraser", this)); //tool 13 = SpawnerEraser
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -91,6 +95,20 @@ public class ToolController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(lastMiS!=miSelected)
+        {
+            //selectAnothermi
+            Transform can = miSelected.transform.Find("Canvas");
+            if(can!=null)
+            {
+                UIManager.instance.changeShowingCanvas(can.gameObject.GetComponent<Canvas>());
+            }
+            else
+            {
+                UIManager.instance.changeShowingCanvas(null);
+            }
+        }
+        lastMiS = miSelected;
         if (Input.GetMouseButtonDown(0))
         {
             if (sdt.state != 0)
@@ -106,6 +124,10 @@ public class ToolController : MonoBehaviour
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                     RaycastHit hit;
                     int layerMask = 1 << 6;
+                    if(currentTool is SelecterTool)
+                    {
+                        layerMask = (1 << 6) | (1 << 7);
+                    }
                     if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
                     {
                         Vector3 hitPosition = hit.point;
@@ -213,6 +235,7 @@ public class ToolController : MonoBehaviour
     }
     public void setToolWithIndex(int ind)
     {
+        Debug.Log("ToolController:" + tools[ind].GetType().Name);
         currentTool = tools[ind];
     }
     public void setHeightSetter(int offset)
@@ -737,6 +760,116 @@ public class DrawerTool : Tool
     }
 
 }
+public class BaseTool : Tool
+{
+    private ToolController controller;
+    private LineRenderer visualizer;
+    private Vector3 startPosition;
+    private Vector3 currentPosition;
+    private bool isDragging = false;
+    private GameObject hittenObject;
+
+
+    public BaseTool(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        Debug.Log($"开始拖选，起点: {position}");
+
+        startPosition = position;
+        currentPosition = position;
+        hittenObject = hitO;
+        isDragging = true;
+
+        // 获取可视化器
+        visualizer = controller.GetDragVisualizer();
+        if (visualizer != null)
+        {
+            visualizer.enabled = true;
+            UpdateVisualizer();
+        }
+    }
+
+    public override void OnDragging(Vector3 position)
+    {
+        if (!isDragging) return;
+
+        currentPosition = position;
+        UpdateVisualizer();
+
+    }
+
+    public override void EndUse()
+    {
+        base.EndUse();
+
+        if (!isDragging) return;
+
+        isDragging = false;
+
+        if (visualizer != null)
+        {
+            visualizer.enabled = false;
+        }
+        createBase();
+    }
+
+    private void UpdateVisualizer()
+    {
+        if (visualizer == null) return;
+
+        float y = Mathf.Max(startPosition.y, currentPosition.y) + 10f;
+
+        Vector3 p1 = new Vector3(startPosition.x, y, startPosition.z);
+        Vector3 p2 = new Vector3(currentPosition.x, y, startPosition.z);
+        Vector3 p3 = new Vector3(currentPosition.x, y, currentPosition.z);
+        Vector3 p4 = new Vector3(startPosition.x, y, currentPosition.z);
+
+        visualizer.SetPosition(0, p1);
+        visualizer.SetPosition(1, p2);
+        visualizer.SetPosition(2, p3);
+        visualizer.SetPosition(3, p4);
+        visualizer.SetPosition(4, p1); // 闭合矩形
+
+        visualizer.startWidth = 1.5f;
+        visualizer.endWidth = 1.5f;
+    }
+
+    private void createBase()
+    {
+        GameObject go = ToolController.inste.InsOnePref(MapImporter.instate.BasePref);
+        Base bs = go.GetComponent<Base>();
+        Vector2 dis = MathOfRwrme.U3dPosToSvgPos(new Vector2(currentPosition.x, currentPosition.z)) - MathOfRwrme.U3dPosToSvgPos(new Vector2(startPosition.x, startPosition.z));
+        bs.position = MathOfRwrme.U3dPosToSvgPos(new Vector2(startPosition.x, startPosition.z));
+        if (Mathf.Approximately(dis.x, 0f)) dis.x = 0.001f;
+        if (Mathf.Approximately(dis.y, 0f)) dis.y = 0.001f;
+        bs.size = new Vector2(Mathf.Abs(dis.x), Mathf.Abs(dis.y));
+        
+        if(bs.size.x < 0f)
+        {
+            bs.size.x = bs.size.x * -1;
+            bs.position.x = bs.position.x - bs.size.x;
+        }
+        if (bs.size.y < 0f)
+        {
+            bs.size.y = bs.size.y * -1;
+            bs.position.y = bs.position.y - bs.size.y;
+        }
+
+
+        CtrlZer.instance.checkPoint();
+        bs.id = MetaMap.instance.getNewItemId("base");
+        bs._name = "newbase";
+        bs.factionIndex = -1;
+        MetaMap.instance.baseLayer.mapItems.Add(bs);
+        bs.scatterThis();
+        ToolController.inste.miSelected = bs;
+    }
+
+}
 public class RoofChangerTool : Tool
 {
     private ToolController controller;
@@ -1160,4 +1293,121 @@ public class PlatformHeightSetter : Tool
         }
     }
 }
+public class SpawnPointScatter : Tool
+{
+    public SpawnPointScatter(string name) : base(name)
+    {
+
+    }
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        SpawnPoint sp = ToolController.inste.InsOnePref(MapImporter.instate.SpawnPointPref).GetComponent<SpawnPoint>();
+
+        sp.id = MetaMap.instance.getNewItemId("#spawnrect");
+
+        sp.position = MathOfRwrme.U3dPosToSvgPos(position);
+        sp.size = new Vector2(5, 5);
+        sp.layerIndex = 1;
+
+        MetaMap.instance.defaultLayer.mapItems.Add(sp);
+        sp.scatterThis();
+    }
+
+
+}
+public class SpawnPointEraser : Tool
+{
+    private ToolController controller;
+    private LineRenderer visualizer;
+    private Vector3 startPosition;
+    private Vector3 currentPosition;
+    private bool isDragging = false;
+
+    public SpawnPointEraser(string name, ToolController toolController) : base(name)
+    {
+        controller = toolController;
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        Debug.Log($"开始拖选，起点: {position}");
+
+        startPosition = position;
+        currentPosition = position;
+        isDragging = true;
+
+        // 获取可视化器
+        visualizer = controller.GetDragVisualizer();
+        if (visualizer != null)
+        {
+            visualizer.enabled = true;
+            UpdateVisualizer();
+        }
+    }
+
+    public override void OnDragging(Vector3 position)
+    {
+        if (!isDragging) return;
+
+        currentPosition = position;
+        UpdateVisualizer();
+
+    }
+
+    public override void EndUse()
+    {
+        base.EndUse();
+
+        if (!isDragging) return;
+
+        isDragging = false;
+
+        if (visualizer != null)
+        {
+            visualizer.enabled = false;
+        }
+        Erase();
+    }
+
+    private void UpdateVisualizer()
+    {
+        if (visualizer == null) return;
+
+        float y = Mathf.Max(startPosition.y, currentPosition.y) + 10f;
+
+        Vector3 p1 = new Vector3(startPosition.x, y, startPosition.z);
+        Vector3 p2 = new Vector3(currentPosition.x, y, startPosition.z);
+        Vector3 p3 = new Vector3(currentPosition.x, y, currentPosition.z);
+        Vector3 p4 = new Vector3(startPosition.x, y, currentPosition.z);
+
+        visualizer.SetPosition(0, p1);
+        visualizer.SetPosition(1, p2);
+        visualizer.SetPosition(2, p3);
+        visualizer.SetPosition(3, p4);
+        visualizer.SetPosition(4, p1); // 闭合矩形
+
+        visualizer.startWidth = 1.5f;
+        visualizer.endWidth = 1.5f;
+    }
+
+    private void Erase()
+    {
+        for (int i = 0; i < MetaMap.instance.defaultLayer.mapItems.Count; i++)
+        {
+            if (MetaMap.instance.defaultLayer.mapItems[i].layerIndex > 1) break;
+            if(MetaMap.instance.defaultLayer.mapItems[i] is SpawnPoint sp)
+            {
+                if(MathOfRwrme.SvgPosToU3dPos(sp.position).x>startPosition.x && MathOfRwrme.SvgPosToU3dPos(sp.position).x < currentPosition.x && MathOfRwrme.SvgPosToU3dPos(sp.position).y < startPosition.z&& MathOfRwrme.SvgPosToU3dPos(sp.position).y > currentPosition.z)
+                {
+                    MetaMap.instance.defaultLayer.mapItems.RemoveAt(i);
+                    i--;
+                    GameObject.Destroy(sp.gameObject);
+                }
+            }
+        }
+
+    }
+
+}
+
 

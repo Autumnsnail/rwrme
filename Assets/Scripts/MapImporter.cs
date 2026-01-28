@@ -8,10 +8,12 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.LowLevel;
 using UnityEngine.UIElements;
 using static MapImporter;
+using static UnityEditor.Experimental.GraphView.GraphView;
 using static UnityEditor.PlayerSettings;
 
 
@@ -23,8 +25,8 @@ public class MapImporter : MonoBehaviour
     }
 
     [Header("��������")]
-    public string basePath = "map"; // ����·��
-    public string filePrefix = "terrain5_"; // �ļ�ǰ׺
+    public string basePath = "map";
+    public string filePrefix = "terrain5_";
 
     private Dictionary<MapType, GrayScaleImage> loadedMaps = new Dictionary<MapType, GrayScaleImage>();
 
@@ -34,6 +36,8 @@ public class MapImporter : MonoBehaviour
     public GameObject PlatformPref;
     public GameObject WallPref;
     public GameObject SubWallPref;
+    public GameObject BasePref;
+    public GameObject SpawnPointPref;
 
     void Start()
     {
@@ -88,6 +92,85 @@ public class MapImporter : MonoBehaviour
             {
                 if (node is XmlElement ele)
                 {
+                    if (ele.GetAttribute("inkscape:label").StartsWith("bases.default"))
+                    {
+                        Debug.Log("import bases");
+                        foreach (XmlNode baseNode in ele.ChildNodes)
+                        {
+                            if (baseNode.Name == "rect")
+                            {
+                                if (baseNode is XmlElement baseXml)
+                                {
+                                    float cWidth = float.Parse(baseXml.GetAttribute("width"));
+                                    float cHeight = float.Parse(baseXml.GetAttribute("height"));
+                                    float cX = float.Parse(baseXml.GetAttribute("x"));
+                                    float cY = float.Parse(baseXml.GetAttribute("y"));
+                                    Vector2 position = new Vector2(cX, cY);
+
+                                    string trans = baseXml.GetAttribute("transform");
+                                    float angle = 0;
+                                    Matrix2x2 rotM = Matrix2x2.CreateRotation(0);
+                                    Vector2 offV = Vector2.zero;
+                                    Vector2 scale = Vector2.one;
+                                    dealWithTransform(trans, ref rotM, ref angle, ref offV,ref scale);
+
+                                    position = rotM * position;
+                                    position.x = position.x*scale.x;
+                                    position.y = position.y*scale.y;
+                                    position = position + offV;
+                                    cWidth = cWidth * scale.x;
+                                    cHeight = cHeight * scale.y;
+                                    if(cWidth<0)
+                                    {
+                                        position.x += cWidth;
+                                        cWidth *= -1;
+                                    }
+                                    if (cHeight < 0)
+                                    {
+                                        position.y += cHeight;
+                                        cHeight *= -1;
+                                    }
+                                       
+
+                                    //x+a(k-x)
+                                    //(1-a)x+ak
+
+                                    string name="";
+                                    int factionIndex=-1;
+                                    foreach (XmlNode de in baseNode.ChildNodes)
+                                    {
+                                        var properties = de.InnerText.Split(';')
+                                            .Where(p => p.Contains('='))
+                                            .Select(p => p.Split('=', 2))
+                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                        if (properties.ContainsKey("name"))
+                                        {
+                                            name = properties["name"];
+                                        }
+                                        else
+                                        {
+                                        }
+                                        if (properties.ContainsKey("faction_index"))
+                                        {
+                                            factionIndex = int.Parse( properties["faction_index"]);
+                                        }
+                                        else
+                                        {
+                                            factionIndex = -1;
+                                        }
+                                    }
+                                    GameObject go = Instantiate(BasePref);
+                                    Base gc = go.GetComponent<Base>();
+                                    gc._name = name;
+                                    gc.factionIndex = factionIndex;
+                                    gc.id = MetaMap.instance.getNewItemId("base");
+                                    gc.position = position;
+                                    gc.size = new Vector2(cWidth, cHeight);
+                                    MetaMap.instance.baseLayer.mapItems.Add(gc);
+                                }
+                            }
+                        }
+                    }
                     if (ele.GetAttribute("inkscape:label").StartsWith("layer"))
                     {
                         string lnm = ele.GetAttribute("inkscape:label");
@@ -106,7 +189,6 @@ public class MapImporter : MonoBehaviour
                         {
                             dealWithTransform(ele.GetAttribute("transform"), ref rmLayer, ref raLayer, ref ovLayer);
                         }
-
 
                         foreach (XmlNode snode in node.ChildNodes)
                         {
@@ -130,7 +212,7 @@ public class MapImporter : MonoBehaviour
                                         {
                                             if (r is XmlElement bRect)
                                             {
-                                                if (bRect.GetAttribute("id").StartsWith("buildingrect"))
+                                                if (bRect.GetAttribute("id").StartsWith("building"))
                                                 {
                                                     float cWidth = float.Parse(bRect.GetAttribute("width"));
                                                     float cHeight = float.Parse(bRect.GetAttribute("height"));
@@ -194,12 +276,40 @@ public class MapImporter : MonoBehaviour
                                                     }
                                                     GameObject go = Instantiate(BuildingPref);
                                                     Building gc = go.GetComponent<Building>();
-                                                    if (number == 1) Debug.Log("i got this ");
-                                                    gc.reinit(BheightF, bmaterial, position, angle, new Vector2(cWidth, cHeight), MetaMap.instance.getNewItemId("buildingrect"), number);
+                                                    //if (number == 1) Debug.Log("i got this ");
+                                                    gc.reinit(BheightF, bmaterial, position, angle, new Vector2(cWidth, cHeight), MetaMap.instance.getNewItemId("building"), number);
                                                     gc.roof = roof;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(gc);
                                                 }
+                                                if(bRect.GetAttribute("inkscape:label").StartsWith("#spawnrect"))
+                                                {
+                                                    if(r.ChildNodes.Count==0)
+                                                    {
+                                                        //solider SpawnPoint
+                                                        SpawnPoint sp = Instantiate(SpawnPointPref).GetComponent<SpawnPoint>();
 
+                                                        sp.id = MetaMap.instance.getNewItemId("#spawnrect");
+
+                                                        float cX = float.Parse(bRect.GetAttribute("x"));
+                                                        float cY = float.Parse(bRect.GetAttribute("y"));
+                                                        Vector2 position = new Vector2(cX, cY);
+
+                                                        string trans = bRect.GetAttribute("transform");
+                                                        float angle = 0;
+                                                        Matrix2x2 rotM = Matrix2x2.CreateRotation(0);
+                                                        Vector2 offV = Vector2.zero;
+                                                        Vector2 scale = Vector2.one;
+                                                        dealWithTransform(trans, ref rotM, ref angle, ref offV, ref scale);
+                                                        position = position * scale;
+                                                        position = rotM * position;
+                                                        position = position + offV;
+                                                        sp.position = position;
+                                                        sp.size = new Vector2(5, 5);
+                                                        sp.layerIndex = 1;
+
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(sp);
+                                                    }
+                                                }
                                             }
                                         }
                                         if (r.Name == "g")
@@ -228,7 +338,6 @@ public class MapImporter : MonoBehaviour
 
                                             if (pnl.Count == 2)
                                             {
-                                                Debug.Log("MapImporter: may be a platform:" + pnl[1].Attributes["id"].Value);
 
                                                 XmlNode descNode = pnl[0].FirstChild;
                                                 var properties = descNode.InnerText.Split(';')
@@ -286,7 +395,7 @@ public class MapImporter : MonoBehaviour
 
                                                 if (properties.ContainsKey("type"))
                                                 {
-                                                    if(properties["type"].StartsWith("deck"))
+                                                    if (properties["type"].StartsWith("deck"))
                                                     {
                                                         pf.isDeck = true;
                                                     }
@@ -296,13 +405,13 @@ public class MapImporter : MonoBehaviour
                                                     if (properties["mode"].StartsWith("bridge"))
                                                     {
                                                         pf.isDeck = true;
-                                                        
+
                                                     }
                                                 }
                                                 if (properties.ContainsKey("base_wall_template"))
                                                 { pf.base_wall_template = properties["base_wall_template"]; }
                                                 else
-                                                { pf.base_wall_template = "StoneWall1"; } 
+                                                { pf.base_wall_template = "StoneWall1"; }
                                                 if (properties.ContainsKey("top_material")) pf.top_material = properties["top_material"];
                                                 if (properties.ContainsKey("wall_height")) { pf.wall_height = float.Parse(properties["wall_height"]); }
                                                 else
@@ -371,6 +480,7 @@ public class MapImporter : MonoBehaviour
         }
 
         //CtrlZer.instance.checkPoint();
+        if (Syncer.instence != null) Syncer.instence.ScatterMapItems();
     }
 
     public int dealWithLayerLabel(string label)
@@ -403,7 +513,7 @@ public class MapImporter : MonoBehaviour
             return -1;
         }
     }
-    public void dealWithTransform(string trs, ref Matrix2x2 rotate, ref float angle, ref Vector2 offset)
+    public void dealWithTransform(string trs, ref Matrix2x2 rotate, ref float angle, ref Vector2 offset,ref Vector2 scale)
     {
         rotate = Matrix2x2.CreateRotation(0);
         //identitilyeze
@@ -411,6 +521,7 @@ public class MapImporter : MonoBehaviour
         //zero offset
         angle = 0;
         //zero rotate
+        scale = Vector2.one;
 
         //translate matrix rotate
         if (trs.StartsWith("translate"))
@@ -443,11 +554,24 @@ public class MapImporter : MonoBehaviour
             angle = float.Parse(cleanString);
             rotate = Matrix2x2.CreateRotation(angle);
         }
+        else if(trs.StartsWith("scale"))
+        {
+            string cleanString = trs.Replace("scale(", "").Replace(")", "");
+            string[] parts = cleanString.Split(',');
+            float x = float.Parse(parts[0]);
+            float y = float.Parse(parts[1]);
+            scale = new Vector2(x, y);
+        }
         else
         {
             Debug.LogError("com not found:" + trs);
         }
 
+    }
+    public void dealWithTransform(string trs, ref Matrix2x2 rotate, ref float angle, ref Vector2 offset)
+    {
+        Vector2 scale=Vector2.one;
+        dealWithTransform(trs, ref rotate, ref angle, ref offset, ref scale);
     }
     public void ImportAllMaps()
     {
@@ -509,7 +633,7 @@ public class MapImporter : MonoBehaviour
             for (int x = 0; x < width; x++)
             {
                 int index = y * width + x;
-                float grayValue = pixels[index].grayscale; 
+                float grayValue = pixels[index].grayscale;
                 grayImage[y, x] = grayValue;
             }
         }

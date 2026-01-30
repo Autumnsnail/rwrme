@@ -38,6 +38,7 @@ public class MapImporter : MonoBehaviour
     public GameObject SubWallPref;
     public GameObject BasePref;
     public GameObject SpawnPointPref;
+    public GameObject RockPref;
 
     void Start()
     {
@@ -303,12 +304,52 @@ public class MapImporter : MonoBehaviour
                                                         position = position * scale;
                                                         position = rotM * position;
                                                         position = position + offV;
+
+                                                        angle += raGroup;
+                                                        position = rmGroup * position;
+                                                        position += ovGroup;
+
+                                                        angle += raLayer;
+                                                        position = rmLayer * position;
+                                                        position += ovLayer;
+
                                                         sp.position = position;
                                                         sp.size = new Vector2(5, 5);
                                                         sp.layerIndex = 1;
 
                                                         MetaMap.instance.defaultLayer.mapItems.Add(sp);
                                                     }
+                                                }
+                                                if (bRect.GetAttribute("inkscape:label").StartsWith("#rock"))
+                                                {
+                                                    float cX = float.Parse(bRect.GetAttribute("x"));
+                                                    float cY = float.Parse(bRect.GetAttribute("y"));
+                                                    Vector2 position = new Vector2(cX, cY);
+
+                                                    string trans = bRect.GetAttribute("transform");
+                                                    float angle = 0;
+                                                    Matrix2x2 rotM = Matrix2x2.CreateRotation(0);
+                                                    Vector2 offV = Vector2.zero;
+                                                    Vector2 scale = Vector2.one;
+                                                    dealWithTransform(trans, ref rotM, ref angle, ref offV,ref scale);
+                                                    position = rotM * position;
+                                                    position = position + offV;
+                                                    position = position * scale;
+
+                                                    angle += raGroup;
+                                                    position = rmGroup * position;
+                                                    position += ovGroup;
+
+                                                    angle += raLayer;
+                                                    position = rmLayer * position;
+                                                    position += ovLayer;
+
+                                                    GameObject go = Instantiate(RockPref);
+                                                    Rock rc = go.GetComponent<Rock>();
+                                                    rc.position = position;
+                                                    rc.id = MetaMap.instance.getNewItemId("#rock");
+                                                    rc.layerIndex = number;
+                                                    MetaMap.instance.defaultLayer.mapItems.Add(rc);
                                                 }
                                             }
                                         }

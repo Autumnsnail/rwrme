@@ -265,8 +265,49 @@ public class MapExporter : MonoBehaviour
             }
             layer.AppendChild(platformLayer);
 
-            if(i==1)
+            //add rocks here
+            XmlElement RockLayer = xmlDoc.CreateElement("g");
+            RockLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            RockLayer.SetAttribute("id", "layer" + i.ToString() + "rocks");
+            RockLayer.SetAttribute("label", inkscapeNs, "rocks");
+            RockLayer.SetAttribute("style", "display:inline");
+            bool has = false;
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
             {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Rock rk = mi as Rock;
+                if(rk == null) continue;
+                has = true;
+                XmlElement ekE = xmlDoc.CreateElement("rect");
+                ekE.SetAttribute("ry", "10");
+                ekE.SetAttribute("rx", "10");
+                ekE.SetAttribute("label", inkscapeNs, rk.id);
+                ekE.SetAttribute("x", rk.position.x.ToString());
+                ekE.SetAttribute("y", rk.position.y.ToString());
+                ekE.SetAttribute("height", "8.5977106");
+                ekE.SetAttribute("width", "10.030663");
+                ekE.SetAttribute("id", rk.id);
+                ekE.SetAttribute("style", "opacity:1;fill:#999999;fill-opacity:1;display:inline;enable-background:new");
+
+                XmlElement stpDesc = xmlDoc.CreateElement("desc");
+                stpDesc.SetAttribute("id", "desc_" + rk.id);
+                stpDesc.InnerText = "rock";
+                ekE.AppendChild( stpDesc );
+
+                XmlElement stpTitle = xmlDoc.CreateElement("title");
+                stpTitle.SetAttribute("id", "title_" + rk.id);
+                stpTitle.InnerText = "rock";
+                ekE.AppendChild(stpTitle);
+
+                RockLayer.AppendChild(ekE);
+            }
+            if (has) layer.AppendChild(RockLayer);
+
+
+                if (i==1)
+            {
+                //add spawnpoints here
                 XmlElement SpawnPointLayer = xmlDoc.CreateElement("g");
                 SpawnPointLayer.SetAttribute("groupmode", inkscapeNs, "layer");
                 SpawnPointLayer.SetAttribute("id", "layer" + i.ToString() + "spawnpoints");

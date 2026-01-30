@@ -46,8 +46,8 @@ public class ToolController : MonoBehaviour
         tools.Add(new PlatformBasewallChanger("PlatformBasewallChanger")); //tool9 = pt baseWallType changer
         tools.Add(new PlatformHeightSetter("PlatformHeightSetter")); //tool 10 = pt heightSetter
         tools.Add(new BaseTool("PlatformHeightSetter",this)); //tool 11 = base drawer
-        tools.Add(new SpawnPointScatter("SP_Scatter"));//tool 12 SpawnPosition pointer
-        tools.Add(new SpawnPointEraser("SpawnPointEraser", this)); //tool 13 = SpawnerEraser
+        tools.Add(new ItemScatter("Scatter"));//tool 12 SpawnPosition pointer
+        tools.Add(new Eraser("Eraser", this)); //tool 13 = SpawnerEraser
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -180,7 +180,11 @@ public class ToolController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Delete))
         {
-            MetaMap.instance.defaultLayer.mapItems.Remove(miSelected);
+            if(!MetaMap.instance.defaultLayer.mapItems.Remove(miSelected))
+            {
+                //base
+                MetaMap.instance.baseLayer.mapItems.Remove(miSelected);
+            }
             Destroy(miSelected.gameObject.transform.root.gameObject);
         }
 
@@ -244,6 +248,30 @@ public class ToolController : MonoBehaviour
         heightChanger hc = tools[5] as heightChanger;
         hc.offcc = offset;
     }
+
+    public void setScatterType(string type)
+    {
+        System.Type tp = System.Type.GetType(type);
+        if (tp != null)
+        {
+            Debug.Log("ToolController set type as " + tp.Name);
+            ItemScatter isr =  tools[12] as ItemScatter;
+            isr.setType(tp);
+            setToolWithIndex(12);
+        }
+    }
+    public void setEraserType(string type)
+    {
+        System.Type tp = System.Type.GetType(type);
+        if (tp != null)
+        {
+            Debug.Log("ToolController set type as " + tp.Name);
+            Eraser isr = tools[13] as Eraser;
+            isr.setType(tp);
+            setToolWithIndex(13);
+        }
+    }
+
     public GameObject InsOnePref(GameObject partten)
     {
         return Instantiate(partten);
@@ -1213,37 +1241,61 @@ public class PlatformHeightSetter : Tool
         }
     }
 }
-public class SpawnPointScatter : Tool
+public class ItemScatter : Tool
 {
-    public SpawnPointScatter(string name) : base(name)
+    private System.Type itemType;
+    public ItemScatter(string name) : base(name)
     {
 
     }
     public override void startUse(Vector3 position, GameObject hitO)
     {
-        SpawnPoint sp = ToolController.inste.InsOnePref(MapImporter.instate.SpawnPointPref).GetComponent<SpawnPoint>();
+        if(itemType == typeof(SpawnPoint))
+        {
+            SpawnPoint sp = ToolController.inste.InsOnePref(MapImporter.instate.SpawnPointPref).GetComponent<SpawnPoint>();
 
-        sp.id = MetaMap.instance.getNewItemId("#spawnrect");
+            sp.id = MetaMap.instance.getNewItemId("#spawnrect");
 
-        sp.position = MathOfRwrme.U3dPosToSvgPos(position);
-        sp.size = new Vector2(5, 5);
-        sp.layerIndex = 1;
+            sp.position = MathOfRwrme.U3dPosToSvgPos(position);
+            sp.size = new Vector2(5, 5);
+            sp.layerIndex = 1;
 
-        MetaMap.instance.defaultLayer.mapItems.Add(sp);
-        sp.scatterThis();
+            MetaMap.instance.defaultLayer.mapItems.Add(sp);
+            sp.scatterThis();
+        }
+        if(itemType == typeof(Rock))
+        {
+            Rock rc = ToolController.inste.InsOnePref(MapImporter.instate.RockPref).GetComponent<Rock>();
+            rc.id = MetaMap.instance.getNewItemId("#rock");
+            rc.layerIndex = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                rc.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+            rc.position = MathOfRwrme.U3dPosToSvgPos(position);
+            MetaMap.instance.defaultLayer.mapItems.Add(rc);
+            rc.scatterThis();
+
+        }
     }
 
+    public void setType(System.Type type)
+    {
+        itemType = type;
+    }
 
 }
-public class SpawnPointEraser : Tool
+public class Eraser : Tool
 {
     private ToolController controller;
     private LineRenderer visualizer;
     private Vector3 startPosition;
     private Vector3 currentPosition;
     private bool isDragging = false;
+    
+    private System.Type itemType;
 
-    public SpawnPointEraser(string name, ToolController toolController) : base(name)
+    public Eraser(string name, ToolController toolController) : base(name)
     {
         controller = toolController;
     }
@@ -1315,7 +1367,8 @@ public class SpawnPointEraser : Tool
         for (int i = 0; i < MetaMap.instance.defaultLayer.mapItems.Count; i++)
         {
             if (MetaMap.instance.defaultLayer.mapItems[i].layerIndex > 1) break;
-            if(MetaMap.instance.defaultLayer.mapItems[i] is SpawnPoint sp)
+            if(MetaMap.instance.defaultLayer.mapItems[i].GetType()!=itemType)continue;
+            if(MetaMap.instance.defaultLayer.mapItems[i] is MeRect sp)
             {
                 if(MathOfRwrme.SvgPosToU3dPos(sp.position).x>startPosition.x && MathOfRwrme.SvgPosToU3dPos(sp.position).x < currentPosition.x && MathOfRwrme.SvgPosToU3dPos(sp.position).y < startPosition.z&& MathOfRwrme.SvgPosToU3dPos(sp.position).y > currentPosition.z)
                 {
@@ -1328,6 +1381,10 @@ public class SpawnPointEraser : Tool
 
     }
 
+    public void setType(System.Type type)
+    {
+        itemType = type;
+    }
 }
 
 

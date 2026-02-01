@@ -19,6 +19,9 @@ public class MetaMap : MonoBehaviour
     public Layer defaultLayer;//default: L1,L2,L3,L4...
     public Layer baseLayer;//base.default
 
+    public string m_settings;
+
+
     public List<BuildingType> buildingTypes;
     public List<WallType> wallTypes;
     public List<PlatformSerfaceType> PST;
@@ -111,6 +114,8 @@ public class MetaMap : MonoBehaviour
         
     }
 }
+
+
 public class GrayScaleImage
 {
     [SerializeField] private float[,] data;

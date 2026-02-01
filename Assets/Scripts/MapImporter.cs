@@ -7,10 +7,12 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.LowLevel;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 using static MapImporter;
 using static UnityEditor.Experimental.GraphView.GraphView;
@@ -77,7 +79,6 @@ public class MapImporter : MonoBehaviour
         gameObject.GetComponent<MetaMap>().m_metaTerrain.fileName = mapName;
 
     }
-
     public void importObjects()
     {
         Debug.Log("start to Import Objects");
@@ -116,9 +117,9 @@ public class MapImporter : MonoBehaviour
                                     dealWithTransform(trans, ref rotM, ref angle, ref offV,ref scale);
 
                                     position = rotM * position;
-                                    position.x = position.x*scale.x;
-                                    position.y = position.y*scale.y;
+                                    position = position*scale;
                                     position = position + offV;
+                                    
                                     cWidth = cWidth * scale.x;
                                     cHeight = cHeight * scale.y;
                                     if(cWidth<0)
@@ -131,10 +132,7 @@ public class MapImporter : MonoBehaviour
                                         position.y += cHeight;
                                         cHeight *= -1;
                                     }
-                                       
-
-                                    //x+a(k-x)
-                                    //(1-a)x+ak
+                                    
 
                                     string name="";
                                     int factionIndex=-1;
@@ -166,6 +164,7 @@ public class MapImporter : MonoBehaviour
                                     gc.factionIndex = factionIndex;
                                     gc.id = MetaMap.instance.getNewItemId("base");
                                     gc.position = position;
+                                    gc.rotation = angle;
                                     gc.size = new Vector2(cWidth, cHeight);
                                     MetaMap.instance.baseLayer.mapItems.Add(gc);
                                 }
@@ -523,7 +522,39 @@ public class MapImporter : MonoBehaviour
         //CtrlZer.instance.checkPoint();
         if (Syncer.instence != null) Syncer.instence.ScatterMapItems();
     }
+    public void importGeneralSetting()
+    {
+        Debug.Log("start to Import GeneralSettings");
+        XmlDocument xmlDoc = new XmlDocument();
+        string xmlPath = Path.Combine(Application.dataPath, basePath, "objects.svg");
+        Debug.Log("LoadSvg at " + xmlPath);
+        xmlDoc.Load(xmlPath);
+        XmlElement root = xmlDoc.DocumentElement;
+        foreach (XmlNode node in root.ChildNodes )
+        {
+            if(node.Name =="g" && node is XmlElement end)
+            {
+                if(end.GetAttribute("inkscape:label").StartsWith("materials"))
+                {
+                    foreach (XmlNode recs in end.ChildNodes)
+                    {
+                        if(recs.Name == "rect"&& recs is XmlElement rece)
+                        {
+                            if(rece.GetAttribute("inkscape:label").StartsWith("#general"))
+                            {
+                                Debug.Log("find gs :" + rece.ToString());
+                                XmlElement desc = rece.ChildNodes[0] as XmlElement;
+                                MetaMap.instance.m_settings = desc.InnerText;
+                                UIManager.instance.mms[7].transform.GetChild(0).gameObject.GetComponent<TMPro.TMP_InputField>().SetTextWithoutNotify(desc.InnerText);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
+    }
     public int dealWithLayerLabel(string label)
     {
         if (!label.StartsWith("layer")) return -1;
@@ -563,6 +594,8 @@ public class MapImporter : MonoBehaviour
         angle = 0;
         //zero rotate
         scale = Vector2.one;
+
+        if (trs == string.Empty) return;
 
         //translate matrix rotate
         if (trs.StartsWith("translate"))
@@ -605,7 +638,7 @@ public class MapImporter : MonoBehaviour
         }
         else
         {
-            Debug.LogError("com not found:" + trs);
+            Debug.Log("com not found:" + trs);
         }
 
     }
@@ -616,29 +649,10 @@ public class MapImporter : MonoBehaviour
     }
     public void ImportAllMaps()
     {
+        importGeneralSetting();
         importObjects();
         importTerrain();
-        foreach (MapType mapType in System.Enum.GetValues(typeof(MapType)))
-        {
-            string fileName = filePrefix + mapType.ToString().ToLower() + ".png";
-            string filePath = Path.Combine(Application.dataPath, basePath, fileName);
 
-            if (File.Exists(filePath))
-            {
-                GrayScaleImage grayImage = LoadGrayScaleImage(filePath);
-                if (grayImage != null)
-                {
-                    loadedMaps[mapType] = grayImage;
-                    Debug.Log($"�Ѽ���: {fileName} ({grayImage.Width}x{grayImage.Height})");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"�ļ�������: {filePath}");
-            }
-        }
-
-        Debug.Log($"������ɣ������� {loadedMaps.Count} �ŻҶ�ͼ");
     }
 
     private GrayScaleImage LoadGrayScaleImage(string filePath)

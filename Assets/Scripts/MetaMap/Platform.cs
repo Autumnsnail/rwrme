@@ -11,16 +11,42 @@ public class Platform : PathPair
     {
         List<Vector2> points = new List<Vector2>();
 
-        // 清理数据
-        pathData = pathData.Trim().ToLower();
-
-        // 分割命令和参数
         string[] parts = pathData.Split(new char[] { ' ', ',', '\t', '\n' },
                                         StringSplitOptions.RemoveEmptyEntries);
 
         Vector2 currentPoint = Vector2.zero;
-        bool isRelative = false;
 
+        int cmdType = 0;//0 for m,1 for M
+
+        for(int i=0;i<parts.Length; i++)
+        {
+            string token = parts[i];
+            if (char.IsLetter(token[0]))
+            {
+                switch (token[0])
+                {
+                    case 'm':
+                        cmdType = 0;
+                        break;
+                    case 'M':
+                        cmdType = 1;
+                        break;
+                }
+            }
+            else
+            {
+                if (i + 1 < parts.Length)
+                {
+                    float x = float.Parse(parts[i]);
+                    float y = float.Parse(parts[++i]);
+                    if(cmdType==0) currentPoint += new Vector2(x, y);
+                    if (cmdType == 1) currentPoint = new Vector2(x, y);
+                    points.Add(currentPoint);
+                }
+            }
+            
+        }
+        /*
         for (int i = 0; i < parts.Length; i++)
         {
             string token = parts[i];
@@ -70,6 +96,25 @@ public class Platform : PathPair
                             points.Add(currentPoint);
                         }
                         break;
+                    case 'M':
+                        isRelative = false;
+                        if (i + 2 < parts.Length)
+                        {
+                            float x = float.Parse(parts[++i]);
+                            float y = float.Parse(parts[++i]);
+
+                            if (points.Count == 0) // 第一个点
+                            {
+                                currentPoint = new Vector2(x, y);
+                                points.Add(currentPoint);
+                            }
+                            else // 后续点
+                            {
+                                currentPoint = new Vector2(x, y);
+                                points.Add(currentPoint);
+                            }
+                        }
+                        break;
 
                     case 'c': // 贝塞尔曲线（这里简化为直线）
                     case 's':
@@ -102,7 +147,7 @@ public class Platform : PathPair
                 }
             }
         }
-
+        */
         return points;
     }
 

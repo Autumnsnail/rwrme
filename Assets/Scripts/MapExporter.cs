@@ -77,9 +77,37 @@ public class MapExporter : MonoBehaviour
         rootElement.SetAttribute("style", "display:inline;enable-background:new");
         rootElement.SetAttribute("export-filename", inkscapeNs, "G:\\PROGRAMMING\\cplusplus\\runningwithrifles_svn\\simplified3d\\Release\\media\\packages\\vanilla\\maps\\map2\\_rwr_height.png");
 
-
-
         xmlDoc.AppendChild(rootElement);
+
+        XmlDocument templateDoc = new XmlDocument(); 
+        string templatePath = Path.Combine(Application.dataPath, "templates", "vn_no_bti.xml");
+        XmlReaderSettings settings = new XmlReaderSettings();
+        settings.DtdProcessing = DtdProcessing.Ignore;
+        settings.ValidationType = ValidationType.None; 
+        using (XmlReader reader = XmlReader.Create(templatePath, settings))
+        {
+            templateDoc.Load(reader);
+        }
+
+        XmlElement template = templateDoc.DocumentElement.ChildNodes[0] as XmlElement;
+        
+        XmlNode importedNode = xmlDoc.ImportNode(template, true);
+
+        XmlElement generalRect = xmlDoc.CreateElement("rect");
+        XmlElement grdesc = xmlDoc.CreateElement("desc");
+        grdesc.InnerText = MetaMap.instance.m_settings;
+        grdesc.SetAttribute("id", "descGeneralSettings");
+        generalRect.AppendChild(grdesc);
+        generalRect.SetAttribute("label", inkscapeNs, "#general");
+        generalRect.SetAttribute("x", "-2030.0349");
+        generalRect.SetAttribute("y", "-1.3721894");
+        generalRect.SetAttribute("height", "50.507629");
+        generalRect.SetAttribute("width", "77.781746");
+        generalRect.SetAttribute("id", "rectGeneralSettings");
+        generalRect.SetAttribute("style", "fill:#ffd6b0;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:5;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new");
+        importedNode.AppendChild(generalRect);
+
+        rootElement.AppendChild(importedNode);
 
         //export map items(constructions)
         MetaMap.instance.defaultLayer.sortByIndex();
@@ -373,7 +401,6 @@ public class MapExporter : MonoBehaviour
         }
         rootElement.AppendChild(basesLayer);
 
-
         Debug.Log("MapExport");
         string fullPath = System.IO.Path.Combine(Application.dataPath, basePath, m_mm.m_metaTerrain.fileName);
         System.IO.File.WriteAllBytes(fullPath, m_mm.m_metaTerrain.data.convToPng());
@@ -381,7 +408,6 @@ public class MapExporter : MonoBehaviour
 
         Debug.Log("MapExporter:exportSVG!");
         xmlDoc.Save(xmlFilePath);
-        // 同时导出地形高度图
         exportTerrainHeightmap();
     }
 

@@ -10,31 +10,26 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
 
-    GameObject pMM;//pin manager menu
-    GameObject rMM;//refpic
-    GameObject bEM;//building 
     GameObject ddBT;//building drop down
 
-    GameObject wEM;//wall
     GameObject ddWT;//wall dd
 
-    GameObject pEM;//platform
     GameObject ddPS;//platformSerface
     GameObject ddWTP;//platformSerface
 
-    GameObject sEM;//spawnPoints
-    GameObject rEM;//spawnPoints
 
     Canvas showingCanvas;
 
-    List<GameObject> mms;
+    public List<GameObject> mms;
     void Start()
     {
         showingCanvas = null;
-        mms = new List<GameObject>();
         instance = this;    
         Debug.Log("UI Manager init");
-        pMM =  transform.Find("PinManager").gameObject;
+        ddBT = transform.Find("BuildingEditor/BuildingTypes").gameObject;
+        ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
+        ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
+        /*
         mms.Add(pMM);//0
         if (pMM == null )
         {
@@ -44,19 +39,17 @@ public class UIManager : MonoBehaviour
         mms.Add(rMM);//1
         bEM = transform.Find("BuildingEditor").gameObject;
         mms.Add(bEM);//2
-        ddBT = transform.Find("BuildingEditor/BuildingTypes").gameObject;
         wEM = transform.Find("WallEditor").gameObject;
         mms.Add(wEM);//3
         ddWT = transform.Find("WallEditor/WallTypes").gameObject;
-        ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
         pEM = transform.Find("PlatformEditor").gameObject;
         mms.Add(pEM);//4
-        ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
         sEM = transform.Find("SpawnPointEditor").gameObject;
         mms.Add(sEM);//5
         rEM = transform.Find("RockEditor").gameObject;
         mms.Add(rEM);//6
-
+        gEM = transform.Find("settingManager").gameObject;
+        */
     }
 
     // Update is called once per frame
@@ -97,23 +90,7 @@ public class UIManager : MonoBehaviour
         wEM.transform.localScale = Vector3.zero;
         */
     }
-    public void enablePinManager()
-    {
-        disVisableAll();
-        pMM.transform.localScale = new Vector3(1f, 1f, 1f);
-    }
-    public void enableRefManager()
-    {
-        disVisableAll();
-        rMM.transform.localScale = new Vector3(1f, 1f, 1f);
 
-    }
-
-    public void enableBuildingEditor()
-    {
-        disVisableAll();
-        bEM.transform.localScale = Vector3.one;
-    }
     public void updatebBT()
     {
         Debug.Log("UIManager:update bBt");
@@ -198,6 +175,10 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void setGeneralSetting(string s)
+    {
+        MetaMap.instance.m_settings = s;
+    }
     public void setPlatformHeight(string height)
     {
         float h = float.Parse(height);

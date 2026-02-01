@@ -12,6 +12,8 @@ public class Syncer : MonoBehaviour
 
     public GameObject toggleConstructions;
     public GameObject toggleSpawnPoints;
+    public GameObject uiOfGeneralInfo;
+
 
     // Start is called before the first frame update
     void Start()
@@ -164,6 +166,10 @@ public class Syncer : MonoBehaviour
         {
             mi.gameObject.SetActive(stat);
         }
+    }
+    public void SyncGeneralSettingInfo()
+    {
+
     }
     public void changeBaseVisState(bool stat)
     {

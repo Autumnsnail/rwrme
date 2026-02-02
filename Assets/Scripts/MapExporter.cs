@@ -98,7 +98,7 @@ public class MapExporter : MonoBehaviour
         grdesc.InnerText = MetaMap.instance.m_settings;
         grdesc.SetAttribute("id", "descGeneralSettings");
         generalRect.AppendChild(grdesc);
-        generalRect.SetAttribute("label", inkscapeNs, "#general");
+        generalRect.SetAttribute("label",inkscapeNs, "#general");
         generalRect.SetAttribute("x", "-2030.0349");
         generalRect.SetAttribute("y", "-1.3721894");
         generalRect.SetAttribute("height", "50.507629");
@@ -408,6 +408,15 @@ public class MapExporter : MonoBehaviour
 
         Debug.Log("MapExporter:exportSVG!");
         xmlDoc.Save(xmlFilePath);
+
+        string xmlContent = File.ReadAllText(xmlFilePath);
+
+        // 在特定标签前添加换行
+        xmlContent = xmlContent.Replace("inkscape:label=\"#general\"", "\ninkscape:label=\"#general\"");
+
+        File.WriteAllText(xmlFilePath, xmlContent);
+
+
         exportTerrainHeightmap();
     }
 

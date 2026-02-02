@@ -25,6 +25,7 @@ public class MetaMap : MonoBehaviour
     public List<BuildingType> buildingTypes;
     public List<WallType> wallTypes;
     public List<PlatformSerfaceType> PST;
+    public List<MeshTemplate> meshTemplates;
 
     public List<string> allowedExtensions = new List<string> { "default"};//import later
 
@@ -40,6 +41,8 @@ public class MetaMap : MonoBehaviour
         wallTypes = new List<WallType>();
 
         PST = new List<PlatformSerfaceType>();
+
+        meshTemplates = new List<MeshTemplate>();
         setBts();
         setWts();
 
@@ -260,6 +263,18 @@ public class MeRect :MapItem//this class won,t use directly
         id = key;
         layerIndex = lI;
     }
+    public override void scale(float scaler)
+    {
+        size = size * (1 + 0.03f * scaler);
+    }
+    public override void grab(Vector2 vector2)
+    {
+        position = position + vector2;
+    }
+    public override void rotate(float scaler)
+    {
+        rotation = rotation + scaler * -2;
+    }
 }
 public class PathPair:MapItem
 {
@@ -305,6 +320,12 @@ public class WallType:mapItemType
     }
 }
 
+public class MeshTemplate
+{
+    public string name="empty";
+    public Color color=Color.white;
+    public Vector3 extend = Vector3.one;
+}
 public class PlatformSerfaceType: mapItemType
 {
     public Material material;

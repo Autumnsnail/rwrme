@@ -48,6 +48,7 @@ public class ToolController : MonoBehaviour
         tools.Add(new BaseTool("PlatformHeightSetter",this)); //tool 11 = base drawer
         tools.Add(new ItemScatter("Scatter"));//tool 12 SpawnPosition pointer
         tools.Add(new Eraser("Eraser", this)); //tool 13 = SpawnerEraser
+        tools.Add(new MeshScatter("Mesh Scatter")); //tool 14 = MeshScatter
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -272,6 +273,11 @@ public class ToolController : MonoBehaviour
         }
     }
 
+    public void setMeshScatterTool(int index)
+    {
+        MeshScatter ms = tools[14] as MeshScatter;
+        ms.ChooseThis(MetaMap.instance.meshTemplates[index].name);
+    }
     public GameObject InsOnePref(GameObject partten)
     {
         return Instantiate(partten);
@@ -1282,6 +1288,39 @@ public class ItemScatter : Tool
     public void setType(System.Type type)
     {
         itemType = type;
+    }
+
+}
+public class MeshScatter : Tool
+{
+    string templateName = null;
+    public MeshScatter(string name) : base(name)
+    {
+
+    }
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        MeMesh ms = ToolController.inste.InsOnePref(MapImporter.instate.MeshPref).GetComponent<MeMesh>();
+
+        ms.id = MetaMap.instance.getNewItemId("#mesh");
+        ms.layerIndex = 1;
+        if (hitO.GetComponent<MapItem>() != null)
+        {
+        ms.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+        }
+
+        ms.position = MathOfRwrme.U3dPosToSvgPos(position);
+        ms.templated = true;
+        ms.template_ref = templateName;
+
+        MetaMap.instance.defaultLayer.mapItems.Add(ms);
+        ms.scatterThis();
+    }
+
+    public void ChooseThis(string name)
+    {
+        templateName = name;
+        ToolController.inste.setToolWithIndex(14);
     }
 
 }

@@ -16,6 +16,7 @@ public class UIManager : MonoBehaviour
 
     GameObject ddPS;//platformSerface
     GameObject ddWTP;//platformSerface
+    GameObject ddMt;// mesh templates
 
 
     Canvas showingCanvas;
@@ -29,6 +30,7 @@ public class UIManager : MonoBehaviour
         ddBT = transform.Find("BuildingEditor/BuildingTypes").gameObject;
         ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
         ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
+        ddMt = transform.Find("MeshEditor/MeshTemplates").gameObject;
         /*
         mms.Add(pMM);//0
         if (pMM == null )
@@ -175,6 +177,16 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    public void updateMTD()
+    {
+        TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
+        dd.ClearOptions();
+        List<MeshTemplate> btp = MetaMap.instance.meshTemplates;
+        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
+        dd.AddOptions(optionTexts);
+    }
+
+    
     public void setGeneralSetting(string s)
     {
         MetaMap.instance.m_settings = s;

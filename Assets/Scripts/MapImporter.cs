@@ -41,6 +41,7 @@ public class MapImporter : MonoBehaviour
     public GameObject BasePref;
     public GameObject SpawnPointPref;
     public GameObject RockPref;
+    public GameObject MeshPref;
 
     void Start()
     {
@@ -350,6 +351,59 @@ public class MapImporter : MonoBehaviour
                                                     rc.layerIndex = number;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(rc);
                                                 }
+                                                if (bRect.GetAttribute("inkscape:label").StartsWith("#mesh"))
+                                                {
+                                                    float cX = float.Parse(bRect.GetAttribute("x"));
+                                                    float cY = float.Parse(bRect.GetAttribute("y"));
+                                                    Vector2 position = new Vector2(cX, cY);
+                                                    string trans = bRect.GetAttribute("transform");
+                                                    float angle = 0;
+                                                    Matrix2x2 rotM = Matrix2x2.CreateRotation(0);
+                                                    Vector2 offV = Vector2.zero;
+                                                    Vector2 scale = Vector2.one;
+                                                    dealWithTransform(trans, ref rotM, ref angle, ref offV, ref scale);
+                                                    position = rotM * position;
+                                                    position = position + offV;
+                                                    position = position * scale;
+
+                                                    angle += raGroup;
+                                                    position = rmGroup * position;
+                                                    position += ovGroup;
+
+                                                    angle += raLayer;
+                                                    position = rmLayer * position;
+                                                    position += ovLayer;
+
+                                                    XmlElement thdesc = bRect.FirstChild as XmlElement;
+                                                    if (thdesc == null) continue;
+                                                    Debug.Log("MapImporter : " + thdesc.InnerText);
+                                                    var properties = thdesc.InnerText.Split(';')
+                                                        .Where(p => p.Contains('='))
+                                                        .Select(p => p.Split('=', 2))
+                                                        .GroupBy(kv => kv[0].Trim())
+                                                        .ToDictionary(
+                                                            g => g.Key,
+                                                            g => g.Last()[1].Trim()
+                                                        );
+
+                                                    if (!properties.ContainsKey("template"))
+                                                    {
+                                                        continue;
+                                                    }
+                                                    else
+                                                    {
+                                                        if (!MetaMap.instance.meshTemplates.Any(template => template.name == properties["template"])) continue;
+                                                        GameObject go = Instantiate(MeshPref);
+                                                        MeMesh ms = go.GetComponent<MeMesh>();
+                                                        ms.position = position;
+                                                        ms.rotation = angle;
+                                                        ms.id = MetaMap.instance.getNewItemId("#mesh");
+                                                        ms.layerIndex = number;
+                                                        ms.template_ref = properties["template"];
+                                                        ms.templated = true;
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(ms);
+                                                    }
+                                                }
                                             }
                                         }
                                         if (r.Name == "g")
@@ -585,6 +639,63 @@ public class MapImporter : MonoBehaviour
             return -1;
         }
     }
+    public void importTemplates()
+    {
+        Debug.Log("start to Import GeneralSettings");
+        XmlDocument xmlDoc = new XmlDocument();
+        string templatePath = Path.Combine(Application.dataPath, "templates", "vn_no_bti.xml");
+        xmlDoc.Load(templatePath);
+        XmlElement root = xmlDoc.DocumentElement;
+        XmlElement eg = root.FirstChild as XmlElement;
+        if (eg == null) { Debug.Log("wrong xml"); }
+        foreach (XmlNode node in eg.ChildNodes)
+        {
+            if (node.Name != "rect") continue;
+            XmlElement rect = node as XmlElement;
+            if(rect == null) continue;
+            if(rect.GetAttribute("inkscape:label").StartsWith("#mesh_template"))
+            {
+                var properties = rect.FirstChild.InnerText.Split(';')
+                    .Where(p => p.Contains('='))
+                    .Select(p => p.Split('=', 2))
+                    .GroupBy(kv => kv[0].Trim())
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Last()[1].Trim()
+                    );
+                if (!properties.ContainsKey("name")) continue;
+                MeshTemplate template = new MeshTemplate(); 
+                template.name = properties["name"];
+                if (properties.ContainsKey("collision_model_size"))
+                {
+                    Debug.Log("MapImporter get collision_model_size: " + properties["collision_model_size"]);
+                    string inputS = Regex.Replace(properties["collision_model_size"], @"\s+", " ").Trim();
+                    string[] parts = inputS.Split(' ');
+                    Vector3 vector = new Vector3(
+                        float.Parse(parts[0]),
+                        float.Parse(parts[1]),
+                        float.Parse(parts[2])
+                    );
+                    template.extend = vector;
+                }
+                template.color = StringToColor(template.name);
+                MetaMap.instance.meshTemplates.Add(template);
+            }
+        }
+
+    }
+    public static Color StringToColor(string str)
+    {
+        uint hash = 0;
+        foreach (char c in str) hash = hash * 31 + c;
+
+        float r = (hash & 0xFF) / 255f;
+        float g = ((hash >> 8) & 0xFF) / 255f;
+        float b = ((hash >> 16) & 0xFF) / 255f;
+
+        return new Color(r * 0.7f + 0.3f, g * 0.7f + 0.3f, b * 0.7f + 0.3f);
+    }
+
     public void dealWithTransform(string trs, ref Matrix2x2 rotate, ref float angle, ref Vector2 offset,ref Vector2 scale)
     {
         rotate = Matrix2x2.CreateRotation(0);
@@ -649,10 +760,10 @@ public class MapImporter : MonoBehaviour
     }
     public void ImportAllMaps()
     {
+        importTemplates();
         importGeneralSetting();
         importObjects();
         importTerrain();
-
     }
 
     private GrayScaleImage LoadGrayScaleImage(string filePath)
@@ -714,7 +825,6 @@ public class MapImporter : MonoBehaviour
         return new Dictionary<MapType, GrayScaleImage>(loadedMaps);
     }
 
-    // ��ӡͳ����Ϣ
     public void PrintStats()
     {
         foreach (var pair in loadedMaps)

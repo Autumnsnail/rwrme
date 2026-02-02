@@ -332,8 +332,42 @@ public class MapExporter : MonoBehaviour
             }
             if (has) layer.AppendChild(RockLayer);
 
+            //add templated mesh here
+            XmlElement meshLayer = xmlDoc.CreateElement("g");
+            meshLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            meshLayer.SetAttribute("id", "layer" + i.ToString() + "meshs");
+            meshLayer.SetAttribute("label", inkscapeNs, "meshs");
+            meshLayer.SetAttribute("style", "display:inline");
+            has = false;
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                MeMesh ms = mi as MeMesh;
+                if (ms == null) continue;
+                has = true;
+                XmlElement ekE = xmlDoc.CreateElement("rect");
+                ekE.SetAttribute("label", inkscapeNs, "#mesh");
+                ekE.SetAttribute("x", "0");
+                ekE.SetAttribute("y", "0");
+                ekE.SetAttribute("height", ms.gameObject.transform.localScale.z.ToString());
+                ekE.SetAttribute("width", ms.gameObject.transform.localScale.x.ToString());
+                ekE.SetAttribute("transform", MathOfRwrme.angleToTransform(ms.rotation, ms.position));
+                ekE.SetAttribute("id", ms.id);
+                ekE.SetAttribute("style", "fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new");
 
-                if (i==1)
+                XmlElement stpDesc = xmlDoc.CreateElement("desc");
+                stpDesc.SetAttribute("id", "desc_" + ms.id);
+                stpDesc.InnerText = "template = "+ms.template_ref+";";
+                ekE.AppendChild(stpDesc);
+
+
+                meshLayer.AppendChild(ekE);
+            }
+            if (has) layer.AppendChild(meshLayer);
+
+
+            if (i==1)
             {
                 //add spawnpoints here
                 XmlElement SpawnPointLayer = xmlDoc.CreateElement("g");
@@ -360,7 +394,6 @@ public class MapExporter : MonoBehaviour
                         buiEDesc.SetAttribute("id", "desc" + j.ToString());
                         SpawnPointLayer.AppendChild(spE);
                     }
-
                 }
                 layer.AppendChild(SpawnPointLayer);
 

@@ -119,7 +119,7 @@ public class ToolController : MonoBehaviour
             else
             {
 
-                if (Input.mousePosition.x / Screen.width < 0.85)
+                if ( (Input.mousePosition.x / Screen.width < 0.85 ) && (Input.mousePosition.x / Screen.width > 0.39 || Input.mousePosition.y / Screen.height > 0.28) )
                 {
 
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -1268,6 +1268,7 @@ public class ItemScatter : Tool
 
             MetaMap.instance.defaultLayer.mapItems.Add(sp);
             sp.scatterThis();
+            ToolController.inste.miSelected = sp;
         }
         if(itemType == typeof(Rock))
         {
@@ -1281,8 +1282,40 @@ public class ItemScatter : Tool
             rc.position = MathOfRwrme.U3dPosToSvgPos(position);
             MetaMap.instance.defaultLayer.mapItems.Add(rc);
             rc.scatterThis();
+            ToolController.inste.miSelected = rc;
 
         }
+        if(itemType == typeof(Ladder))
+        {
+            Ladder ld = ToolController.inste.InsOnePref(MapImporter.instate.LadderPref).GetComponent<Ladder>();
+            ld.id = MetaMap.instance.getNewItemId("#ladder");
+            ld.layerIndex = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                ld.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+            ld.position = MathOfRwrme.U3dPosToSvgPos(position);
+            MetaMap.instance.defaultLayer.mapItems.Add(ld);
+            ld.scatterThis();
+            ToolController.inste.miSelected = ld;
+
+        }
+        if (itemType == typeof(Vehicle))
+        {
+            Vehicle sp = ToolController.inste.InsOnePref(MapImporter.instate.VehiclePref).GetComponent<Vehicle>();
+
+            sp.id = MetaMap.instance.getNewItemId("spawn_vehicle");
+
+            sp.position = MathOfRwrme.U3dPosToSvgPos(position)- new Vector2(1.445f*2,1.667f*2);
+            sp.layerIndex = 1;
+            sp.taged = true;
+            sp.key = "jeep";
+
+            MetaMap.instance.defaultLayer.mapItems.Add(sp);
+            sp.scatterThis();
+            ToolController.inste.miSelected = sp;
+        }
+        
     }
 
     public void setType(System.Type type)
@@ -1405,7 +1438,6 @@ public class Eraser : Tool
     {
         for (int i = 0; i < MetaMap.instance.defaultLayer.mapItems.Count; i++)
         {
-            if (MetaMap.instance.defaultLayer.mapItems[i].layerIndex > 1) break;
             if(MetaMap.instance.defaultLayer.mapItems[i].GetType()!=itemType)continue;
             if(MetaMap.instance.defaultLayer.mapItems[i] is MeRect sp)
             {
@@ -1417,7 +1449,6 @@ public class Eraser : Tool
                 }
             }
         }
-
     }
 
     public void setType(System.Type type)

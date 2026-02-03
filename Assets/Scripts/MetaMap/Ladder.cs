@@ -5,16 +5,16 @@ using UnityEngine;
 using System.Linq;
 using UnityEditor.Profiling;
 
-public class Rock : MeRect
+public class Ladder : MeRect
 {
-    public Rock(Vector2 pos, float r, Vector2 s, string key, int lI) : base(pos, r, s, key, lI)
+    public Ladder(Vector2 pos, float r, Vector2 s, string key, int lI) : base(pos, r, s, key, lI)
     {
     }
 
     public override string getInfoText()
     {
         string info = "";
-        info += "Rock\n";
+        info += "Ladder\n";
         info += "id = " + id + "\n";
 
         return info;
@@ -27,7 +27,8 @@ public class Rock : MeRect
             Vector3 troPos=new Vector3(0,0,0);
             VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex,ref troPos);
             go.transform.localPosition = troPos;
-            go.transform.localScale = Vector3.one;
+            go.transform.localScale = new Vector3(1,2.5f,1);
+            go.transform.rotation = Quaternion.Euler(0f, -1 * rotation, 0f);
         }
     }
 }

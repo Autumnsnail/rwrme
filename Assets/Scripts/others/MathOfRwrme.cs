@@ -30,7 +30,17 @@ public class MathOfRwrme
         u3dV2 = u3dV2 / 2;
         return u3dV2;
     }
+    public static Color StringToColor(string str)
+    {
+        uint hash = 0;
+        foreach (char c in str) hash = hash * 31 + c;
 
+        float r = (hash & 0xFF) / 255f;
+        float g = ((hash >> 8) & 0xFF) / 255f;
+        float b = ((hash >> 16) & 0xFF) / 255f;
+
+        return new Color(r * 0.7f + 0.3f, g * 0.7f + 0.3f, b * 0.7f + 0.3f);
+    }
     public static Vector2 U3dPosToSvgPos(Vector2 u3dV2)
     {
         u3dV2 *= 2;

@@ -366,6 +366,34 @@ public class MapExporter : MonoBehaviour
             }
             if (has) layer.AppendChild(meshLayer);
 
+            //add ladders here
+            XmlElement LadderLayer = xmlDoc.CreateElement("g");
+            LadderLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            LadderLayer.SetAttribute("id", "layer" + i.ToString() + "ladders");
+            LadderLayer.SetAttribute("label", inkscapeNs, "ladders");
+            LadderLayer.SetAttribute("style", "display:inline");
+            has = false;
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Ladder ld = mi as Ladder;
+                if (ld == null) continue;
+                has = true;
+                XmlElement ekE = xmlDoc.CreateElement("rect");
+                ekE.SetAttribute("label", inkscapeNs, "#ladder");
+                ekE.SetAttribute("x", 0.ToString());
+                ekE.SetAttribute("y", 0.ToString());
+                ekE.SetAttribute("height", "2.25");
+                ekE.SetAttribute("width", "6");
+                ekE.SetAttribute("transform", MathOfRwrme.angleToTransform(ld.rotation, ld.position));
+                ekE.SetAttribute("id", ld.id);
+                ekE.SetAttribute("style", "opacity:0.79775277;fill:#2cffe7;fill-opacity:1;fill-rule:nonzero;stroke:none;display:inline;enable-background:new");
+
+                LadderLayer.AppendChild(ekE);
+            }
+            if (has) layer.AppendChild(LadderLayer);
+
 
             if (i==1)
             {
@@ -390,12 +418,48 @@ public class MapExporter : MonoBehaviour
                         spE.SetAttribute("x", sp.position.x.ToString());
                         spE.SetAttribute("y", sp.position.y.ToString());
                         spE.SetAttribute("label", inkscapeNs, sp.id);
-                        XmlElement buiEDesc = xmlDoc.CreateElement("desc");
-                        buiEDesc.SetAttribute("id", "desc" + j.ToString());
                         SpawnPointLayer.AppendChild(spE);
                     }
                 }
                 layer.AppendChild(SpawnPointLayer);
+
+                //add vehicles here
+                XmlElement VehicleLayer = xmlDoc.CreateElement("g");
+                VehicleLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+                VehicleLayer.SetAttribute("id", "layer" + i.ToString() + "vehicles");
+                VehicleLayer.SetAttribute("label", inkscapeNs, "vehicles");
+                VehicleLayer.SetAttribute("style", "display:none");
+
+                for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+                {
+                    Vehicle vc = MetaMap.instance.defaultLayer.mapItems[j] as Vehicle;
+                    if (vc != null)
+                    {
+                        XmlElement spE = xmlDoc.CreateElement("rect");
+                        spE.SetAttribute("style", "fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new");
+                        spE.SetAttribute("id", vc.id);
+                        spE.SetAttribute("width", 5.7888808.ToString());
+                        spE.SetAttribute("height", 6.6684999.ToString());
+
+                        spE.SetAttribute("x", 0.ToString());
+                        spE.SetAttribute("y", 0.ToString());
+                        spE.SetAttribute("label", "");
+                        spE.SetAttribute("transform", MathOfRwrme.angleToTransform(vc.rotation, vc.position));
+                        XmlElement vehiDesc = xmlDoc.CreateElement("desc");
+                        vehiDesc.SetAttribute("id", "desc_vehicle" + j.ToString());
+                        if(vc.taged)
+                        {
+                            vehiDesc.InnerText = "type = vehicle;tag = " +vc.key+ ";";
+                        }
+                        else
+                        {
+                            vehiDesc.InnerText = "type = vehicle;key = " + vc.key + ";";
+                        }
+                        spE.AppendChild(vehiDesc);
+                        VehicleLayer.AppendChild(spE);
+                    }
+                }
+                layer.AppendChild(VehicleLayer);
 
             }
 

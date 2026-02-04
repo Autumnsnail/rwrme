@@ -28,8 +28,10 @@ public class MeMesh : MeRect
             if (templated)
             {
                 MeshTemplate foundTemplate = MetaMap.instance.meshTemplates.FirstOrDefault(template => template.name == template_ref);
-                go.transform.localScale = foundTemplate.extend;
-                go.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.color = foundTemplate.color;
+                go.transform.localScale = new Vector3 (size.x/2,foundTemplate.extend.y,size.y/2);
+                go.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.color = new Color(foundTemplate.color.r, foundTemplate.color.g, foundTemplate.color.b,0.5f);
+                go.transform.GetChild(1).gameObject.GetComponent<Renderer>().material.color = foundTemplate.color;
+                go.transform.GetChild(1).localScale = new Vector3 (foundTemplate.extend.x / go.transform.localScale.x, foundTemplate.extend.y / go.transform.localScale.y, foundTemplate.extend.z / go.transform.localScale.z);
             }
         }
 

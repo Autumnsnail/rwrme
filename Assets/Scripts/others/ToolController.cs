@@ -5,6 +5,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditor.TerrainTools;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
@@ -49,6 +50,8 @@ public class ToolController : MonoBehaviour
         tools.Add(new ItemScatter("Scatter"));//tool 12 SpawnPosition pointer
         tools.Add(new Eraser("Eraser", this)); //tool 13 = SpawnerEraser
         tools.Add(new MeshScatter("Mesh Scatter")); //tool 14 = MeshScatter
+        tools.Add(new TerrainMaterialPainter("Terrain painter")); //tool 15 = terrainPainter
+        
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -119,7 +122,7 @@ public class ToolController : MonoBehaviour
             else
             {
 
-                if ( (Input.mousePosition.x / Screen.width < 0.85 ) && (Input.mousePosition.x / Screen.width > 0.39 || Input.mousePosition.y / Screen.height > 0.28) )
+                if ( (Input.mousePosition.x / Screen.width < 0.82 ) && (Input.mousePosition.x / Screen.width > 0.21 || Input.mousePosition.y / Screen.height > 0.23) )
                 {
 
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -273,6 +276,16 @@ public class ToolController : MonoBehaviour
         }
     }
 
+    public void setTPterHei(string hei)
+    {
+        TerrainMaterialPainter tmp =  tools[15] as TerrainMaterialPainter;
+        tmp.tarind =  int.Parse(hei);
+    }
+    public void setTPterRng(string ran)
+    {
+        TerrainMaterialPainter tmp = tools[15] as TerrainMaterialPainter;
+        tmp.radius = float.Parse(ran);
+    }
     public void setMeshScatterTool(int index)
     {
         MeshScatter ms = tools[14] as MeshScatter;
@@ -1315,7 +1328,39 @@ public class ItemScatter : Tool
             sp.scatterThis();
             ToolController.inste.miSelected = sp;
         }
-        
+        if (itemType == typeof(ItemSupply))
+        {
+            ItemSupply ld = ToolController.inste.InsOnePref(MapImporter.instate.ItemSupplyPref).GetComponent<ItemSupply>();
+            ld.id = MetaMap.instance.getNewItemId("item_supply");
+            ld.layerIndex = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                ld.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+            ld.position = MathOfRwrme.U3dPosToSvgPos(position);
+            ld.size = new Vector2(4, 4);
+            MetaMap.instance.defaultLayer.mapItems.Add(ld);
+            ld.scatterThis();
+            ToolController.inste.miSelected = ld;
+
+        }
+        if (itemType == typeof(Crate))
+        {
+            Crate ld = ToolController.inste.InsOnePref(MapImporter.instate.CratePref).GetComponent<Crate>();
+            ld.id = MetaMap.instance.getNewItemId("crate");
+            ld.layerIndex = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                ld.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+            ld.position = MathOfRwrme.U3dPosToSvgPos(position);
+            ld.size = new Vector2(4.9588485f, 4.4664636f);
+            MetaMap.instance.defaultLayer.mapItems.Add(ld);
+            ld.scatterThis();
+            ToolController.inste.miSelected = ld;
+
+        }
+
     }
 
     public void setType(System.Type type)
@@ -1334,7 +1379,7 @@ public class MeshScatter : Tool
     public override void startUse(Vector3 position, GameObject hitO)
     {
         MeMesh ms = ToolController.inste.InsOnePref(MapImporter.instate.MeshPref).GetComponent<MeMesh>();
-
+        
         ms.id = MetaMap.instance.getNewItemId("#mesh");
         ms.layerIndex = 1;
         if (hitO.GetComponent<MapItem>() != null)
@@ -1344,6 +1389,7 @@ public class MeshScatter : Tool
 
         ms.position = MathOfRwrme.U3dPosToSvgPos(position);
         ms.templated = true;
+        ms.size = MetaMap.instance.meshTemplates.Find(x => x.name == templateName).size;
         ms.template_ref = templateName;
 
         MetaMap.instance.defaultLayer.mapItems.Add(ms);
@@ -1454,6 +1500,85 @@ public class Eraser : Tool
     public void setType(System.Type type)
     {
         itemType = type;
+    }
+}
+
+public class TerrainMaterialPainter : Tool
+{
+    public int tarind=3;
+    public bool underUse = false;
+    private Vector2 curPos;
+    private Color tarCol;
+    public float radius = 20;
+    private Texture2D tex;
+
+    public TerrainMaterialPainter(string name) : base(name)
+    {
+    }
+
+    public void DrawCircleOnTexture(Texture2D texture,Vector2 pos ,float width,float height, Color color)
+    {
+        pos = new Vector2(pos.x/2, (1024 - pos.y)/2+512);
+        float scaleX = texture.width / width;
+        float scaleY = texture.height / height;
+
+        int pixelCenterX = Mathf.RoundToInt(pos.x * scaleX);
+        int pixelCenterY = Mathf.RoundToInt(pos.y * scaleY);
+        int pixelRadius = Mathf.RoundToInt(radius * Mathf.Min(scaleX, scaleY));
+
+        // 2. 计算边界
+        int left = Mathf.Max(0, pixelCenterX - pixelRadius);
+        int right = Mathf.Min(texture.width - 1, pixelCenterX + pixelRadius);
+        int top = Mathf.Max(0, pixelCenterY - pixelRadius);
+        int bottom = Mathf.Min(texture.height - 1, pixelCenterY + pixelRadius);
+
+        int regionWidth = right - left + 1;
+        int regionHeight = bottom - top + 1;
+
+        int radiusSquared = pixelRadius * pixelRadius;
+
+        for (int y = top; y <= bottom; y++)
+        {
+            int dy = y - pixelCenterY;
+            int dySquared = dy * dy;
+
+            for (int x = left; x <= right; x++)
+            {
+                int dx = x - pixelCenterX;
+                if (dx * dx + dySquared <= radiusSquared)
+                {
+                    texture.SetPixel(x, y, color);
+                }
+            }
+        }
+
+        texture.Apply();
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (tarind == 0) tarCol = new Color(0, 0, 0, 1);
+        if (tarind == 1) tarCol = new Color(1, 0, 0, 1);
+        if (tarind == 2) tarCol = new Color(1, 1, 0, 1);
+        if (tarind == 3) tarCol = new Color(1, 1, 1, 1);
+        if (tarind == 4) tarCol = new Color(1, 1, 1, 0);
+        Terrain terrain = Terrain.activeTerrain;
+        tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
+        underUse = true;
+        curPos = MathOfRwrme.U3dPosToSvgPos(position);
+        DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol);
+    }
+
+    public override void OnDragging(Vector3 position)
+    {
+        if (!underUse) return;
+        curPos = MathOfRwrme.U3dPosToSvgPos(position);
+        DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol);
+    }
+
+    public override void EndUse()
+    {
+        underUse = false;
     }
 }
 

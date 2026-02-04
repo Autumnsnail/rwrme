@@ -12,7 +12,7 @@ public class Syncer : MonoBehaviour
 
     public GameObject toggleConstructions;
     public GameObject toggleSpawnPoints;
-    public GameObject uiOfGeneralInfo;
+    public GameObject toggleMeshs;
 
 
     // Start is called before the first frame update
@@ -161,7 +161,8 @@ public class Syncer : MonoBehaviour
     public void changeConstructionVisState(bool stat)
     {
         toggleConstructions.GetComponent<Toggle>().isOn = stat;
-        if (!stat) changeSpawnPointVisState(stat);
+        toggleSpawnPoints.GetComponent<Toggle>().SetIsOnWithoutNotify(stat);
+        toggleMeshs.GetComponent<Toggle>().SetIsOnWithoutNotify(stat);
         foreach (MapItem mi in MetaMap.instance.defaultLayer.mapItems)
         {
             mi.gameObject.SetActive(stat);
@@ -182,11 +183,19 @@ public class Syncer : MonoBehaviour
 
     public void changeSpawnPointVisState(bool stat)
     {
-        toggleSpawnPoints.GetComponent<Toggle>().isOn = stat;
-        if (stat) changeConstructionVisState(stat);
         foreach (MapItem mi in MetaMap.instance.defaultLayer.mapItems)
         {
             if(mi is SpawnPoint)
+            {
+                mi.gameObject.SetActive(stat);
+            }
+        }
+    }
+    public void changeMeshsVisState(bool stat)
+    {
+        foreach (MapItem mi in MetaMap.instance.defaultLayer.mapItems)
+        {
+            if (mi is MeMesh)
             {
                 mi.gameObject.SetActive(stat);
             }

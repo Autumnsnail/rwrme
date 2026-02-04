@@ -273,7 +273,7 @@ public class DualModeCameraController : MonoBehaviour
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0 && cam != null)
         {
-            cam.orthographicSize -= scroll * zoomSpeed;
+            cam.orthographicSize -= scroll * zoomSpeed* cam.orthographicSize*0.005f;
             cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minOrthoSize, maxOrthoSize);
             orthographicSize = cam.orthographicSize;
         }

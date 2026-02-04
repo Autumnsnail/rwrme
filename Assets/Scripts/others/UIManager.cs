@@ -29,7 +29,6 @@ public class UIManager : MonoBehaviour
         Debug.Log("UI Manager init");
         ddBT = transform.Find("BuildingEditor/BuildingTypes").gameObject;
         ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
-        ddPS = transform.Find("PlatformEditor/PlatformTypes").gameObject;
         ddMt = transform.Find("MeshEditor/MeshTemplates").gameObject;
         /*
         mms.Add(pMM);//0
@@ -137,28 +136,6 @@ public class UIManager : MonoBehaviour
             {
                 uci.setMat(wt);
                 ToolController.inste.setToolWithIndex(4);
-            }
-        }
-    }
-    public void updatePT()
-    {
-        TMP_Dropdown dd = ddPS.GetComponent<TMP_Dropdown>();
-        dd.ClearOptions();
-        List<PlatformSerfaceType> btp = MetaMap.instance.PST;
-        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
-        dd.AddOptions(optionTexts);
-    }
-    public void changepsc(int ind)
-    {
-        PlatformSerfaceType wt = MetaMap.instance.PST[ind];
-        if (wt != null)
-        {
-            MaterialChangerTool uci = ToolController.inste.tools[4] as MaterialChangerTool;
-            if (uci != null)
-            {
-                //uci.setMat(wt);
-                ToolController.inste.setToolWithIndex(4);
-                uci.setMat(wt);
             }
         }
     }

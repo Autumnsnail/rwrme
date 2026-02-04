@@ -51,7 +51,7 @@ public class MapExporter : MonoBehaviour
 
     public void exportMap() 
     {
-        string xmlFilePath = Path.Combine(Application.dataPath, basePath, "OUTobjects.svg");
+        string xmlFilePath = Path.Combine(Application.dataPath, basePath, "objects.svg");
         xmlDoc = new XmlDocument();
         XmlDeclaration xd=  xmlDoc.CreateXmlDeclaration("1.0", "UTF-8","no");
         xmlDoc.AppendChild( xd );
@@ -350,8 +350,8 @@ public class MapExporter : MonoBehaviour
                 ekE.SetAttribute("label", inkscapeNs, "#mesh");
                 ekE.SetAttribute("x", "0");
                 ekE.SetAttribute("y", "0");
-                ekE.SetAttribute("height", ms.gameObject.transform.localScale.z.ToString());
-                ekE.SetAttribute("width", ms.gameObject.transform.localScale.x.ToString());
+                ekE.SetAttribute("height", ms.size.y.ToString());
+                ekE.SetAttribute("width", ms.size.x.ToString());
                 ekE.SetAttribute("transform", MathOfRwrme.angleToTransform(ms.rotation, ms.position));
                 ekE.SetAttribute("id", ms.id);
                 ekE.SetAttribute("style", "fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new");
@@ -394,6 +394,73 @@ public class MapExporter : MonoBehaviour
             }
             if (has) layer.AppendChild(LadderLayer);
 
+            //add function items here
+            XmlElement folayer = xmlDoc.CreateElement("g");
+            folayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            folayer.SetAttribute("id", "layer" + i.ToString() + "itemSupply");
+            folayer.SetAttribute("label", inkscapeNs, "itemSupply");
+            folayer.SetAttribute("style", "display:inline");
+            has = false;
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                ItemSupply ms = mi as ItemSupply;
+                if (ms == null) continue;
+                has = true;
+                XmlElement ekE = xmlDoc.CreateElement("rect");
+                ekE.SetAttribute("label", inkscapeNs, "");
+                ekE.SetAttribute("x", "0");
+                ekE.SetAttribute("y", "0");
+                ekE.SetAttribute("height", ms.size.y.ToString());
+                ekE.SetAttribute("width", ms.size.x.ToString());
+                ekE.SetAttribute("transform", MathOfRwrme.angleToTransform(ms.rotation, ms.position));
+                ekE.SetAttribute("id", ms.id);
+                ekE.SetAttribute("style", "fill:#de8787;fill-opacity:1;display:inline;enable-background:new");
+
+                XmlElement stpDesc = xmlDoc.CreateElement("desc");
+                stpDesc.SetAttribute("id", "desc_" + ms.id);
+                stpDesc.InnerText = "type = ";
+                if(ms.type == 0)
+                {
+                    stpDesc.InnerText += "stash;";
+                }
+                if (ms.type == 1)
+                {
+                    stpDesc.InnerText += "weapon_rack;";
+                }
+                ekE.AppendChild(stpDesc);
+                folayer.AppendChild(ekE);
+            }
+            if (has) layer.AppendChild(folayer);
+
+            //add crates here
+            XmlElement crateLayer = xmlDoc.CreateElement("g");
+            crateLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            crateLayer.SetAttribute("id", "layer" + i.ToString() + "crate");
+            crateLayer.SetAttribute("label", inkscapeNs, "crate");
+            crateLayer.SetAttribute("style", "display:inline");
+            has = false;
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Crate ct = mi as Crate;
+                if (ct == null) continue;
+                has = true;
+                XmlElement ekE = xmlDoc.CreateElement("rect");
+                ekE.SetAttribute("label", inkscapeNs, "");
+                ekE.SetAttribute("x", "0");
+                ekE.SetAttribute("y", "0");
+                ekE.SetAttribute("height", ct.size.y.ToString());
+                ekE.SetAttribute("width", ct.size.x.ToString());
+                ekE.SetAttribute("transform", MathOfRwrme.angleToTransform(ct.rotation, ct.position));
+                ekE.SetAttribute("id", ct.id);
+                ekE.SetAttribute("style", "fill:#ff9955;fill-opacity:1;stroke:none;display:inline;enable-background:new");
+
+                crateLayer.AppendChild(ekE);
+            }
+            if (has) layer.AppendChild(crateLayer);
 
             if (i==1)
             {
@@ -507,14 +574,14 @@ public class MapExporter : MonoBehaviour
         xmlDoc.Save(xmlFilePath);
 
         string xmlContent = File.ReadAllText(xmlFilePath);
-
-        // 在特定标签前添加换行
+        
         xmlContent = xmlContent.Replace("inkscape:label=\"#general\"", "\ninkscape:label=\"#general\"");
 
         File.WriteAllText(xmlFilePath, xmlContent);
 
 
         exportTerrainHeightmap();
+        exportTerrainAlphamap();
     }
 
     /// <summary>
@@ -611,7 +678,7 @@ public class MapExporter : MonoBehaviour
         exportTexture.Apply();
 
         // 保存为PNG文件
-        string fileName = $"TerrainHeightmap_{System.DateTime.Now:yyyyMMdd_HHmmss}.png";
+        string fileName = $"terrain5_heightmap.png";
         string filePath = Path.Combine(Application.dataPath, basePath, fileName);
         
         // 确保map目录存在
@@ -641,6 +708,14 @@ public class MapExporter : MonoBehaviour
 #endif
     }
 
+    public void exportTerrainAlphamap()
+    {
+        Texture2D tex = Terrain.activeTerrain.materialTemplate.GetTexture("_Mask") as Texture2D; 
+        byte[] pngData = tex.EncodeToPNG();
+
+        string filePath = Path.Combine(Application.dataPath, basePath,"terrain5_combined_alpha.png");
+        File.WriteAllBytes(filePath, pngData);
+    }
     public void exportBuildings()
     {
 

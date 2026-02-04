@@ -21,10 +21,10 @@ public class MetaMap : MonoBehaviour
 
     public string m_settings;
 
+    public Texture2D CombinedAlpha;
 
     public List<BuildingType> buildingTypes;
     public List<WallType> wallTypes;
-    public List<PlatformSerfaceType> PST;
     public List<MeshTemplate> meshTemplates;
 
     public List<string> allowedExtensions = new List<string> { "default"};//import later
@@ -40,13 +40,11 @@ public class MetaMap : MonoBehaviour
         buildingTypes = new List<BuildingType>();
         wallTypes = new List<WallType>();
 
-        PST = new List<PlatformSerfaceType>();
-
+        CombinedAlpha = new Texture2D(2, 2);
         meshTemplates = new List<MeshTemplate>();
-        setBts();
-        setWts();
+        //setBts();
+        //setWts();
 
-        setPsts();
         Debug.Log("MetaMapInit");
     }
 
@@ -101,15 +99,6 @@ public class MetaMap : MonoBehaviour
         wallTypes.Add(new WallType("RuinWall1", Color.gray, 0.8f, 3.0f));
     }
 
-    private void setPsts()
-    {
-        PST.Add(new PlatformSerfaceType("terrain", Color.grey * 0.6f));
-        PST.Add(new PlatformSerfaceType("pavement", Color.yellow * 0.6f));
-        PST.Add(new PlatformSerfaceType("wood", Color.yellow * 0.8f+Color.red*0.2f));
-        PST.Add(new PlatformSerfaceType("grass", Color.green * 0.6f));
-        PST.Add(new PlatformSerfaceType("none", Color.cyan * 0.6f));
-
-    }
 
     // Update is called once per frame
     void Update()
@@ -325,6 +314,7 @@ public class MeshTemplate
     public string name="empty";
     public Color color=Color.white;
     public Vector3 extend = Vector3.one;
+    public Vector2 size= Vector2.one;
 }
 public class PlatformSerfaceType: mapItemType
 {

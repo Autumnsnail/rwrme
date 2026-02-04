@@ -191,11 +191,7 @@ public class Platform : PathPair
         VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(positinLineR[0]), this.layerIndex, ref pot);
         List<Vector2> u3dpll = positinLineL.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
         List<Vector2> u3dplr = positinLineR.Select(pos => MathOfRwrme.SvgPosToU3dPos(pos)).ToList();
-        PlatformSerfaceType pst = MetaMap.instance.PST.FirstOrDefault(type => type.name.Equals(top_material));
-        if (pst != null)
-        {
-            this.GetComponent<Renderer>().material = pst.material;
-        }
+        this.GetComponent<Renderer>().material.color = MathOfRwrme.StringToColor(top_material);
         WallType wtp = MetaMap.instance.wallTypes.FirstOrDefault(type => type.name.Equals(wall_template));
         float wallHeight = 1;
         if (wtp != null)
@@ -218,7 +214,10 @@ public class Platform : PathPair
 
     }
 
-
+    public void setSurface(string input)
+    {
+        top_material = input;
+    }
     void GeneratePathGeometry(List<Vector2> leftPath, List<Vector2> rightPath, float pathHeight, float wallHei)
     {
         List<Vector3> vertices = new List<Vector3>();

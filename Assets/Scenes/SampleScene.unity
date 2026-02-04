@@ -14064,6 +14064,7 @@ MonoBehaviour:
   MeshPref: {fileID: 3262444319831941621, guid: 819239d82183b86478d3c60d9b17f2db, type: 3}
   LadderPref: {fileID: 2484935396979114370, guid: 8ae2edd6963014b4d9223243f4d8fad9, type: 3}
   VehiclePref: {fileID: 2484935396979114370, guid: 8c65d54ec72f44145afc679e5f08a17c, type: 3}
+  cbdTl: {fileID: 2100000, guid: 47377dcccbbaa33489c1125d53b7739f, type: 2}
 --- !u!4 &1307524968
 Transform:
   m_ObjectHideFlags: 0

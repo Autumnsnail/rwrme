@@ -45,6 +45,8 @@ public class MapImporter : MonoBehaviour
     public GameObject LadderPref;
     public GameObject VehiclePref;
 
+    public Material cbdTl;
+
     void Start()
     {
         instate = this;
@@ -773,8 +775,6 @@ public class MapImporter : MonoBehaviour
         }
 
     }
-    
-
     public void dealWithTransform(string trs, ref Matrix2x2 rotate, ref float angle, ref Vector2 offset,ref Vector2 scale)
     {
         rotate = Matrix2x2.CreateRotation(0);
@@ -843,8 +843,23 @@ public class MapImporter : MonoBehaviour
         importGeneralSetting();
         importObjects();
         importTerrain();
+        importTerrainCombinAplha();
     }
 
+    public void importTerrainCombinAplha()
+    {
+        string fileName = "terrain5_combined_alpha.png";
+        string path = Path.Combine(Application.dataPath,basePath,fileName);
+        if (File.Exists(path))
+        {
+            byte[] fileData = File.ReadAllBytes(path);
+            Texture2D texture = new Texture2D(2, 2);
+            texture.LoadImage(fileData);
+            cbdTl.SetTexture("_Mask",texture);
+            Debug.Log("MapImporter set cbdmtl");
+        }
+
+    }
     private GrayScaleImage LoadGrayScaleImage(string filePath)
     {
         try
@@ -870,7 +885,6 @@ public class MapImporter : MonoBehaviour
         int width = texture.width;
         int height = texture.height;
         GrayScaleImage grayImage = new GrayScaleImage(width, height);
-
         Color[] pixels = texture.GetPixels();
 
         for (int y = 0; y < height; y++)

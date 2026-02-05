@@ -1,9 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.UI;
 using UnityEngine;
 using System.Linq;
-using UnityEditor.Profiling;
 
 public class Building : MeRect
 {

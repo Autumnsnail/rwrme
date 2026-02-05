@@ -1,22 +1,10 @@
-using Palmmedia.ReportGenerator.Core.Reporting.Builders.Rendering;
-using System;
-using System.Collections;
+
 using System.Collections.Generic;
-using System.ComponentModel.Design.Serialization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
-using TMPro;
-using Unity.VisualScripting;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.LowLevel;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
-using static MapImporter;
-using static UnityEditor.Experimental.GraphView.GraphView;
-using static UnityEditor.PlayerSettings;
 
 
 public class MapImporter : MonoBehaviour

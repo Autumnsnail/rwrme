@@ -4,21 +4,21 @@ using System.IO;
 
 public class TerrainHeightmapFromTexture : MonoBehaviour
 {
-    [Header("µØÐÎÉèÖÃ")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     public Terrain targetTerrain;
 
-    [Header("»Ò¶ÈÍ¼ÉèÖÃ")]
+    [Header("ï¿½Ò¶ï¿½Í¼ï¿½ï¿½ï¿½ï¿½")]
     public Texture2D heightmapTexture;
     public bool flipVertically = false;
     public bool flipHorizontally = false;
 
-    [Header("¸ß¶Èµ÷Õû")]
+    [Header("ï¿½ß¶Èµï¿½ï¿½ï¿½")]
     [Range(0f, 1f)]
     public float maxHeight = 1f;
     [Range(0f, 1f)]
     public float minHeight = 0f;
 
-    [Header("µ÷ÊÔÉèÖÃ")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     public bool enableLogging = true;
     public bool previewInEditor = false;
 
@@ -29,7 +29,7 @@ public class TerrainHeightmapFromTexture : MonoBehaviour
             targetTerrain = GetComponent<Terrain>();
             if (targetTerrain == null)
             {
-                Debug.LogError("Î´ÕÒµ½µØÐÎ×é¼þ£¡Çë½«½Å±¾¹ÒÔØµ½µØÐÎ¶ÔÏóÉÏ»òÖ¸¶¨Ä¿±êµØÐÎ¡£");
+                Debug.LogError("Î´ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë½«ï¿½Å±ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½Î¶ï¿½ï¿½ï¿½ï¿½Ï»ï¿½Ö¸ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½Î¡ï¿½");
                 return;
             }
         }
@@ -40,63 +40,63 @@ public class TerrainHeightmapFromTexture : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Î´Ö¸¶¨»Ò¶ÈÍ¼ÎÆÀí£¡");
+            Debug.LogWarning("Î´Ö¸ï¿½ï¿½ï¿½Ò¶ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
         }
     }
 
-    [ContextMenu("Ó¦ÓÃ¸ß¶ÈÍ¼")]
+    [ContextMenu("Ó¦ï¿½Ã¸ß¶ï¿½Í¼")]
     public void ApplyHeightmap()
     {
         if (targetTerrain == null || heightmapTexture == null)
         {
-            Debug.LogError("µØÐÎ»ò»Ò¶ÈÍ¼Îª¿Õ£¡");
+            Debug.LogError("ï¿½ï¿½ï¿½Î»ï¿½Ò¶ï¿½Í¼Îªï¿½Õ£ï¿½");
             return;
         }
 
-        Log("¿ªÊ¼Ó¦ÓÃ»Ò¶ÈÍ¼µ½µØÐÎ...");
-        Log($"»Ò¶ÈÍ¼³ß´ç: {heightmapTexture.width} x {heightmapTexture.height}");
+        Log("ï¿½ï¿½Ê¼Ó¦ï¿½Ã»Ò¶ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½...");
+        Log($"ï¿½Ò¶ï¿½Í¼ï¿½ß´ï¿½: {heightmapTexture.width} x {heightmapTexture.height}");
 
-        // »ñÈ¡µØÐÎÊý¾Ý
+        // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         TerrainData terrainData = targetTerrain.terrainData;
         int resolution = terrainData.heightmapResolution;
-        Log($"µØÐÎ¸ß¶ÈÍ¼·Ö±æÂÊ: {resolution}");
+        Log($"ï¿½ï¿½ï¿½Î¸ß¶ï¿½Í¼ï¿½Ö±ï¿½ï¿½ï¿½: {resolution}");
 
-        // ´´½¨¸ß¶ÈÊý×é
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½ï¿½ï¿½ï¿½ï¿½
         float[,] heights = new float[resolution, resolution];
 
-        // ´¦Àí»Ò¶ÈÍ¼Êý¾Ý
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ò¶ï¿½Í¼ï¿½ï¿½ï¿½ï¿½
         ProcessHeightmapTexture(heights, resolution);
 
-        // Ó¦ÓÃ¸ß¶ÈÊý¾Ýµ½µØÐÎ
-        Log("ÕýÔÚÉèÖÃµØÐÎ¸ß¶È...");
+        // Ó¦ï¿½Ã¸ß¶ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½
+        Log("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½Î¸ß¶ï¿½...");
         terrainData.SetHeights(0, 0, heights);
 
-        Log("µØÐÎ¸ß¶ÈÉèÖÃÍê³É£¡");
-        Log($"×îÖÕ¸ß¶È·¶Î§: {minHeight} µ½ {maxHeight}");
+        Log("ï¿½ï¿½ï¿½Î¸ß¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½");
+        Log($"ï¿½ï¿½ï¿½Õ¸ß¶È·ï¿½Î§: {minHeight} ï¿½ï¿½ {maxHeight}");
 
         if (previewInEditor)
         {
-            Debug.Log("Ô¤ÀÀÄ£Ê½ÒÑÆôÓÃ - ÔÚ±à¼­Æ÷ÖÐ²é¿´µØÐÎ±ä»¯");
+            Debug.Log("Ô¤ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - ï¿½Ú±à¼­ï¿½ï¿½ï¿½Ð²é¿´ï¿½ï¿½ï¿½Î±ä»¯");
         }
     }
 
     private void ProcessHeightmapTexture(float[,] heights, int resolution)
     {
-        Log("¿ªÊ¼´¦Àí»Ò¶ÈÍ¼Êý¾Ý...");
+        Log("ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Ò¶ï¿½Í¼ï¿½ï¿½ï¿½ï¿½...");
 
         int textureWidth = heightmapTexture.width;
         int textureHeight = heightmapTexture.height;
 
-        // È·±£ÎÆÀí¿É¶Á
+        // È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¶ï¿½
         if (!heightmapTexture.isReadable)
         {
-            Debug.LogError("»Ò¶ÈÍ¼ÎÆÀí²»¿É¶Á£¡ÇëÔÚµ¼ÈëÉèÖÃÖÐÆôÓÃ 'Read/Write Enabled'");
+            Debug.LogError("ï¿½Ò¶ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 'Read/Write Enabled'");
             return;
         }
 
-        // »ñÈ¡ËùÓÐÏñËØÑÕÉ«
+        // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
         Color[] pixels = heightmapTexture.GetPixels();
-        Log($"ÒÑ»ñÈ¡ {pixels.Length} ¸öÏñËØÊý¾Ý");
+        Log($"ï¿½Ñ»ï¿½È¡ {pixels.Length} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 
         float minFound = 1f;
         float maxFound = 0f;
@@ -105,32 +105,32 @@ public class TerrainHeightmapFromTexture : MonoBehaviour
         {
             for (int x = 0; x < resolution; x++)
             {
-                // ¼ÆËãÎÆÀí×ø±ê
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 int texX = (int)((float)x / resolution * textureWidth);
                 int texY = (int)((float)y / resolution * textureHeight);
 
-                // ´¦Àí·­×ª
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
                 if (flipHorizontally) texX = textureWidth - 1 - texX;
                 if (flipVertically) texY = textureHeight - 1 - texY;
 
-                // È·±£×ø±êÔÚÓÐÐ§·¶Î§ÄÚ
+                // È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½Î§ï¿½ï¿½
                 texX = Mathf.Clamp(texX, 0, textureWidth - 1);
                 texY = Mathf.Clamp(texY, 0, textureHeight - 1);
 
-                // »ñÈ¡ÏñËØË÷Òý
+                // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 int pixelIndex = texY * textureWidth + texX;
 
                 if (pixelIndex >= 0 && pixelIndex < pixels.Length)
                 {
-                    // »ñÈ¡»Ò¶ÈÖµ£¨Ê¹ÓÃRGBµÄÆ½¾ùÖµ»òµ¥¶ÀÍ¨µÀ£©
+                    // ï¿½ï¿½È¡ï¿½Ò¶ï¿½Öµï¿½ï¿½Ê¹ï¿½ï¿½RGBï¿½ï¿½Æ½ï¿½ï¿½Öµï¿½òµ¥¶ï¿½Í¨ï¿½ï¿½ï¿½ï¿½
                     Color pixel = pixels[pixelIndex];
                     float grayValue = (pixel.r + pixel.g + pixel.b) / 3f;
 
-                    // ¼ÇÂ¼ÕÒµ½µÄ×îÐ¡ºÍ×î´óÖµ
+                    // ï¿½ï¿½Â¼ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
                     if (grayValue < minFound) minFound = grayValue;
                     if (grayValue > maxFound) maxFound = grayValue;
 
-                    // Ó¦ÓÃ¸ß¶È·¶Î§µ÷Õû
+                    // Ó¦ï¿½Ã¸ß¶È·ï¿½Î§ï¿½ï¿½ï¿½ï¿½
                     float adjustedHeight = Mathf.Lerp(minHeight, maxHeight, grayValue);
 
                     heights[y, x] = adjustedHeight;
@@ -140,24 +140,24 @@ public class TerrainHeightmapFromTexture : MonoBehaviour
                     heights[y, x] = 0f;
                     if (enableLogging && (x == 0 || y == 0))
                     {
-                        Debug.LogWarning($"ÏñËØË÷Òý³¬³ö·¶Î§: {pixelIndex}, ×ø±ê: ({x},{y})");
+                        Debug.LogWarning($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§: {pixelIndex}, ï¿½ï¿½ï¿½ï¿½: ({x},{y})");
                     }
                 }
             }
 
-            // Ã¿´¦Àí10%µÄÐÐÊä³öÒ»´Î½ø¶È
+            // Ã¿ï¿½ï¿½ï¿½ï¿½10%ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î½ï¿½ï¿½ï¿½
             if (enableLogging && y % (resolution / 10) == 0)
             {
                 float progress = (float)y / resolution * 100f;
-                Log($"´¦Àí½ø¶È: {progress:F1}%");
+                Log($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {progress:F1}%");
             }
         }
 
-        Log($"»Ò¶ÈÍ¼Êý¾Ý·¶Î§: {minFound:F3} µ½ {maxFound:F3}");
-        Log("»Ò¶ÈÍ¼Êý¾Ý´¦ÀíÍê³É");
+        Log($"ï¿½Ò¶ï¿½Í¼ï¿½ï¿½ï¿½Ý·ï¿½Î§: {minFound:F3} ï¿½ï¿½ {maxFound:F3}");
+        Log("ï¿½Ò¶ï¿½Í¼ï¿½ï¿½ï¿½Ý´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
     }
 
-    [ContextMenu("ÖØÖÃµØÐÎ¸ß¶È")]
+    [ContextMenu("ï¿½ï¿½ï¿½Ãµï¿½ï¿½Î¸ß¶ï¿½")]
     public void ResetTerrainHeight()
     {
         if (targetTerrain != null)
@@ -166,23 +166,128 @@ public class TerrainHeightmapFromTexture : MonoBehaviour
             int resolution = terrainData.heightmapResolution;
             float[,] heights = new float[resolution, resolution];
             terrainData.SetHeights(0, 0, heights);
-            Log("µØÐÎ¸ß¶ÈÒÑÖØÖÃÎªÆ½Ãæ");
+            Log("ï¿½ï¿½ï¿½Î¸ß¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÆ½ï¿½ï¿½");
         }
     }
 
-    [ContextMenu("´òÓ¡µØÐÎÐÅÏ¢")]
+    [ContextMenu("ï¿½ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢")]
     public void PrintTerrainInfo()
     {
         if (targetTerrain != null)
         {
             TerrainData data = targetTerrain.terrainData;
-            Log("=== µØÐÎÐÅÏ¢ ===");
-            Log($"³ß´ç: {data.size}");
-            Log($"¸ß¶ÈÍ¼·Ö±æÂÊ: {data.heightmapResolution}");
-            Log($"µØÐÎÎ»ÖÃ: {targetTerrain.transform.position}");
-            Log($"µØÐÎÐý×ª: {targetTerrain.transform.rotation}");
-            Log($"µØÐÎËõ·Å: {targetTerrain.transform.localScale}");
+            Log("=== ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ ===");
+            Log($"ï¿½ß´ï¿½: {data.size}");
+            Log($"ï¿½ß¶ï¿½Í¼ï¿½Ö±ï¿½ï¿½ï¿½: {data.heightmapResolution}");
+            Log($"ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½: {targetTerrain.transform.position}");
+            Log($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª: {targetTerrain.transform.rotation}");
+            Log($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {targetTerrain.transform.localScale}");
         }
+    }
+
+    [ContextMenu("ï¿½ï¿½ï¿½ï¿½ï¿½Î¸ß¶ï¿½Í¼")]
+    public void ExportHeightmap()
+    {
+        if (targetTerrain == null)
+        {
+            Debug.LogError("Ä¿ï¿½ï¿½ï¿½ï¿½Îªï¿½Õ£ï¿½ï¿½Þ·ï¿½ï¿½ï¿½ï¿½");
+            return;
+        }
+
+        Log("ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½Î¸ß¶ï¿½Í¼...");
+
+        // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        TerrainData terrainData = targetTerrain.terrainData;
+        int resolution = terrainData.heightmapResolution;
+        Log($"ï¿½ï¿½ï¿½Î¸ß¶ï¿½Í¼ï¿½Ö±ï¿½ï¿½ï¿½: {resolution}");
+
+        // ï¿½ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Î¸ß¶ï¿½ï¿½ï¿½ï¿½ï¿½
+        float[,] heights = terrainData.GetHeights(0, 0, resolution, resolution);
+
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        Texture2D exportTexture = new Texture2D(resolution, resolution, TextureFormat.RGB24, false);
+
+        // ï¿½Òµï¿½Êµï¿½ÊµÄ¸ß¶È·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½
+        float actualMin = float.MaxValue;
+        float actualMax = float.MinValue;
+
+        // ï¿½ï¿½È¼É¨ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Òµï¿½Êµï¿½Ê¸ß¶È·ï¿½Î§
+        for (int y = 0; y < resolution; y++)
+        {
+            for (int x = 0; x < resolution; x++)
+            {
+                float height = heights[y, x];
+                if (height < actualMin) actualMin = height;
+                if (height > actualMax) actualMax = height;
+            }
+        }
+
+        Log($"Êµï¿½Ê¸ß¶È·ï¿½Î§: {actualMin:F3} ï¿½ï¿½ {actualMax:F3}");
+
+        // ×ªï¿½ï¿½ï¿½ß¶ï¿½ï¿½ï¿½ï¿½Ý´ï¿½ï¿½ï¿½ï¿½ï¿½
+        Color[] pixels = new Color[resolution * resolution];
+
+        for (int y = 0; y < resolution; y++)
+        {
+            for (int x = 0; x < resolution; x++)
+            {
+                // ï¿½ï¿½È¡ï¿½ß¶ï¿½Öµ
+                float height = heights[y, x];
+
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½Öµï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½0-1ï¿½ï¿½Î§
+                float normalizedHeight;
+                if (actualMax > actualMin)
+                {
+                    normalizedHeight = (height - actualMin) / (actualMax - actualMin);
+                }
+                else
+                {
+                    normalizedHeight = 0.5f; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½Ì¹ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½Ð¼ï¿½Öµ
+                }
+
+                // Ó¦ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ëµ¼ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Â£ï¿½
+                int texX = flipHorizontally ? (resolution - 1 - x) : x;
+                int texY = flipVertically ? (resolution - 1 - y) : y;
+
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                int pixelIndex = texY * resolution + texX;
+
+                // ï¿½ï¿½ï¿½ï¿½ï¿½Ò¶ï¿½ï¿½ï¿½É«
+                Color grayColor = new Color(normalizedHeight, normalizedHeight, normalizedHeight, 1f);
+                pixels[pixelIndex] = grayColor;
+            }
+
+            // Ã¿ï¿½ï¿½ï¿½ï¿½10%ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î½ï¿½ï¿½ï¿½
+            if (enableLogging && y % (resolution / 10) == 0)
+            {
+                float progress = (float)y / resolution * 100f;
+                Log($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {progress:F1}%");
+            }
+        }
+
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½
+        exportTexture.SetPixels(pixels);
+        exportTexture.Apply();
+
+        // ï¿½ï¿½ï¿½ï¿½ÎªPNGï¿½Ä¼ï¿½
+        string fileName = $"TerrainHeightmap_{System.DateTime.Now:yyyyMMdd_HHmmss}.png";
+        string filePath = Path.Combine(Application.dataPath, fileName);
+
+        byte[] pngData = exportTexture.EncodeToPNG();
+        File.WriteAllBytes(filePath, pngData);
+
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
+        DestroyImmediate(exportTexture);
+
+        Log($"ï¿½ï¿½ï¿½Î¸ß¶ï¿½Í¼ï¿½Ñµï¿½ï¿½ï¿½ï¿½ï¿½: {filePath}");
+        Log($"ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ß¶È·ï¿½Î§: {actualMin:F3} ï¿½ï¿½ {actualMax:F3}");
+        Log("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
+
+#if UNITY_EDITOR
+        // ï¿½Ú±à¼­ï¿½ï¿½ï¿½Ë¢ï¿½ï¿½ï¿½ï¿½Ê»ï¿½ï¿½ï¿½ï¿½
+        UnityEditor.AssetDatabase.Refresh();
+        Log("ï¿½ï¿½ï¿½Ë¢ï¿½ï¿½Unityï¿½ï¿½Ê»ï¿½ï¿½ï¿½ï¿½");
+#endif
     }
 
     private void Log(string message)
@@ -193,7 +298,7 @@ public class TerrainHeightmapFromTexture : MonoBehaviour
         }
     }
 
-    // ÔÚInspectorÖÐÑéÖ¤ÊäÈë
+    // ï¿½ï¿½Inspectorï¿½ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½ï¿½ï¿½
     private void OnValidate()
     {
         if (maxHeight < minHeight)

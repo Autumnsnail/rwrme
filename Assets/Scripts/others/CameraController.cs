@@ -143,7 +143,6 @@ public class DualModeCameraController : MonoBehaviour
             // 在俯视角模式下解锁鼠标以便拖动
             UnlockCursor();
 
-            Debug.Log("切换到俯视角模式（正交相机）");
         }
         else
         {
@@ -159,7 +158,6 @@ public class DualModeCameraController : MonoBehaviour
             // 在飞行模式下锁定鼠标
             LockCursor();
 
-            Debug.Log("切换到飞行模式（透视相机）");
         }
     }
 
@@ -275,7 +273,7 @@ public class DualModeCameraController : MonoBehaviour
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0 && cam != null)
         {
-            cam.orthographicSize -= scroll * zoomSpeed;
+            cam.orthographicSize -= scroll * zoomSpeed* cam.orthographicSize*0.005f;
             cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minOrthoSize, maxOrthoSize);
             orthographicSize = cam.orthographicSize;
         }

@@ -1,53 +1,874 @@
-using System.Collections;
+
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Xml;
+using UnityEngine;
+
 
 public class MapImporter : MonoBehaviour
 {
     public enum MapType
     {
-        heightmap,
         alpha_sand
     }
 
-    [Header("导入设置")]
-    public string basePath = "map"; // 基础路径
-    public string filePrefix = "terrain5_"; // 文件前缀
+    [Header("锟斤拷锟斤拷锟斤拷锟斤拷")]
+    public string basePath = "map";
+    public string filePrefix = "terrain5_";
 
     private Dictionary<MapType, GrayScaleImage> loadedMaps = new Dictionary<MapType, GrayScaleImage>();
 
+    public static MapImporter instate;
+
+    public GameObject BuildingPref;
+    public GameObject PlatformPref;
+    public GameObject WallPref;
+    public GameObject SubWallPref;
+    public GameObject BasePref;
+    public GameObject SpawnPointPref;
+    public GameObject RockPref;
+    public GameObject MeshPref;
+    public GameObject LadderPref;
+    public GameObject VehiclePref;
+    public GameObject ItemSupplyPref;
+    public GameObject CratePref;
+
+    public Material cbdTl;
+
+
     void Start()
     {
+        instate = this;
         ImportAllMaps();
+        Debug.Log("MapInporter Init");
     }
 
-    public void ImportAllMaps()
+    public void importTerrain()
     {
-        foreach (MapType mapType in System.Enum.GetValues(typeof(MapType)))
+        TerrainConfigReader tcr = new TerrainConfigReader();
+        tcr.configFilePath = Path.Combine(basePath, "terrain.cfg");
+        tcr.LoadTerrainConfig();
+        tcr.PrintConfigValues();
+        string mapName = "terrain5_heightmap.png";
+        float maxHeight = 25.0f;
+        /*
+        PageWorldX = 1536
+        PageWorldZ = 1536
+        MaxHeight = 25
+        */
+        if (tcr.GetValue("Heightmap.image") != null)
         {
-            string fileName = filePrefix + mapType.ToString().ToLower() + ".png";
-            string filePath = Path.Combine(Application.persistentDataPath, basePath, fileName);
+            mapName = tcr.GetValue("Heightmap.image");
+            Debug.Log("get heightmap name as " + mapName);
+        }
+        if (tcr.GetValue("MaxHeight") != null)
+        {
+            maxHeight = tcr.GetFloat("MaxHeight");
+        }
 
-            if (File.Exists(filePath))
+        GrayScaleImage grayImage = LoadGrayScaleImage(Path.Combine(Application.dataPath, basePath, mapName));
+        gameObject.GetComponent<MetaMap>().m_metaTerrain.setData(grayImage);
+        gameObject.GetComponent<MetaMap>().m_metaTerrain.maxHeight = maxHeight;
+        Debug.Log($"set Height {maxHeight}");
+        gameObject.GetComponent<MetaMap>().m_metaTerrain.fileName = mapName;
+
+    }
+    public void importObjects()
+    {
+        Debug.Log("start to Import Objects");
+        XmlDocument xmlDoc = new XmlDocument();
+        string xmlPath = Path.Combine(Application.dataPath, basePath, "objects.svg");
+        Debug.Log("LoadSvg at " + xmlPath);
+        xmlDoc.Load(xmlPath);
+
+        XmlElement root = xmlDoc.DocumentElement;
+        foreach (XmlNode node in root.ChildNodes)
+        {
+            if (node.Name == "g")
             {
-                GrayScaleImage grayImage = LoadGrayScaleImage(filePath, mapType);
-                if (grayImage != null)
+                if (node is XmlElement ele)
                 {
-                    loadedMaps[mapType] = grayImage;
-                    Debug.Log($"已加载: {fileName} ({grayImage.Width}x{grayImage.Height})");
+                    if (ele.GetAttribute("inkscape:label").StartsWith("bases.default"))
+                    {
+                        Debug.Log("import bases");
+                        foreach (XmlNode baseNode in ele.ChildNodes)
+                        {
+                            if (baseNode.Name == "rect")
+                            {
+                                if (baseNode is XmlElement baseXml)
+                                {
+                                    float cWidth = float.Parse(baseXml.GetAttribute("width"));
+                                    float cHeight = float.Parse(baseXml.GetAttribute("height"));
+                                    float cX = float.Parse(baseXml.GetAttribute("x"));
+                                    float cY = float.Parse(baseXml.GetAttribute("y"));
+                                    Vector2 position = new Vector2(cX, cY);
+
+                                    string trans = baseXml.GetAttribute("transform");
+                                    float angle = 0;
+                                    Matrix2x2 rotM = Matrix2x2.CreateRotation(0);
+                                    Vector2 offV = Vector2.zero;
+                                    Vector2 scale = Vector2.one;
+                                    dealWithTransform(trans, ref rotM, ref angle, ref offV,ref scale);
+
+                                    position = rotM * position;
+                                    position = position*scale;
+                                    position = position + offV;
+                                    
+                                    cWidth = cWidth * scale.x;
+                                    cHeight = cHeight * scale.y;
+                                    if(cWidth<0)
+                                    {
+                                        position.x += cWidth;
+                                        cWidth *= -1;
+                                    }
+                                    if (cHeight < 0)
+                                    {
+                                        position.y += cHeight;
+                                        cHeight *= -1;
+                                    }
+                                    
+
+                                    string name="";
+                                    int factionIndex=-1;
+                                    foreach (XmlNode de in baseNode.ChildNodes)
+                                    {
+                                        var properties = de.InnerText.Split(';')
+                                            .Where(p => p.Contains('='))
+                                            .Select(p => p.Split('=', 2))
+                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                        if (properties.ContainsKey("name"))
+                                        {
+                                            name = properties["name"];
+                                        }
+                                        else
+                                        {
+                                        }
+                                        if (properties.ContainsKey("faction_index"))
+                                        {
+                                            factionIndex = int.Parse( properties["faction_index"]);
+                                        }
+                                        else
+                                        {
+                                            factionIndex = -1;
+                                        }
+                                    }
+                                    GameObject go = Instantiate(BasePref);
+                                    Base gc = go.GetComponent<Base>();
+                                    gc._name = name;
+                                    gc.factionIndex = factionIndex;
+                                    gc.id = MetaMap.instance.getNewItemId("base");
+                                    gc.position = position;
+                                    gc.rotation = angle;
+                                    gc.size = new Vector2(cWidth, cHeight);
+                                    MetaMap.instance.baseLayer.mapItems.Add(gc);
+                                }
+                            }
+                        }
+                    }
+                    if (ele.GetAttribute("inkscape:label").StartsWith("layer"))
+                    {
+                        string lnm = ele.GetAttribute("inkscape:label");
+                        int number = 0;
+
+                        number = dealWithLayerLabel(lnm);
+                        if (number == -1) continue;
+
+                        Debug.Log("mapImporter start import items at layer " + number.ToString());
+
+                        float raLayer = 0;
+                        Matrix2x2 rmLayer = Matrix2x2.CreateRotation(0);
+                        Vector2 ovLayer = Vector2.zero;
+
+                        if (ele.HasAttribute("transform"))
+                        {
+                            dealWithTransform(ele.GetAttribute("transform"), ref rmLayer, ref raLayer, ref ovLayer);
+                        }
+
+                        foreach (XmlNode snode in node.ChildNodes)
+                        {
+                            if (snode.Name == "g")
+                            {
+                                if (snode is XmlElement sele)
+                                {
+                                    float _raGroup = 0;
+                                    Matrix2x2 _rmGroup = Matrix2x2.CreateRotation(0);
+                                    Vector2 _ovGroup = Vector2.zero;
+                                    Vector2 _scGroup = Vector2.one;
+
+                                    if (sele.HasAttribute("transform"))
+                                    {
+                                        Debug.Log("MapImporter : group has transform :" + sele.GetAttribute("transform"));
+                                        dealWithTransform(sele.GetAttribute("transform"), ref _rmGroup, ref _raGroup, ref _ovGroup,ref _scGroup);
+                                    }
+
+                                    foreach (XmlNode r in snode.ChildNodes)
+                                    {
+                                        if (r.Name == "rect")
+                                        {
+                                            if (r is XmlElement bRect)
+                                            {
+                                                float cX = float.Parse(bRect.GetAttribute("x"));
+                                                float cY = float.Parse(bRect.GetAttribute("y"));
+                                                Vector2 position = new Vector2(cX, cY);
+                                                string trans = bRect.GetAttribute("transform");
+                                                float angle = 0;
+                                                Matrix2x2 rotM = Matrix2x2.CreateRotation(0);
+                                                Vector2 offV = Vector2.zero;
+                                                Vector2 scale = Vector2.one;
+                                                dealWithTransform(trans, ref rotM, ref angle, ref offV, ref scale);
+                                                position = position * scale;
+                                                position = rotM * position;
+                                                position = position + offV;
+                                                angle += _raGroup;
+                                                position = position * _scGroup;
+                                                position = _rmGroup * position;
+                                                position += _ovGroup;
+                                                angle += raLayer;
+                                                position = rmLayer * position;
+                                                position += ovLayer;
+
+
+                                                if (bRect.GetAttribute("id").StartsWith("building"))
+                                                {
+                                                    float cWidth = float.Parse(bRect.GetAttribute("width"));
+                                                    float cHeight = float.Parse(bRect.GetAttribute("height"));
+
+
+                                                    int BheightF = 0;
+                                                    string bmaterial = "";
+                                                    bool roof = false;
+                                                    foreach (XmlNode de in r.ChildNodes)
+                                                    {
+                                                        var properties = de.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                                        if (properties.ContainsKey("height"))
+                                                        {
+                                                            BheightF = int.Parse(properties["height"]);
+                                                        }
+                                                        else
+                                                        {
+                                                            //Debug.Log(bRect.OuterXml);
+                                                        }
+                                                        if (properties.ContainsKey("material"))
+                                                        {
+                                                            bmaterial = properties["material"];
+                                                        }
+                                                        else
+                                                        {
+
+                                                        }
+                                                        if (properties.ContainsKey("roof_type"))
+                                                        {
+
+                                                            roof = (properties["roof_type"] == "elevated");
+                                                        }
+                                                        else if (BheightF == 2)
+                                                        {
+                                                            roof = true;
+                                                        }
+
+                                                    }
+                                                    GameObject go = Instantiate(BuildingPref);
+                                                    Building gc = go.GetComponent<Building>();
+                                                    //if (number == 1) Debug.Log("i got this ");
+                                                    gc.reinit(BheightF, bmaterial, position, angle, new Vector2(cWidth, cHeight), MetaMap.instance.getNewItemId("building"), number);
+                                                    gc.roof = roof;
+                                                    MetaMap.instance.defaultLayer.mapItems.Add(gc);
+                                                }
+                                                if (bRect.GetAttribute("id").StartsWith("item_supply"))
+                                                {
+                                                    float cWidth = float.Parse(bRect.GetAttribute("width"));
+                                                    float cHeight = float.Parse(bRect.GetAttribute("height"));
+
+                                                    foreach (XmlNode de in r.ChildNodes)
+                                                    {
+                                                        if (de.Name != "desc") continue;
+                                                        var properties = de.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                                        if(properties.ContainsKey("type"))
+                                                        {
+                                                            ItemSupply stspl = Instantiate(ItemSupplyPref).GetComponent<ItemSupply>();
+                                                            if (properties["type"]=="weapon_rack")
+                                                            {
+                                                                stspl.type = 1;
+                                                            }
+                                                            if (properties["type"] == "stash")
+                                                            {
+                                                                stspl.type = 0;
+                                                            }
+                                                            stspl.position = position;
+                                                            stspl.id = MetaMap.instance.getNewItemId("item_supply");
+                                                            stspl.size = new Vector2(cWidth, cHeight);
+                                                            stspl.rotation = angle;
+                                                            stspl.layerIndex = number;
+                                                            MetaMap.instance.defaultLayer.mapItems.Add(stspl);
+                                                        }
+
+                                                    }
+                                                }
+                                                if (bRect.GetAttribute("id").StartsWith("crate"))
+                                                {
+                                                    float cWidth = float.Parse(bRect.GetAttribute("width"));
+                                                    float cHeight = float.Parse(bRect.GetAttribute("height"));
+
+                                                    
+                                                            Crate cT = Instantiate(CratePref).GetComponent<Crate>();
+                                                        cT.position = position;
+                                                        cT.id = MetaMap.instance.getNewItemId("crate");
+                                                        cT.size = new Vector2(cWidth, cHeight);
+                                                        cT.rotation = angle;
+                                                        cT.layerIndex = number;
+                                                            MetaMap.instance.defaultLayer.mapItems.Add(cT);
+                                                    
+                                                }
+                                                if (bRect.GetAttribute("id").StartsWith("spawn"))
+                                                {
+                                                    XmlElement rdsc = bRect.FirstChild as XmlElement;
+                                                    if (rdsc == null) continue;
+                                                    var properties = rdsc.InnerText.Split(';')
+                                                        .Where(p => p.Contains('='))
+                                                        .Select(p => p.Split('=', 2))
+                                                        .GroupBy(kv => kv[0].Trim())
+                                                        .ToDictionary(
+                                                            g => g.Key,
+                                                            g => g.Last()[1].Trim()
+                                                        );
+                                                    if(properties.ContainsKey("type"))
+                                                    {
+                                                        if (properties["type"]=="vehicle")
+                                                        {
+                                                            //get a vehicle
+                                                            Vehicle vc = Instantiate(VehiclePref).GetComponent<Vehicle>();
+                                                            if(properties.ContainsKey("tag"))
+                                                            {
+                                                                vc.taged = true;
+                                                                vc.key = properties["tag"];
+                                                            }
+                                                            else
+                                                            {
+                                                                vc.key = properties["key"];
+                                                            }
+                                                            vc.id = MetaMap.instance.getNewItemId("spawn_vehicle");
+
+                                                            vc.position = position;
+                                                            vc.layerIndex = 4;
+                                                            vc.rotation = angle;
+                                                            
+                                                            MetaMap.instance.defaultLayer.mapItems.Add(vc);
+
+                                                        }
+                                                    }
+                                                }
+                                                if (bRect.GetAttribute("inkscape:label").StartsWith("#spawnrect"))
+                                                {
+                                                    if(r.ChildNodes.Count==0)
+                                                    {
+                                                        //solider SpawnPoint
+                                                        SpawnPoint sp = Instantiate(SpawnPointPref).GetComponent<SpawnPoint>();
+
+                                                        sp.id = MetaMap.instance.getNewItemId("#spawnrect");
+
+
+                                                        sp.position = position;
+                                                        sp.size = new Vector2(5, 5);
+                                                        sp.layerIndex = 1;
+
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(sp);
+                                                    }
+                                                }
+                                                if (bRect.GetAttribute("inkscape:label").StartsWith("#rock"))
+                                                {
+                                                    GameObject go = Instantiate(RockPref);
+                                                    Rock rc = go.GetComponent<Rock>();
+                                                    rc.position = position;
+                                                    rc.id = MetaMap.instance.getNewItemId("#rock");
+                                                    rc.layerIndex = number;
+                                                    MetaMap.instance.defaultLayer.mapItems.Add(rc);
+                                                }
+                                                if (bRect.GetAttribute("inkscape:label").StartsWith("#ladder"))
+                                                {
+
+                                                    GameObject ld = Instantiate(LadderPref);
+                                                    Ladder ldr = ld.GetComponent<Ladder>();
+                                                    ldr.position = position;
+                                                    ldr.rotation  = angle;
+                                                    ldr.id = MetaMap.instance.getNewItemId("#ladder");
+                                                    ldr.layerIndex = number;
+                                                    MetaMap.instance.defaultLayer.mapItems.Add(ldr);
+                                                }
+                                                if (bRect.GetAttribute("inkscape:label").StartsWith("#mesh"))
+                                                {
+                                                    float cWidth = float.Parse(bRect.GetAttribute("width"));
+                                                    float cHeight = float.Parse(bRect.GetAttribute("height"));
+                                                    XmlNode descnode = null;
+                                                    foreach(XmlNode lsnd in bRect.ChildNodes)
+                                                    {
+                                                        if(lsnd.Name == "desc")
+                                                        {
+                                                            descnode = lsnd;
+                                                            break;
+                                                        }
+                                                    }
+                                                    XmlElement thdesc = descnode as XmlElement;
+                                                    if (thdesc == null) continue;
+                                                    Debug.Log("MapImporter : " + thdesc.InnerText);
+                                                    var properties = thdesc.InnerText.Split(';')
+                                                        .Where(p => p.Contains('='))
+                                                        .Select(p => p.Split('=', 2))
+                                                        .GroupBy(kv => kv[0].Trim())
+                                                        .ToDictionary(
+                                                            g => g.Key,
+                                                            g => g.Last()[1].Trim()
+                                                        );
+                                                    if (!properties.ContainsKey("template"))
+                                                    {
+                                                        continue;
+                                                    }
+                                                    else
+                                                    {
+                                                        if (!MetaMap.instance.meshTemplates.Any(template => template.name == properties["template"])) continue;
+                                                        GameObject go = Instantiate(MeshPref);
+                                                        MeMesh ms = go.GetComponent<MeMesh>();
+                                                        ms.position = position;
+                                                        ms.rotation = angle;
+                                                        ms.id = MetaMap.instance.getNewItemId("#mesh");
+                                                        ms.layerIndex = number;
+                                                        ms.template_ref = properties["template"];
+                                                        ms.size = new Vector2(cWidth, cHeight);
+                                                        ms.templated = true;
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(ms);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (r.Name == "g")
+                                        {
+
+                                            float raPair = 0;
+                                            Matrix2x2 rmPair = Matrix2x2.CreateRotation(0);
+                                            Vector2 ovPair = Vector2.zero;
+                                            if (r is XmlElement pairEle)
+                                            {
+                                                if (pairEle.HasAttribute("transform"))
+                                                {
+                                                    dealWithTransform(pairEle.GetAttribute("transform"), ref rmPair, ref raPair, ref ovPair);
+                                                }
+                                            }
+                                            //import platform
+                                            //List<XmlNode> pnl = r.ChildNodes;
+                                            List<XmlNode> pnl = new List<XmlNode>();
+                                            XmlNodeList pnlls = r.ChildNodes;
+                                            foreach (XmlNode pnlli in pnlls)
+                                            {
+                                                pnl.Add(pnlli);
+                                            }
+
+
+
+                                            if (pnl.Count == 2)
+                                            {
+
+                                                XmlNode descNode = pnl[0].FirstChild;
+                                                var properties = descNode.InnerText.Split(';')
+                                                    .Where(p => p.Contains('='))
+                                                    .Select(p => p.Split('=', 2))
+                                                    .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                    .ToDictionary(g => g.Key, g => g.First());
+                                                if (properties.ContainsKey("type"))
+                                                {
+                                                    if (properties["type"] == "start" || properties["type"] == "deck_start")
+                                                    {
+                                                        pnl.Insert(0, pnl[1]);
+                                                        pnl.RemoveAt(2);
+                                                        descNode = pnl[0].FirstChild;
+                                                        properties = descNode.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                            .ToDictionary(g => g.Key, g => g.First());
+                                                    }
+                                                }
+
+                                                GameObject go = Instantiate(PlatformPref);
+                                                Platform pf = go.GetComponent<Platform>();
+                                                MetaMap.instance.defaultLayer.mapItems.Add(pf);
+
+                                                pf.id = MetaMap.instance.getNewItemId("platform");
+
+                                                string pathData1 = pnl[0].Attributes["d"].Value;
+                                                pf.positinLineL = pf.ParsePathData(pathData1);
+                                                for (int i = 0; i < pf.positinLineL.Count; i++)
+                                                {
+                                                    pf.positinLineL[i] = rmPair * pf.positinLineL[i];
+                                                    pf.positinLineL[i] += ovPair;
+
+                                                    pf.positinLineL[i] = _scGroup * pf.positinLineL[i];
+                                                    pf.positinLineL[i] = _rmGroup * pf.positinLineL[i];
+                                                    pf.positinLineL[i] += _ovGroup;
+                                                    pf.positinLineL[i] = rmLayer * pf.positinLineL[i];
+                                                    pf.positinLineL[i] += ovLayer;
+                                                }
+
+                                                string pathData2 = pnl[1].Attributes["d"].Value;
+                                                pf.positinLineR = pf.ParsePathData(pathData2);
+                                                for (int i = 0; i < pf.positinLineR.Count; i++)
+                                                {
+                                                    pf.positinLineR[i] = rmPair * pf.positinLineR[i];
+                                                    pf.positinLineR[i] += ovPair;
+
+                                                    pf.positinLineR[i] = _scGroup * pf.positinLineR[i];
+                                                    pf.positinLineR[i] = _rmGroup * pf.positinLineR[i];
+                                                    pf.positinLineR[i] += _ovGroup;
+                                                    pf.positinLineR[i] = rmLayer * pf.positinLineR[i];
+                                                    pf.positinLineR[i] += ovLayer;
+
+                                                }
+
+                                                pf.layerIndex = number;
+
+                                                if (properties.ContainsKey("type"))
+                                                {
+                                                    if (properties["type"].StartsWith("deck"))
+                                                    {
+                                                        pf.isDeck = true;
+                                                    }
+                                                }
+                                                if (properties.ContainsKey("mode"))
+                                                {
+                                                    if (properties["mode"].StartsWith("bridge"))
+                                                    {
+                                                        pf.isDeck = true;
+
+                                                    }
+                                                }
+                                                if (properties.ContainsKey("base_wall_template"))
+                                                { pf.base_wall_template = properties["base_wall_template"]; }
+                                                else
+                                                { pf.base_wall_template = "StoneWall1"; }
+                                                if (properties.ContainsKey("top_material")) pf.top_material = properties["top_material"];
+                                                if (properties.ContainsKey("wall_height")) { pf.wall_height = float.Parse(properties["wall_height"]); }
+                                                else
+                                                {
+                                                    pf.wall_height = -1f;
+                                                }
+                                                if (properties.ContainsKey("height")) pf.height = float.Parse(properties["height"]);
+                                                if (properties.ContainsKey("wall_template")) pf.wall_template = properties["wall_template"];
+
+                                            }
+                                        }
+                                        if (r.Name == "path")
+                                        {
+                                            if (r is XmlElement bPath)
+                                            {
+                                                float _raPath = 0;
+                                                Matrix2x2 _rmPath = Matrix2x2.CreateRotation(0);
+                                                Vector2 _ovPath = Vector2.zero;
+                                                Vector2 _scPath = Vector2.one;
+                                                if (bPath.HasAttribute("transform"))
+                                                {
+                                                    dealWithTransform(bPath.GetAttribute("transform"), ref _rmPath, ref _raPath, ref _ovPath,ref _scPath);
+                                                }
+                                                if (bPath.GetAttribute("id").StartsWith("wall"))
+                                                {
+
+                                                    GameObject go = Instantiate(WallPref);
+                                                    Wall gs = go.GetComponent<Wall>();
+                                                    //gs.SubWallPref = SubWallPref;//DONE!
+                                                    string pathData1 = bPath.Attributes["d"].Value;
+                                                    gs.positionLine = gs.ParsePathData(pathData1);
+
+                                                    for (int i = 0; i < gs.positionLine.Count; i++)
+                                                    {
+                                                        gs.positionLine[i] = gs.positionLine[i] * _scPath;
+                                                        gs.positionLine[i] = _rmPath * gs.positionLine[i];
+                                                        gs.positionLine[i] += _ovPath;
+
+                                                        gs.positionLine[i] = gs.positionLine[i] * _scGroup;
+                                                        gs.positionLine[i] = _rmGroup * gs.positionLine[i];
+                                                        gs.positionLine[i] += _ovGroup;
+                                                        gs.positionLine[i] = rmLayer * gs.positionLine[i];
+                                                        gs.positionLine[i] += ovLayer;
+
+                                                    }
+
+                                                    XmlNode descNode = bPath.FirstChild;
+                                                    var properties = descNode.InnerText.Split(';')
+                                                        .Where(p => p.Contains('='))
+                                                        .Select(p => p.Split('=', 2))
+                                                        .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                        .ToDictionary(g => g.Key, g => g.First());
+                                                    if (properties.ContainsKey("template")) gs.material = properties["template"];
+                                                    MetaMap.instance.defaultLayer.mapItems.Add(gs);
+                                                    gs.id = MetaMap.instance.getNewItemId("wall");
+                                                    gs.layerIndex = number;
+                                                }
+
+                                            }
+                                        }
+                                    }
+
+                                }
+
+                            }
+                        }
+                    }
                 }
-            }
-            else
-            {
-                Debug.LogWarning($"文件不存在: {filePath}");
             }
         }
 
-        Debug.Log($"导入完成，共加载 {loadedMaps.Count} 张灰度图");
+        //CtrlZer.instance.checkPoint();
+        if (Syncer.instence != null) Syncer.instence.ScatterMapItems();
+    }
+    public void importGeneralSetting()
+    {
+        Debug.Log("start to Import GeneralSettings");
+        XmlDocument xmlDoc = new XmlDocument();
+        string xmlPath = Path.Combine(Application.dataPath, basePath, "objects.svg");
+        Debug.Log("LoadSvg at " + xmlPath);
+        xmlDoc.Load(xmlPath);
+        XmlElement root = xmlDoc.DocumentElement;
+        foreach (XmlNode node in root.ChildNodes )
+        {
+            if(node.Name =="g" && node is XmlElement end)
+            {
+                if(end.GetAttribute("inkscape:label").StartsWith("materials"))
+                {
+                    foreach (XmlNode recs in end.ChildNodes)
+                    {
+                        if(recs.Name == "rect"&& recs is XmlElement rece)
+                        {
+                            if(rece.GetAttribute("inkscape:label").StartsWith("#general"))
+                            {
+                                Debug.Log("find gs :" + rece.ToString());
+                                XmlElement desc = rece.ChildNodes[0] as XmlElement;
+                                MetaMap.instance.m_settings = desc.InnerText;
+                                UIManager.instance.mms[7].transform.GetChild(0).gameObject.GetComponent<TMPro.TMP_InputField>().SetTextWithoutNotify(desc.InnerText);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    public int dealWithLayerLabel(string label)
+    {
+        if (!label.StartsWith("layer")) return -1;
+        if (label == "layer") return 1;
+        string lnm = label;
+        int number = -1;
+        Regex regex = new Regex(@"^layer(\d+)(?:\.([a-zA-Z]+))?$");
+        Match match = regex.Match(lnm);
+        if (match.Success)
+        {
+            string numberString = match.Groups[1].Value;
+            string extension = match.Groups[2].Success ? match.Groups[2].Value : "default";
+
+            if (!MetaMap.instance.allowedExtensions.Contains(extension))
+            {
+                return -1;
+            }
+
+            if (!int.TryParse(numberString, out number))
+            {
+                return -1;
+            }
+
+            return number;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    public void importTemplates()
+    {
+        Debug.Log("start to Import GeneralSettings");
+        XmlDocument xmlDoc = new XmlDocument();
+        string templatePath = Path.Combine(Application.dataPath, "templates", "vn_no_bti.xml");
+        xmlDoc.Load(templatePath);
+        XmlElement root = xmlDoc.DocumentElement;
+        XmlElement eg = root.FirstChild as XmlElement;
+        if (eg == null) { Debug.Log("wrong xml"); }
+        foreach (XmlNode node in eg.ChildNodes)
+        {
+            if (node.Name != "rect") continue;
+            XmlElement rect = node as XmlElement;
+            if(rect == null) continue;
+            if(rect.GetAttribute("inkscape:label").StartsWith("#mesh_template"))
+            {
+                float width = float.Parse( rect.GetAttribute("width"));
+                float height = float.Parse(rect.GetAttribute("height"));
+                foreach (XmlNode node2 in rect.ChildNodes)
+                { 
+                var properties = node2.InnerText.Split(';')
+                    .Where(p => p.Contains('='))
+                    .Select(p => p.Split('=', 2))
+                    .GroupBy(kv => kv[0].Trim())
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Last()[1].Trim()
+                    );
+                if (!properties.ContainsKey("name")) continue;
+                MeshTemplate template = new MeshTemplate(); 
+                template.size = new Vector2(width, height);
+                template.name = properties["name"];
+                if (properties.ContainsKey("collision_model_size"))
+                {
+                    Debug.Log("MapImporter get collision_model_size: " + properties["collision_model_size"]);
+                    string inputS = Regex.Replace(properties["collision_model_size"], @"\s+", " ").Trim();
+                    string[] parts = inputS.Split(' ');
+                    Vector3 vector = new Vector3(
+                        float.Parse(parts[0]),
+                        float.Parse(parts[1]),
+                        float.Parse(parts[2])
+                    );
+                    template.extend = vector;
+                }
+                template.color = MathOfRwrme.StringToColor(template.name);
+                MetaMap.instance.meshTemplates.Add(template);
+                }
+            }
+            if(rect.GetAttribute("inkscape:label").StartsWith("#material"))
+            {
+                foreach (XmlNode node2 in rect.ChildNodes)
+                {
+                    var properties = node2.InnerText.Split(';')
+                        .Where(p => p.Contains('='))
+                        .Select(p => p.Split('=', 2))
+                        .GroupBy(kv => kv[0].Trim())
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Last()[1].Trim()
+                        );
+                    if (properties.ContainsKey("type")) continue;
+                    if (!properties.ContainsKey("name")) continue;
+                    string name = properties["name"];
+                    Color c1 = MathOfRwrme.StringToColor(name);
+                    Color c2 = MathOfRwrme.StringToColor("side"+name);
+                    BuildingType bt = new BuildingType(name,c1,c2);
+                    MetaMap.instance.buildingTypes.Add(bt);
+                }
+            }
+            if(rect.GetAttribute("inkscape:label").StartsWith("#wall_template"))
+            {
+                foreach (XmlNode node2 in rect.ChildNodes)
+                {
+                    var properties = node2.InnerText.Split(';')
+                        .Where(p => p.Contains('='))
+                        .Select(p => p.Split('=', 2))
+                        .GroupBy(kv => kv[0].Trim())
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Last()[1].Trim()
+                        );
+                    if (!properties.ContainsKey("name")) continue;
+                    string name = properties["name"];
+                    Color c1 = MathOfRwrme.StringToColor(name);
+                    float dep = 1.0f;
+                    float hei = 1.0f;
+                    if (properties.ContainsKey("depth")) dep = float.Parse( properties["depth"] );
+                    if (properties.ContainsKey("height")) dep = float.Parse(properties["height"]);
+                    WallType wt = new WallType(name, c1, dep,hei);
+                    MetaMap.instance.wallTypes.Add(wt);
+                }
+            }
+        }
+
+    }
+    public void dealWithTransform(string trs, ref Matrix2x2 rotate, ref float angle, ref Vector2 offset,ref Vector2 scale)
+    {
+        rotate = Matrix2x2.CreateRotation(0);
+        //identitilyeze
+        offset = Vector2.zero;
+        //zero offset
+        angle = 0;
+        //zero rotate
+        scale = Vector2.one;
+
+        if (trs == string.Empty) return;
+
+        //translate matrix rotate
+        if (trs.StartsWith("translate"))
+        {
+            string cleanString = trs.Replace("translate(", "").Replace(")", "");
+            string[] parts = cleanString.Split(',');
+            float x = float.Parse(parts[0]);
+            float y = float.Parse(parts[1]);
+            offset = new Vector2(x, y);
+        }
+        else if (trs.StartsWith("matrix"))
+        {
+            string cleanString = trs.Replace("matrix(", "").Replace(")", "");
+            //Debug.Log("MapImporter.cs" + cleanString);
+            string[] parts = cleanString.Split(',');
+            float a = float.Parse(parts[0]);
+            float b = float.Parse(parts[1]);
+            float c = float.Parse(parts[2]);
+            float d = float.Parse(parts[3]);
+            float tx = float.Parse(parts[4]);
+            float ty = float.Parse(parts[5]);
+            float radians = Mathf.Atan2(c, a);
+            angle = radians * Mathf.Rad2Deg;
+            rotate = new Matrix2x2(a, c, b, d);
+            offset = new Vector2(tx, ty);
+        }
+        else if (trs.StartsWith("rotate"))
+        {
+            string cleanString = trs.Replace("rotate(", "").Replace(")", "");
+            angle = float.Parse(cleanString);
+            rotate = Matrix2x2.CreateRotation(angle);
+        }
+        else if(trs.StartsWith("scale"))
+        {
+            string cleanString = trs.Replace("scale(", "").Replace(")", "");
+            string[] parts = cleanString.Split(',');
+            float x = float.Parse(parts[0]);
+            float y = float.Parse(parts[1]);
+            scale = new Vector2(x, y);
+        }
+        else
+        {
+            Debug.Log("com not found:" + trs);
+        }
+
+    }
+    public void dealWithTransform(string trs, ref Matrix2x2 rotate, ref float angle, ref Vector2 offset)
+    {
+        Vector2 scale=Vector2.one;
+        dealWithTransform(trs, ref rotate, ref angle, ref offset, ref scale);
+    }
+    public void ImportAllMaps()
+    {
+        importTemplates();
+        importGeneralSetting();
+        importObjects();
+        importTerrain();
+        importTerrainCombinAplha();
     }
 
-    private GrayScaleImage LoadGrayScaleImage(string filePath, MapType mapType)
+    public void importTerrainCombinAplha()
+    {
+        string fileName = "terrain5_combined_alpha.png";
+        string path = Path.Combine(Application.dataPath,basePath,fileName);
+        if (File.Exists(path))
+        {
+            byte[] fileData = File.ReadAllBytes(path);
+            Texture2D texture = new Texture2D(2, 2);
+            texture.LoadImage(fileData);
+            cbdTl.SetTexture("_Mask",texture);
+            Debug.Log("MapImporter set cbdmtl");
+        }
+
+    }
+    private GrayScaleImage LoadGrayScaleImage(string filePath)
     {
         try
         {
@@ -61,7 +882,7 @@ public class MapImporter : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"加载失败 {filePath}: {e.Message}");
+            Debug.LogError($"锟斤拷锟斤拷失锟斤拷: {e.Message}");
         }
 
         return null;
@@ -72,7 +893,6 @@ public class MapImporter : MonoBehaviour
         int width = texture.width;
         int height = texture.height;
         GrayScaleImage grayImage = new GrayScaleImage(width, height);
-
         Color[] pixels = texture.GetPixels();
 
         for (int y = 0; y < height; y++)
@@ -80,42 +900,113 @@ public class MapImporter : MonoBehaviour
             for (int x = 0; x < width; x++)
             {
                 int index = y * width + x;
-                float grayValue = pixels[index].grayscale; // 转换为灰度值
+                float grayValue = pixels[index].grayscale;
                 grayImage[y, x] = grayValue;
             }
         }
 
-        // 清理纹理
         DestroyImmediate(texture);
 
         return grayImage;
     }
 
-    // 获取指定类型的灰度图
     public GrayScaleImage GetGrayScaleImage(MapType mapType)
     {
         loadedMaps.TryGetValue(mapType, out GrayScaleImage image);
         return image;
     }
 
-    // 检查是否已加载某灰度图
     public bool HasMap(MapType mapType)
     {
         return loadedMaps.ContainsKey(mapType);
     }
 
-    // 获取所有已加载的灰度图
     public Dictionary<MapType, GrayScaleImage> GetAllMaps()
     {
         return new Dictionary<MapType, GrayScaleImage>(loadedMaps);
     }
 
-    // 打印统计信息
     public void PrintStats()
     {
         foreach (var pair in loadedMaps)
         {
             Debug.Log($"{pair.Key}: {pair.Value.Width}x{pair.Value.Height}");
         }
+    }
+}
+
+
+public class TerrainConfigReader
+{
+    public string configFilePath = "map/terrain.cfg";
+
+    private Dictionary<string, string> configData = new Dictionary<string, string>();
+
+    public void LoadTerrainConfig()
+    {
+        string fullPath = Path.Combine(Application.dataPath, configFilePath);
+
+        if (!File.Exists(fullPath))
+        {
+            return;
+        }
+
+        try
+        {
+            string[] lines = File.ReadAllLines(fullPath);
+
+            foreach (string line in lines)
+            {
+                if (string.IsNullOrEmpty(line) || line.StartsWith("//") || !line.Contains("="))
+                    continue;
+
+                string[] parts = line.Split('=');
+                if (parts.Length == 2)
+                {
+                    string key = parts[0].Trim();
+                    string value = parts[1].Trim();
+                    configData[key] = value;
+                }
+            }
+
+        }
+        catch (System.Exception e)
+        {
+        }
+    }
+
+    // 锟斤拷取锟斤拷锟斤拷值锟侥凤拷锟斤拷
+    public string GetValue(string key)
+    {
+        return configData.ContainsKey(key) ? configData[key] : null;
+    }
+
+    public int GetInt(string key, int defaultValue = 0)
+    {
+        return configData.ContainsKey(key) && int.TryParse(configData[key], out int result) ? result : defaultValue;
+    }
+
+    public float GetFloat(string key, float defaultValue = 0f)
+    {
+        return configData.ContainsKey(key) && float.TryParse(configData[key], out float result) ? result : defaultValue;
+    }
+
+    public bool GetBool(string key, bool defaultValue = false)
+    {
+        if (!configData.ContainsKey(key)) return defaultValue;
+
+        string value = configData[key].ToLower();
+        return value == "yes" || value == "true" || value == "1";
+    }
+
+    // 使锟斤拷示锟斤拷
+    public void PrintConfigValues()
+    {
+        Debug.Log($"DetailTile: {GetInt("DetailTile")}");
+        Debug.Log($"PageSource: {GetValue("PageSource")}");
+        Debug.Log($"Heightmap: {GetValue("Heightmap.image")}");
+        Debug.Log($"PageSize: {GetInt("PageSize")}");
+        Debug.Log($"MaxHeight: {GetFloat("MaxHeight")}");
+        Debug.Log($"VertexNormals: {GetBool("VertexNormals")}");
     }
 }

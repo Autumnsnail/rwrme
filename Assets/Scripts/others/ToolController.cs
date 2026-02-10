@@ -1,6 +1,7 @@
 
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class ToolController : MonoBehaviour
@@ -43,7 +44,9 @@ public class ToolController : MonoBehaviour
         tools.Add(new Eraser("Eraser", this)); //tool 13 = SpawnerEraser
         tools.Add(new MeshScatter("Mesh Scatter")); //tool 14 = MeshScatter
         tools.Add(new TerrainMaterialPainter("Terrain painter")); //tool 15 = terrainPainter
-        
+        tools.Add(new HeightBush("HBS")); //tool 16 = terrainPainter
+        tools.Add(new HeightSmudge("HS")); //tool 17 = terrainSmudge
+
         currentTool = tools[0];
         // 创建拖选可视化对象
         CreateDragVisualizer();
@@ -88,10 +91,70 @@ public class ToolController : MonoBehaviour
         dragVisualizer.enabled = false;
     }
 
-    // Update is called once per frame
-    void Update()
+
+    void OnGUI()
     {
-        if(lastMiS!=miSelected)
+        if (currentTool.m_name == "HBS")
+        {
+            Rect rect = new Rect(500, 10, 400, 30);
+            HeightBush htb = currentTool as HeightBush;
+
+            GUI.color = Color.white;
+            GUI.Label(rect, "height:" + htb.height+" hardness:"+htb.hardness +" range:"+htb.range);
+        }
+    }
+
+        // Update is called once per frame
+        void Update()
+    {
+
+        if (currentTool.m_name == "HBS")
+        {
+            HeightBush htb = currentTool as HeightBush;
+
+            if (Input.GetKey(KeyCode.Equals))
+            {
+                if (Input.GetKey(KeyCode.LeftControl))
+                {
+                    htb.height += 0.002f;
+                    htb.height = Mathf.Clamp(htb.height, 0, 1);
+                }
+                else if (Input.GetKey(KeyCode.LeftShift))
+                {
+                    htb.hardness += 0.002f;
+                    htb.hardness = Mathf.Clamp(htb.hardness, 0, 50);
+
+                }
+                else
+                {
+                    htb.range += 1f;
+                    htb.range = Mathf.Clamp(htb.range, 0, 1000);
+
+                }
+            }
+            if(Input.GetKey(KeyCode.Minus))
+            {
+                if (Input.GetKey(KeyCode.LeftControl))
+                {
+                    htb.height -= 0.002f;
+                    htb.height = Mathf.Clamp(htb.height, 0, 1);
+
+                }
+                else if (Input.GetKey(KeyCode.LeftShift))
+                {
+                    htb.hardness -= 0.002f;
+                    htb.hardness = Mathf.Clamp(htb.hardness, 0, 50);
+
+                }
+                else
+                {
+                    htb.range -= 1f;
+                    htb.range = Mathf.Clamp(htb.range, 0, 1000);
+
+                }
+            }
+        }
+            if (lastMiS!=miSelected)
         {
             //selectAnothermi
             Transform can = miSelected.transform.Find("Canvas");
@@ -1575,3 +1638,116 @@ public class TerrainMaterialPainter : Tool
 }
 
 
+public class HeightBush : Tool
+{
+    public float range = 10.0f; 
+    public float height = 0.5f; 
+    public float hardness = 1.0f; 
+
+    private Terrain currentTerrain;
+
+    public HeightBush(string name) : base(name)
+    {
+    }
+    public override void startUse(Vector3 position, GameObject hitObject)
+    {
+        currentTerrain = Terrain.activeTerrain;
+        if (currentTerrain == null) return;
+        ApplyHeightBrush(position, true);
+    }
+
+
+    public override void OnDragging(Vector3 currentPosition)
+    {
+        if (currentTerrain == null) return;
+        ApplyHeightBrush(currentPosition, false);
+    }
+
+    private void ApplyHeightBrush(Vector3 worldPos, bool isStart)
+    {
+        TerrainData terrainData = currentTerrain.terrainData;
+
+        Vector2Int centerCoord =Vector2Int.FloorToInt(new Vector2( worldPos.x,worldPos.z)/2) ;
+        int radiusInPixels = Mathf.CeilToInt(range / 2);
+
+        float[,] heights = terrainData.GetHeights(0, 0,
+            terrainData.heightmapResolution,
+            terrainData.heightmapResolution);
+
+
+        int startX = Mathf.Max(0, centerCoord.x - radiusInPixels);
+        int endX = Mathf.Min(terrainData.heightmapResolution, centerCoord.x + radiusInPixels);
+        int startY = Mathf.Max(0, centerCoord.y - radiusInPixels);
+        int endY = Mathf.Min(terrainData.heightmapResolution, centerCoord.y + radiusInPixels);
+        Debug.Log("are = " + startX.ToString()+" " + endX.ToString() + " " + startY.ToString() + " " + endY.ToString() + " ");
+
+        for (int y = startY; y < endY; y++)
+        {
+            for (int x = startX; x < endX; x++)
+            {
+                float distance = Vector2.Distance(new Vector2(x, y),
+                    new Vector2(centerCoord.x, centerCoord.y)) / radiusInPixels;
+
+                if (distance <= 1.0f)
+                {
+                    float falloff = Mathf.Pow(1 - distance, hardness);
+
+                    float targetHeight = heights[y, x]*(1-falloff) + height * falloff;
+                    heights[y, x] = Mathf.Clamp(targetHeight, 0, 1);
+                }
+            }
+        }
+
+        terrainData.SetHeights(0, 0, heights);
+        terrainData.SyncHeightmap();
+    }
+}
+public class HeightSmudge : Tool
+{
+    public float range = 10.0f;
+    public float strength = 0.3f;
+
+    private Terrain currentTerrain;
+    private Vector3 lastPos;
+
+    public HeightSmudge(string name) : base(name) { }
+
+    public override void startUse(Vector3 position, GameObject hitObject)
+    {
+        currentTerrain = Terrain.activeTerrain;
+        lastPos = position;
+    }
+
+    public override void OnDragging(Vector3 currentPos)
+    {
+        if (currentTerrain == null) return;
+
+        TerrainData data = currentTerrain.terrainData;
+        Vector3 size = data.size;
+        int res = data.heightmapResolution;
+
+        Vector3 localPos = currentPos - currentTerrain.transform.position;
+        Vector3 lastLocalPos = lastPos - currentTerrain.transform.position;
+
+        int cx = (int)(localPos.x / size.x * res);
+        int cy = (int)(localPos.z / size.z * res);
+        int lcx = (int)(lastLocalPos.x / size.x * res);
+        int lcy = (int)(lastLocalPos.z / size.z * res);
+
+        int radius = Mathf.CeilToInt(range / 2);
+        float[,] heights = data.GetHeights(0, 0, res, res);
+
+        for (int y = Mathf.Max(0, cy - radius); y < Mathf.Min(res, cy + radius); y++)
+            for (int x = Mathf.Max(0, cx - radius); x < Mathf.Min(res, cx + radius); x++)
+            {
+                int srcY = lcy + (y - cy);
+                int srcX = lcx + (x - cx);
+
+                if (srcY >= 0 && srcY < res && srcX >= 0 && srcX < res)
+                    heights[y, x] = Mathf.Lerp(heights[y, x], heights[srcY, srcX], strength);
+            }
+
+        data.SetHeights(0, 0, heights);
+        lastPos = currentPos;
+    }
+}

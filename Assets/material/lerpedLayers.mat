@@ -86,6 +86,9 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
+    - _ContourIntensity: 1
+    - _ContourInterval: 1
+    - _ContourWidth: 0.01
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -103,5 +106,6 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ContourColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

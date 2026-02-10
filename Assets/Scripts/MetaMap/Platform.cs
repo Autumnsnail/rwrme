@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
+using UnityEngine;
 
 public class Platform : PathPair
 {
@@ -209,7 +209,7 @@ public class Platform : PathPair
             this.transform.GetChild(1).gameObject.GetComponent<Renderer>().material = bwtp.material;
         }
 
-        GeneratePathGeometry(u3dpll, u3dplr, pot.y, wallHeight);
+        GeneratePathGeometry(u3dpll, u3dplr, wallHeight);
 
     }
 
@@ -217,21 +217,28 @@ public class Platform : PathPair
     {
         top_material = input;
     }
-    void GeneratePathGeometry(List<Vector2> leftPath, List<Vector2> rightPath, float pathHeight, float wallHei)
+    void GeneratePathGeometry(List<Vector2> leftPath, List<Vector2> rightPath,  float wallHei)
     {
         List<Vector3> vertices = new List<Vector3>();
         List<Vector3> sides = new List<Vector3>();
         List<Vector3> baseWall = new List<Vector3>();
 
+        List<float> pathHeight = new List<float>();
+        for (int i=0;i<rightPath.Count;i++)
+        {
+            Vector3 pot = Vector3.zero;
+            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(positinLineR[i]), this.layerIndex, ref  pot);
+            pathHeight.Add(pot.y);
+        }
         if (isDeck)
         {
-            pathHeight += height;
+            for (int i = 0; i < rightPath.Count; i++) pathHeight[i] += height;
         }
 
         for (int i = 0; i < leftPath.Count; i++)
         {
-            Vector3 p1 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
-            Vector3 p2 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+            Vector3 p1 = new Vector3(leftPath[i].x, pathHeight[i], leftPath[i].y);
+            Vector3 p2 = new Vector3(rightPath[i].x, pathHeight[i], rightPath[i].y);
             vertices.Add(p1);
             vertices.Add(p2);
         }
@@ -245,70 +252,70 @@ public class Platform : PathPair
             {
                 for (int i = 0; i < leftPath.Count; i++)
                 {
-                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
-                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight[i] + wallHei, leftPath[i].y);
+                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight[i], leftPath[i].y);
                     sides.Add(p1);
                     sides.Add(p2);
                 }
                 for (int i = leftPath.Count - 1; i >= 0; i--)
                 {
-                    Vector3 p1 = new Vector3(rightPath[i].x, pathHeight + wallHei, rightPath[i].y);
-                    Vector3 p2 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+                    Vector3 p1 = new Vector3(rightPath[i].x, pathHeight[i] + wallHei, rightPath[i].y);
+                    Vector3 p2 = new Vector3(rightPath[i].x, pathHeight[i], rightPath[i].y);
                     sides.Add(p1);
                     sides.Add(p2);
                 }
-                sides.Add(new Vector3(leftPath[0].x, pathHeight + wallHei, leftPath[0].y));
-                sides.Add(new Vector3(leftPath[0].x, pathHeight, leftPath[0].y));
+                sides.Add(new Vector3(leftPath[0].x, pathHeight[0]   + wallHei, leftPath[0].y));
+                sides.Add(new Vector3(leftPath[0].x, pathHeight[0], leftPath[0].y));
             }
             else if (isBridge)
             {
 
                 for (int i = 0; i < leftPath.Count; i++)
                 {
-                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
-                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight[i] + wallHei, leftPath[i].y);
+                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight[i], leftPath[i].y);
                     sides.Add(p1);
                     sides.Add(p2);
                 }
-                sides.Add(new Vector3(leftPath[leftPath.Count - 1].x, pathHeight + wallHei, leftPath[leftPath.Count - 1].y));
-                sides.Add(new Vector3(leftPath[leftPath.Count - 1].x, pathHeight + wallHei, leftPath[leftPath.Count - 1].y));
-                sides.Add(new Vector3(rightPath[0].x, pathHeight + wallHei, rightPath[0].y));
-                sides.Add(new Vector3(rightPath[0].x, pathHeight + wallHei, rightPath[0].y));
+                sides.Add(new Vector3(leftPath[leftPath.Count - 1].x, pathHeight[leftPath.Count - 1] + wallHei, leftPath[leftPath.Count - 1].y));
+                sides.Add(new Vector3(leftPath[leftPath.Count - 1].x, pathHeight[leftPath.Count - 1] + wallHei, leftPath[leftPath.Count - 1].y));
+                sides.Add(new Vector3(rightPath[0].x, pathHeight[0] + wallHei, rightPath[0].y));
+                sides.Add(new Vector3(rightPath[0].x, pathHeight[0] + wallHei, rightPath[0].y));
 
                 for (int i = 0; i < leftPath.Count; i++)
                 {
-                    Vector3 p1 = new Vector3(rightPath[i].x, pathHeight + wallHei, rightPath[i].y);
-                    Vector3 p2 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+                    Vector3 p1 = new Vector3(rightPath[i].x, pathHeight[i] + wallHei, rightPath[i].y);
+                    Vector3 p2 = new Vector3(rightPath[i].x, pathHeight[i], rightPath[i].y);
                     sides.Add(p1);
                     sides.Add(p2);
                 }
             }
             else
             {
-                sides.Add(new Vector3(rightPath[0].x, pathHeight + wallHei, rightPath[0].y));
-                sides.Add(new Vector3(rightPath[0].x, pathHeight, rightPath[0].y));
+                sides.Add(new Vector3(rightPath[0].x, pathHeight[0] + wallHei, rightPath[0].y));
+                sides.Add(new Vector3(rightPath[0].x, pathHeight[0], rightPath[0].y));
                 for (int i = 0; i < leftPath.Count; i++)
                 {
-                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight + wallHei, leftPath[i].y);
-                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+                    Vector3 p1 = new Vector3(leftPath[i].x, pathHeight[i] + wallHei, leftPath[i].y);
+                    Vector3 p2 = new Vector3(leftPath[i].x, pathHeight[i], leftPath[i].y);
                     sides.Add(p1);
                     sides.Add(p2);
                 }
-                sides.Add(new Vector3(rightPath[rightPath.Count - 1].x, pathHeight + wallHei, rightPath[rightPath.Count - 1].y));
-                sides.Add(new Vector3(rightPath[rightPath.Count - 1].x, pathHeight, rightPath[rightPath.Count - 1].y));
+                sides.Add(new Vector3(rightPath[rightPath.Count - 1].x, pathHeight[rightPath.Count - 1] + wallHei, rightPath[rightPath.Count - 1].y));
+                sides.Add(new Vector3(rightPath[rightPath.Count - 1].x, pathHeight[rightPath.Count - 1], rightPath[rightPath.Count - 1].y));
             }
             GenerateQuadSide(sides);
         }
         for (int i = 0; i < leftPath.Count; i++)
         {
-            Vector3 p1 = new Vector3(leftPath[i].x, pathHeight, leftPath[i].y);
+            Vector3 p1 = new Vector3(leftPath[i].x, pathHeight[i], leftPath[i].y);
             Vector3 p2 = new Vector3(leftPath[i].x, 0, leftPath[i].y);
             baseWall.Add(p1);
             baseWall.Add(p2);
         }
         for (int i = leftPath.Count - 1; i >= 0; i--)
         {
-            Vector3 p1 = new Vector3(rightPath[i].x, pathHeight, rightPath[i].y);
+            Vector3 p1 = new Vector3(rightPath[i].x, pathHeight[i], rightPath[i].y);
             Vector3 p2 = new Vector3(rightPath[i].x, 0, rightPath[i].y);
             baseWall.Add(p1);
             baseWall.Add(p2);

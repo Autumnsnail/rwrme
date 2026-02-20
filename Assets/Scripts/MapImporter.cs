@@ -417,7 +417,7 @@ public class MapImporter : MonoBehaviour
                                                     }
                                                     XmlElement thdesc = descnode as XmlElement;
                                                     if (thdesc == null) continue;
-                                                    Debug.Log("MapImporter : " + thdesc.InnerText);
+                                                   // Debug.Log("MapImporter : " + thdesc.InnerText);
                                                     var properties = thdesc.InnerText.Split(';')
                                                         .Where(p => p.Contains('='))
                                                         .Select(p => p.Split('=', 2))
@@ -759,6 +759,7 @@ public class MapImporter : MonoBehaviour
             }
             if(rect.GetAttribute("inkscape:label").StartsWith("#wall_template"))
             {
+                Debug.Log("get wall template");
                 foreach (XmlNode node2 in rect.ChildNodes)
                 {
                     var properties = node2.InnerText.Split(';')

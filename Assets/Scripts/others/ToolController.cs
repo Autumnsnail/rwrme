@@ -1202,6 +1202,7 @@ public class PlatformDrawer : Tool
             endLine.Clear();
             MetaMap.instance.defaultLayer.mapItems.Add(plt);
             plt.scatterThis();
+            drawing = 0;
         }
         if (drawing == 1)
         {

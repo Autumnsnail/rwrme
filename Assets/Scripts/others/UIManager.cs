@@ -28,6 +28,7 @@ public class UIManager : MonoBehaviour
         instance = this;    
         Debug.Log("UI Manager init");
         ddBT = transform.Find("BuildingEditor/BuildingTypes").gameObject;
+        ddWT = transform.Find("WallEditor/WallTypes").gameObject;
         ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
         ddMt = transform.Find("MeshEditor/MeshTemplates").gameObject;
         /*

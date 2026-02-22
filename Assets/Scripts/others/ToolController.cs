@@ -8,7 +8,7 @@ public class ToolController : MonoBehaviour
 {
     // Start is called before the first frame update
     public List<Tool> tools = new List<Tool>();
-    Tool currentTool;
+    public Tool currentTool;
     public Camera orthographicCamera;
     public static ToolController inste;
 

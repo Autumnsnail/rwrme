@@ -23,6 +23,9 @@ public class MetaMap : MonoBehaviour
 
     public List<string> allowedExtensions = new List<string> { "default"};//import later
 
+    public int terrainLayerCount = 4;
+    public List<string> terrainAlphaFileName = new List<string> { "null", "terrain5_alpha_sand.png", "terrain5_alpha_grass.png", "terrain5_alpha_asphalt.png", "terrain5_alpha_road.png" };
+
     // Start is called before the first frame update
     void Start()
     {

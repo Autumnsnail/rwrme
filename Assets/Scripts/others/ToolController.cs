@@ -17,6 +17,7 @@ public class ToolController : MonoBehaviour
 
     private SideTool sdt = new SideTool();
 
+    private Dictionary<KeyCode, int> toolShortcutMap;
 
     public MapItem miSelected;
     private MapItem lastMiS;
@@ -48,6 +49,29 @@ public class ToolController : MonoBehaviour
         tools.Add(new HeightSmudge("HS")); //tool 17 = terrainSmudge
 
         currentTool = tools[0];
+
+        toolShortcutMap = new Dictionary<KeyCode, int>
+        {
+            { KeyCode.Alpha1, 0  },  // Selecter
+            { KeyCode.Alpha2, 1  },  // TankPin
+            { KeyCode.Alpha3, 2  },  // DrawerSelect (Building)
+            { KeyCode.Alpha4, 3  },  // RoofChanger
+            { KeyCode.Alpha5, 4  },  // MaterialChanger
+            { KeyCode.Alpha6, 5  },  // HeightChanger
+            { KeyCode.Alpha7, 6  },  // WallDrawer
+            { KeyCode.Alpha8, 7  },  // PlatformDrawer
+            { KeyCode.Alpha9, 8  },  // PlatformTypeChanger
+            { KeyCode.Alpha0, 9  },  // PlatformBasewallChanger
+            { KeyCode.F1,     10 },  // PlatformHeightSetter
+            { KeyCode.F2,     11 },  // BaseTool
+            { KeyCode.F3,     12 },  // ItemScatter
+            { KeyCode.F4,     13 },  // Eraser
+            { KeyCode.F5,     14 },  // MeshScatter
+            { KeyCode.F6,     15 },  // TerrainMaterialPainter
+            { KeyCode.F7,     16 },  // HeightBush (HBS)
+            { KeyCode.F8,     17 },  // HeightSmudge
+        };
+
         // 创建拖选可视化对象
         CreateDragVisualizer();
     }
@@ -271,6 +295,8 @@ public class ToolController : MonoBehaviour
             currentTool.escape();
         }
 
+        HandleToolShortcuts();
+
         sdt.mi = miSelected;
 
         Vector2 ofst = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
@@ -281,6 +307,21 @@ public class ToolController : MonoBehaviour
         Vector2 gv2 = new Vector2(normalizedX, normalizedY);
         sdt.update(ofst, gv2);
     }
+    private void HandleToolShortcuts()
+    {
+        // 不在 Ctrl 组合键时才响应工具切换，避免与 Ctrl+C/V 等冲突
+        if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) return;
+
+        foreach (var kv in toolShortcutMap)
+        {
+            if (Input.GetKeyDown(kv.Key))
+            {
+                setToolWithIndex(kv.Value);
+                break;
+            }
+        }
+    }
+
     public void setToolPinTank()
     {
         Debug.Log("set Tool to TankPiun");

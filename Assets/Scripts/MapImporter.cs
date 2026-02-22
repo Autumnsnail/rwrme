@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -543,7 +544,7 @@ public class MapImporter : MonoBehaviour
                                                 {
                                                     if (properties["mode"].StartsWith("bridge"))
                                                     {
-                                                        pf.isDeck = true;
+                                                        pf.isBridge = true;
 
                                                     }
                                                 }
@@ -692,7 +693,8 @@ public class MapImporter : MonoBehaviour
     {
         Debug.Log("start to Import GeneralSettings");
         XmlDocument xmlDoc = new XmlDocument();
-        string templatePath = Path.Combine(Application.dataPath, "templates", "vn_no_bti.xml");
+        string file = Directory.GetFiles(Path.Combine(Application.dataPath, "templates"), "*.xml").FirstOrDefault();
+        string templatePath = Path.Combine(Application.dataPath, "templates", file);
         xmlDoc.Load(templatePath);
         XmlElement root = xmlDoc.DocumentElement;
         XmlElement eg = root.FirstChild as XmlElement;
@@ -779,6 +781,29 @@ public class MapImporter : MonoBehaviour
                     if (properties.ContainsKey("height")) dep = float.Parse(properties["height"]);
                     WallType wt = new WallType(name, c1, dep,hei);
                     MetaMap.instance.wallTypes.Add(wt);
+                }
+            }
+            if (rect.GetAttribute("inkscape:label").StartsWith("#terrain_layer"))
+            {
+                Debug.Log("terrain_layer");
+                foreach (XmlNode node2 in rect.ChildNodes)
+                {
+                    var properties = node2.InnerText.Split(';')
+                        .Where(p => p.Contains('='))
+                        .Select(p => p.Split('=', 2))
+                        .GroupBy(kv => kv[0].Trim())
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Last()[1].Trim()
+                        );
+                    if (!properties.ContainsKey("alpha")) continue;
+                    int ind = int.Parse( properties["index"]);
+                    while(ind > MetaMap.instance.terrainAlphaFileName.Count-1)
+                    {
+                        MetaMap.instance.terrainAlphaFileName.Add("null");
+                    }
+                    if (ind+1 >MetaMap.instance.terrainLayerCount) MetaMap.instance.terrainLayerCount = ind+1;
+                    MetaMap.instance.terrainAlphaFileName[ind] = properties["alpha"];
                 }
             }
         }
@@ -888,7 +913,6 @@ public class MapImporter : MonoBehaviour
 
         return null;
     }
-
     private GrayScaleImage ConvertTextureToGrayScaleImage(Texture2D texture)
     {
         int width = texture.width;

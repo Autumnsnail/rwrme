@@ -708,9 +708,45 @@ public class MapExporter : MonoBehaviour
     {
         Texture2D tex = Terrain.activeTerrain.materialTemplate.GetTexture("_Mask") as Texture2D; 
         byte[] pngData = tex.EncodeToPNG();
+        int width = tex.width;
+        int height = tex.height;
+        Color32[] srcPixels = tex.GetPixels32();
 
         string filePath = Path.Combine(Application.dataPath, basePath,"terrain5_combined_alpha.png");
         File.WriteAllBytes(filePath, pngData);
+
+        for(int i=1;i<5;i++)
+        {
+            string fileName = MetaMap.instance.terrainAlphaFileName[i];
+            Texture2D channelTex = new Texture2D(width, height, TextureFormat.R8, false);
+            Color32[] channelPixels = new Color32[srcPixels.Length];
+            for (int p = 0; p < srcPixels.Length; p++)
+            {
+                byte value = 0;
+
+                switch (i)
+                {
+                    case 1: value = srcPixels[p].r; break;
+                    case 2: value = srcPixels[p].g; break;
+                    case 3: value = srcPixels[p].b; break;
+                    case 4: value = srcPixels[p].a;
+                        value = (byte)(255 - value);
+                        break;
+                }
+
+                channelPixels[p] = new Color32(value, value, value, 255);
+            }
+            channelTex.SetPixels32(channelPixels);
+            channelTex.Apply();
+            filePath = Path.Combine(
+                Application.dataPath,
+                basePath,
+                fileName
+            );
+
+            File.WriteAllBytes(filePath, channelTex.EncodeToPNG());
+        }
+
     }
     public void exportBuildings()
     {

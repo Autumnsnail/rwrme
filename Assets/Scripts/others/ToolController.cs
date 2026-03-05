@@ -263,6 +263,7 @@ public class ToolController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Delete))
         {
+            CtrlZer.instance.checkPoint();
             if(!MetaMap.instance.defaultLayer.mapItems.Remove(miSelected))
             {
                 //base
@@ -468,6 +469,9 @@ public class ToolController : MonoBehaviour
             // 生成新ID
             newBuilding.id = MetaMap.instance.getNewItemId("building");
 
+            // 记录撤销点（必须在修改 mapItems 之前）
+            CtrlZer.instance.checkPoint();
+
             // 添加到地图
             MetaMap.instance.defaultLayer.mapItems.Add(newBuilding);
             
@@ -476,9 +480,6 @@ public class ToolController : MonoBehaviour
             
             // 选中新建筑
             miSelected = newBuilding;
-
-            // 记录撤销点
-            CtrlZer.instance.checkPoint();
 
             Debug.Log($"已粘贴建筑到位置: {pastePosition2D}, ID: {newBuilding.id}");
         }
@@ -981,6 +982,8 @@ public class MaterialChangerTool : Tool
             MapItem mi = hitO.GetComponent<MapItem>();
             if (mi == null) return;
 
+            CtrlZer.instance.checkPoint();
+
             if (mi is Platform plt)
             {
                 if(this.bt is PlatformSerfaceType pst)
@@ -1129,6 +1132,7 @@ public class WallDrawer : Tool
         ToolController.inste.dragVisualizer.enabled = false;
         if (drawing)
         {
+            CtrlZer.instance.checkPoint();
             drawing = false;
             GameObject go = ToolController.inste.InsOnePref(MapImporter.instate.WallPref);
             Wall wl = go.GetComponent<Wall>();
@@ -1215,6 +1219,7 @@ public class PlatformDrawer : Tool
         
         if (drawing == 2)
         {
+            CtrlZer.instance.checkPoint();
             GameObject go = ToolController.inste.InsOnePref(MapImporter.instate.PlatformPref);
             Platform plt = go.GetComponent<Platform>();
             plt.id = MetaMap.instance.getNewItemId("platform");
@@ -1366,6 +1371,7 @@ public class ItemScatter : Tool
     }
     public override void startUse(Vector3 position, GameObject hitO)
     {
+        CtrlZer.instance.checkPoint();
         if(itemType == typeof(SpawnPoint))
         {
             SpawnPoint sp = ToolController.inste.InsOnePref(MapImporter.instate.SpawnPointPref).GetComponent<SpawnPoint>();
@@ -1475,6 +1481,7 @@ public class MeshScatter : Tool
     }
     public override void startUse(Vector3 position, GameObject hitO)
     {
+        CtrlZer.instance.checkPoint();
         MeMesh ms = ToolController.inste.InsOnePref(MapImporter.instate.MeshPref).GetComponent<MeMesh>();
         
         ms.id = MetaMap.instance.getNewItemId("#mesh");
@@ -1579,6 +1586,7 @@ public class Eraser : Tool
 
     private void Erase()
     {
+        CtrlZer.instance.checkPoint();
         for (int i = 0; i < MetaMap.instance.defaultLayer.mapItems.Count; i++)
         {
             if(MetaMap.instance.defaultLayer.mapItems[i].GetType()!=itemType)continue;
@@ -1654,6 +1662,7 @@ public class TerrainMaterialPainter : Tool
 
     public override void startUse(Vector3 position, GameObject hitO)
     {
+        CtrlZer.instance.checkPointWithTerrainMask();
         if (tarind == 0) tarCol = new Color(0, 0, 0, 1);
         if (tarind == 1) tarCol = new Color(1, 0, 0, 1);
         if (tarind == 2) tarCol = new Color(1, 1, 0, 1);
@@ -1693,6 +1702,7 @@ public class HeightBush : Tool
     }
     public override void startUse(Vector3 position, GameObject hitObject)
     {
+        CtrlZer.instance.checkPointWithHeightmap();
         currentTerrain = Terrain.activeTerrain;
         if (currentTerrain == null) return;
         ApplyHeightBrush(position, true);
@@ -1756,6 +1766,7 @@ public class HeightSmudge : Tool
 
     public override void startUse(Vector3 position, GameObject hitObject)
     {
+        CtrlZer.instance.checkPointWithHeightmap();
         currentTerrain = Terrain.activeTerrain;
         lastPos = position;
     }

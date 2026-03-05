@@ -5,36 +5,248 @@ using UnityEngine;
 public class CtrlZer : MonoBehaviour
 {
     public static CtrlZer instance;
-    // Start is called before the first frame update
+
+    private const int MaxHistorySize = 50;
+
+    private struct Snapshot
+    {
+        public List<MapItem> defaultItems;
+        public List<MapItem> baseItems;
+        public float[,] heightmapData;
+        public Color[] maskPixels;
+        public int maskWidth;
+        public int maskHeight;
+    }
+
+    private List<Snapshot> undoStack = new List<Snapshot>();
+    private List<Snapshot> redoStack = new List<Snapshot>();
+
     void Start()
     {
         instance = this;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if(Input.GetKey(KeyCode.LeftControl)&&Input.GetKeyDown(KeyCode.X))
+        if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
         {
-            Debug.Log("CtrlZer:try ctrl+z");
-            CtrlZ();
+            if (Input.GetKeyDown(KeyCode.Z))
+            {
+                Undo();
+            }
+            if (Input.GetKeyDown(KeyCode.Y))
+            {
+                Redo();
+            }
         }
     }
 
-    public List<MapItem> mapItems;
+    private Snapshot CaptureSnapshot()
+    {
+        return new Snapshot
+        {
+            defaultItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems),
+            baseItems = new List<MapItem>(MetaMap.instance.baseLayer.mapItems)
+        };
+    }
 
+    private void PushUndo(Snapshot snap)
+    {
+        undoStack.Add(snap);
+        if (undoStack.Count > MaxHistorySize)
+            undoStack.RemoveAt(0);
+
+        DestroyRedoOrphans();
+        redoStack.Clear();
+
+        Debug.Log("CtrlZer: Checkpoint saved (undo depth: " + undoStack.Count + ")");
+    }
+
+    /// <summary>
+    /// Save mapItems state before a non-terrain operation.
+    /// </summary>
     public void checkPoint()
     {
-        Debug.Log("CtrlZer:Saved");
-        mapItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems);
-        //i hope there is gc
+        PushUndo(CaptureSnapshot());
     }
 
-    public void CtrlZ()
+    /// <summary>
+    /// Save mapItems + terrain heightmap before a height-modifying operation.
+    /// </summary>
+    public void checkPointWithHeightmap()
     {
-        MetaMap.instance.defaultLayer.mapItems = new List<MapItem>(mapItems);
-        Syncer.instence.destroyAllOutMapitems();
-        Syncer.instence.ScatterMapItems();
+        Snapshot snap = CaptureSnapshot();
+
+        Terrain terrain = Terrain.activeTerrain;
+        if (terrain != null)
+        {
+            TerrainData td = terrain.terrainData;
+            int res = td.heightmapResolution;
+            float[,] src = td.GetHeights(0, 0, res, res);
+            float[,] copy = new float[res, res];
+            System.Buffer.BlockCopy(src, 0, copy, 0, res * res * sizeof(float));
+            snap.heightmapData = copy;
+        }
+
+        PushUndo(snap);
     }
 
+    /// <summary>
+    /// Save mapItems + terrain mask texture before a terrain-paint operation.
+    /// </summary>
+    public void checkPointWithTerrainMask()
+    {
+        Snapshot snap = CaptureSnapshot();
+
+        Terrain terrain = Terrain.activeTerrain;
+        if (terrain != null)
+        {
+            Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
+            if (tex != null)
+            {
+                snap.maskPixels = tex.GetPixels();
+                snap.maskWidth = tex.width;
+                snap.maskHeight = tex.height;
+            }
+        }
+
+        PushUndo(snap);
+    }
+
+    public void Undo()
+    {
+        if (undoStack.Count == 0)
+        {
+            Debug.Log("CtrlZer: Nothing to undo");
+            return;
+        }
+
+        redoStack.Add(CaptureCurrentFullSnapshot());
+
+        Snapshot snapshot = undoStack[undoStack.Count - 1];
+        undoStack.RemoveAt(undoStack.Count - 1);
+
+        RestoreSnapshot(snapshot);
+        Debug.Log("CtrlZer: Undo (remaining: " + undoStack.Count + ")");
+    }
+
+    public void Redo()
+    {
+        if (redoStack.Count == 0)
+        {
+            Debug.Log("CtrlZer: Nothing to redo");
+            return;
+        }
+
+        undoStack.Add(CaptureCurrentFullSnapshot());
+
+        Snapshot snapshot = redoStack[redoStack.Count - 1];
+        redoStack.RemoveAt(redoStack.Count - 1);
+
+        RestoreSnapshot(snapshot);
+        Debug.Log("CtrlZer: Redo (remaining: " + redoStack.Count + ")");
+    }
+
+    /// <summary>
+    /// Capture a snapshot that mirrors whatever data types the target snapshot
+    /// might contain, so that undo/redo round-trips correctly for terrain data.
+    /// Always captures both heightmap and mask to ensure nothing is lost.
+    /// </summary>
+    private Snapshot CaptureCurrentFullSnapshot()
+    {
+        Snapshot snap = CaptureSnapshot();
+
+        Terrain terrain = Terrain.activeTerrain;
+        if (terrain != null)
+        {
+            TerrainData td = terrain.terrainData;
+            int res = td.heightmapResolution;
+            float[,] src = td.GetHeights(0, 0, res, res);
+            float[,] copy = new float[res, res];
+            System.Buffer.BlockCopy(src, 0, copy, 0, res * res * sizeof(float));
+            snap.heightmapData = copy;
+
+            Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
+            if (tex != null)
+            {
+                snap.maskPixels = tex.GetPixels();
+                snap.maskWidth = tex.width;
+                snap.maskHeight = tex.height;
+            }
+        }
+
+        return snap;
+    }
+
+    private void RestoreSnapshot(Snapshot snapshot)
+    {
+        MetaMap.instance.defaultLayer.mapItems = new List<MapItem>(snapshot.defaultItems);
+        MetaMap.instance.baseLayer.mapItems = new List<MapItem>(snapshot.baseItems);
+
+        HashSet<MapItem> activeItems = new HashSet<MapItem>(snapshot.defaultItems);
+        foreach (var item in snapshot.baseItems)
+            activeItems.Add(item);
+
+        MapItem[] allItems = FindObjectsOfType<MapItem>(true);
+        foreach (MapItem item in allItems)
+        {
+            if (item == null) continue;
+            item.gameObject.SetActive(activeItems.Contains(item));
+        }
+
+        StartCoroutine(Syncer.instence.ScatterMapItems());
+
+        if (snapshot.heightmapData != null)
+        {
+            Terrain terrain = Terrain.activeTerrain;
+            if (terrain != null)
+            {
+                terrain.terrainData.SetHeights(0, 0, snapshot.heightmapData);
+                terrain.terrainData.SyncHeightmap();
+            }
+        }
+
+        if (snapshot.maskPixels != null)
+        {
+            Terrain terrain = Terrain.activeTerrain;
+            if (terrain != null)
+            {
+                Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
+                if (tex != null)
+                {
+                    tex.SetPixels(snapshot.maskPixels);
+                    tex.Apply();
+                }
+            }
+        }
+    }
+
+    private void DestroyRedoOrphans()
+    {
+        if (redoStack.Count == 0) return;
+
+        HashSet<MapItem> keepAlive = new HashSet<MapItem>(MetaMap.instance.defaultLayer.mapItems);
+        foreach (var item in MetaMap.instance.baseLayer.mapItems)
+            keepAlive.Add(item);
+        foreach (var snap in undoStack)
+        {
+            foreach (var item in snap.defaultItems) keepAlive.Add(item);
+            foreach (var item in snap.baseItems) keepAlive.Add(item);
+        }
+
+        HashSet<MapItem> alreadyDestroyed = new HashSet<MapItem>();
+        foreach (var snap in redoStack)
+        {
+            foreach (var item in snap.defaultItems)
+            {
+                if (item != null && !keepAlive.Contains(item) && alreadyDestroyed.Add(item))
+                    Destroy(item.gameObject);
+            }
+            foreach (var item in snap.baseItems)
+            {
+                if (item != null && !keepAlive.Contains(item) && alreadyDestroyed.Add(item))
+                    Destroy(item.gameObject);
+            }
+        }
+    }
 }

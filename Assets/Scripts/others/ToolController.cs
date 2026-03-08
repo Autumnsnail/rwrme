@@ -269,7 +269,7 @@ public class ToolController : MonoBehaviour
                 //base
                 MetaMap.instance.baseLayer.mapItems.Remove(miSelected);
             }
-            Destroy(miSelected.gameObject.transform.root.gameObject);
+            miSelected.gameObject.SetActive(false);
         }
 
         // 复制功能 (Ctrl+C)
@@ -1596,7 +1596,7 @@ public class Eraser : Tool
                 {
                     MetaMap.instance.defaultLayer.mapItems.RemoveAt(i);
                     i--;
-                    GameObject.Destroy(sp.gameObject);
+                    sp.gameObject.SetActive(false);
                 }
             }
         }

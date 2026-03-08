@@ -40,7 +40,7 @@ public class ToolController : MonoBehaviour
         tools.Add(new PlatformTypeChanger("PlatformTypeChanger", this)); //tool8 = pt changer
         tools.Add(new PlatformBasewallChanger("PlatformBasewallChanger")); //tool9 = pt baseWallType changer
         tools.Add(new PlatformHeightSetter("PlatformHeightSetter")); //tool 10 = pt heightSetter
-        tools.Add(new BaseTool("PlatformHeightSetter",this)); //tool 11 = base drawer
+        tools.Add(new BaseTool("BaseBuilder",this)); //tool 11 = base drawer
         tools.Add(new ItemScatter("Scatter"));//tool 12 SpawnPosition pointer
         tools.Add(new Eraser("Eraser", this)); //tool 13 = SpawnerEraser
         tools.Add(new MeshScatter("Mesh Scatter")); //tool 14 = MeshScatter

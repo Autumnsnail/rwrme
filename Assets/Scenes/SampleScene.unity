@@ -12101,7 +12101,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1762337452}
-  - {fileID: 1804557390}
   - {fileID: 996477631}
   - {fileID: 1696934453}
   - {fileID: 400675080}
@@ -12113,6 +12112,7 @@ RectTransform:
   - {fileID: 818486556}
   - {fileID: 437001963}
   - {fileID: 1055921380}
+  - {fileID: 1804557390}
   - {fileID: 134771150}
   - {fileID: 49089992}
   - {fileID: 1722220874}
@@ -15415,7 +15415,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc3ee3fb128bf26488fe564f125cba14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapItems: []
 --- !u!114 &1307524974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21795,9 +21794,9 @@ RectTransform:
   - {fileID: 1438480913}
   m_Father: {fileID: 1071045040}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -40, y: -120}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -40, y: -660}
   m_SizeDelta: {x: 80, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1804557391

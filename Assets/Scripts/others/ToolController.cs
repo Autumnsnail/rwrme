@@ -247,17 +247,22 @@ public class ToolController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.G))
         {
+            if (sdt.state != 1 && sdt.mi != null)
+                CtrlZer.instance.checkPointTransformOnly();
             sdt.tChangeMode(1);
         }
 
         if (Input.GetKeyDown(KeyCode.R))
         {
+            if (sdt.state != 2 && sdt.mi != null)
+                CtrlZer.instance.checkPointTransformOnly();
             sdt.tChangeMode(2);
-
         }
 
         if (Input.GetKeyDown(KeyCode.S))
         {
+            if (sdt.state != 3 && sdt.mi != null)
+                CtrlZer.instance.checkPointTransformOnly();
             sdt.tChangeMode(3);
         }
 

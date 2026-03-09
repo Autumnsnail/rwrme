@@ -8,10 +8,20 @@ public class CtrlZer : MonoBehaviour
 
     private const int MaxHistorySize = 50;
 
+    private struct ItemTransformData
+    {
+        public MapItem item;
+        public Vector2 position;
+        public float rotation;
+        public Vector2 size;
+    }
+
     private struct Snapshot
     {
+        public bool transformOnly;
         public List<MapItem> defaultItems;
         public List<MapItem> baseItems;
+        public List<ItemTransformData> transformData;
         public float[,] heightmapData;
         public Color[] maskPixels;
         public int maskWidth;
@@ -43,11 +53,36 @@ public class CtrlZer : MonoBehaviour
 
     private Snapshot CaptureSnapshot()
     {
+        var defItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems);
+        var bsItems = new List<MapItem>(MetaMap.instance.baseLayer.mapItems);
+        var transforms = new List<ItemTransformData>();
+
+        CaptureTransforms(defItems, transforms);
+        CaptureTransforms(bsItems, transforms);
+
         return new Snapshot
         {
-            defaultItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems),
-            baseItems = new List<MapItem>(MetaMap.instance.baseLayer.mapItems)
+            defaultItems = defItems,
+            baseItems = bsItems,
+            transformData = transforms
         };
+    }
+
+    private void CaptureTransforms(List<MapItem> items, List<ItemTransformData> output)
+    {
+        foreach (var item in items)
+        {
+            if (item is MeRect mr)
+            {
+                output.Add(new ItemTransformData
+                {
+                    item = mr,
+                    position = mr.position,
+                    rotation = mr.rotation,
+                    size = mr.size
+                });
+            }
+        }
     }
 
     private void PushUndo(Snapshot snap)
@@ -68,6 +103,17 @@ public class CtrlZer : MonoBehaviour
     public void checkPoint()
     {
         PushUndo(CaptureSnapshot());
+    }
+
+    /// <summary>
+    /// Save only transform data before a move/rotate/scale operation.
+    /// Undo will restore transforms without touching item lists or visibility.
+    /// </summary>
+    public void checkPointTransformOnly()
+    {
+        Snapshot snap = CaptureSnapshot();
+        snap.transformOnly = true;
+        PushUndo(snap);
     }
 
     /// <summary>
@@ -121,12 +167,22 @@ public class CtrlZer : MonoBehaviour
             return;
         }
 
-        redoStack.Add(CaptureCurrentFullSnapshot());
-
-        Snapshot snapshot = undoStack[undoStack.Count - 1];
+        Snapshot target = undoStack[undoStack.Count - 1];
         undoStack.RemoveAt(undoStack.Count - 1);
 
-        RestoreSnapshot(snapshot);
+        Snapshot current;
+        if (target.transformOnly)
+        {
+            current = CaptureSnapshot();
+            current.transformOnly = true;
+        }
+        else
+        {
+            current = CaptureCurrentFullSnapshot();
+        }
+        redoStack.Add(current);
+
+        RestoreSnapshot(target);
         Debug.Log("CtrlZer: Undo (remaining: " + undoStack.Count + ")");
     }
 
@@ -138,12 +194,22 @@ public class CtrlZer : MonoBehaviour
             return;
         }
 
-        undoStack.Add(CaptureCurrentFullSnapshot());
-
-        Snapshot snapshot = redoStack[redoStack.Count - 1];
+        Snapshot target = redoStack[redoStack.Count - 1];
         redoStack.RemoveAt(redoStack.Count - 1);
 
-        RestoreSnapshot(snapshot);
+        Snapshot current;
+        if (target.transformOnly)
+        {
+            current = CaptureSnapshot();
+            current.transformOnly = true;
+        }
+        else
+        {
+            current = CaptureCurrentFullSnapshot();
+        }
+        undoStack.Add(current);
+
+        RestoreSnapshot(target);
         Debug.Log("CtrlZer: Redo (remaining: " + redoStack.Count + ")");
     }
 
@@ -180,42 +246,71 @@ public class CtrlZer : MonoBehaviour
 
     private void RestoreSnapshot(Snapshot snapshot)
     {
-        MetaMap.instance.defaultLayer.mapItems = new List<MapItem>(snapshot.defaultItems);
-        MetaMap.instance.baseLayer.mapItems = new List<MapItem>(snapshot.baseItems);
-
-        HashSet<MapItem> activeItems = new HashSet<MapItem>(snapshot.defaultItems);
-        foreach (var item in snapshot.baseItems)
-            activeItems.Add(item);
-
-        MapItem[] allItems = FindObjectsOfType<MapItem>(true);
-        foreach (MapItem item in allItems)
+        if (!snapshot.transformOnly)
         {
-            if (item == null) continue;
-            item.gameObject.SetActive(activeItems.Contains(item));
+            HashSet<MapItem> previousItems = new HashSet<MapItem>(MetaMap.instance.defaultLayer.mapItems);
+            foreach (var item in MetaMap.instance.baseLayer.mapItems)
+                previousItems.Add(item);
+
+            MetaMap.instance.defaultLayer.mapItems = new List<MapItem>(snapshot.defaultItems);
+            MetaMap.instance.baseLayer.mapItems = new List<MapItem>(snapshot.baseItems);
+
+            HashSet<MapItem> restoredItems = new HashSet<MapItem>(snapshot.defaultItems);
+            foreach (var item in snapshot.baseItems)
+                restoredItems.Add(item);
+
+            MapItem[] allItems = FindObjectsOfType<MapItem>(true);
+            foreach (MapItem item in allItems)
+            {
+                if (item == null) continue;
+                bool wasInList = previousItems.Contains(item);
+                bool nowInList = restoredItems.Contains(item);
+
+                if (!wasInList && nowInList)
+                    item.gameObject.SetActive(true);
+                else if (wasInList && !nowInList)
+                    item.gameObject.SetActive(false);
+            }
+        }
+
+        if (snapshot.transformData != null)
+        {
+            foreach (var td in snapshot.transformData)
+            {
+                if (td.item is MeRect mr && mr != null)
+                {
+                    mr.position = td.position;
+                    mr.rotation = td.rotation;
+                    mr.size = td.size;
+                }
+            }
         }
 
         StartCoroutine(Syncer.instence.ScatterMapItems());
 
-        if (snapshot.heightmapData != null)
+        if (!snapshot.transformOnly)
         {
-            Terrain terrain = Terrain.activeTerrain;
-            if (terrain != null)
+            if (snapshot.heightmapData != null)
             {
-                terrain.terrainData.SetHeights(0, 0, snapshot.heightmapData);
-                terrain.terrainData.SyncHeightmap();
-            }
-        }
-
-        if (snapshot.maskPixels != null)
-        {
-            Terrain terrain = Terrain.activeTerrain;
-            if (terrain != null)
-            {
-                Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
-                if (tex != null)
+                Terrain terrain = Terrain.activeTerrain;
+                if (terrain != null)
                 {
-                    tex.SetPixels(snapshot.maskPixels);
-                    tex.Apply();
+                    terrain.terrainData.SetHeights(0, 0, snapshot.heightmapData);
+                    terrain.terrainData.SyncHeightmap();
+                }
+            }
+
+            if (snapshot.maskPixels != null)
+            {
+                Terrain terrain = Terrain.activeTerrain;
+                if (terrain != null)
+                {
+                    Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
+                    if (tex != null)
+                    {
+                        tex.SetPixels(snapshot.maskPixels);
+                        tex.Apply();
+                    }
                 }
             }
         }

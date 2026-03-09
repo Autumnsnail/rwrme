@@ -8,10 +8,19 @@ public class CtrlZer : MonoBehaviour
 
     private const int MaxHistorySize = 50;
 
+    private struct ItemTransformData
+    {
+        public MapItem item;
+        public Vector2 position;
+        public float rotation;
+        public Vector2 size;
+    }
+
     private struct Snapshot
     {
         public List<MapItem> defaultItems;
         public List<MapItem> baseItems;
+        public List<ItemTransformData> transformData;
         public float[,] heightmapData;
         public Color[] maskPixels;
         public int maskWidth;
@@ -43,11 +52,36 @@ public class CtrlZer : MonoBehaviour
 
     private Snapshot CaptureSnapshot()
     {
+        var defItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems);
+        var bsItems = new List<MapItem>(MetaMap.instance.baseLayer.mapItems);
+        var transforms = new List<ItemTransformData>();
+
+        CaptureTransforms(defItems, transforms);
+        CaptureTransforms(bsItems, transforms);
+
         return new Snapshot
         {
-            defaultItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems),
-            baseItems = new List<MapItem>(MetaMap.instance.baseLayer.mapItems)
+            defaultItems = defItems,
+            baseItems = bsItems,
+            transformData = transforms
         };
+    }
+
+    private void CaptureTransforms(List<MapItem> items, List<ItemTransformData> output)
+    {
+        foreach (var item in items)
+        {
+            if (item is MeRect mr)
+            {
+                output.Add(new ItemTransformData
+                {
+                    item = mr,
+                    position = mr.position,
+                    rotation = mr.rotation,
+                    size = mr.size
+                });
+            }
+        }
     }
 
     private void PushUndo(Snapshot snap)
@@ -192,6 +226,19 @@ public class CtrlZer : MonoBehaviour
         {
             if (item == null) continue;
             item.gameObject.SetActive(activeItems.Contains(item));
+        }
+
+        if (snapshot.transformData != null)
+        {
+            foreach (var td in snapshot.transformData)
+            {
+                if (td.item is MeRect mr && mr != null)
+                {
+                    mr.position = td.position;
+                    mr.rotation = td.rotation;
+                    mr.size = td.size;
+                }
+            }
         }
 
         StartCoroutine(Syncer.instence.ScatterMapItems());

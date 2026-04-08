@@ -503,7 +503,7 @@ public class MapImporter : MonoBehaviour
                                                 pf.id = MetaMap.instance.getNewItemId("platform");
 
                                                 string pathData1 = pnl[0].Attributes["d"].Value;
-                                                pf.positinLineL = pf.ParsePathData(pathData1);
+                                                pf.positinLineL = SvgPathParser.Parse(pathData1);
                                                 for (int i = 0; i < pf.positinLineL.Count; i++)
                                                 {
                                                     pf.positinLineL[i] = rmPair * pf.positinLineL[i];
@@ -517,7 +517,7 @@ public class MapImporter : MonoBehaviour
                                                 }
 
                                                 string pathData2 = pnl[1].Attributes["d"].Value;
-                                                pf.positinLineR = pf.ParsePathData(pathData2);
+                                                pf.positinLineR = SvgPathParser.Parse(pathData2);
                                                 for (int i = 0; i < pf.positinLineR.Count; i++)
                                                 {
                                                     pf.positinLineR[i] = rmPair * pf.positinLineR[i];
@@ -582,7 +582,7 @@ public class MapImporter : MonoBehaviour
                                                     Wall gs = go.GetComponent<Wall>();
                                                     //gs.SubWallPref = SubWallPref;//DONE!
                                                     string pathData1 = bPath.Attributes["d"].Value;
-                                                    gs.positionLine = gs.ParsePathData(pathData1);
+                                                    gs.positionLine = SvgPathParser.Parse(pathData1);
 
                                                     for (int i = 0; i < gs.positionLine.Count; i++)
                                                     {

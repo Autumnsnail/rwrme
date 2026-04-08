@@ -22,6 +22,12 @@ public class ToolController : MonoBehaviour
     public MapItem miSelected;
     private MapItem lastMiS;
 
+    public List<MapItem> misSelected = new List<MapItem>();
+    public bool MultiSelectMode => misSelected.Count > 0;
+    private int lastMisCount = 0;
+
+    private HashSet<MapItem> highlightedItems = new HashSet<MapItem>();
+
     // 用于存储复制的建筑信息
     private Building copiedBuilding = null;
 
@@ -178,20 +184,29 @@ public class ToolController : MonoBehaviour
                 }
             }
         }
-            if (lastMiS!=miSelected)
+            if (lastMiS != miSelected || lastMisCount != misSelected.Count)
         {
-            //selectAnothermi
-            Transform can = miSelected.transform.Find("Canvas");
-            if(can!=null)
+            if (MultiSelectMode)
             {
-                UIManager.instance.changeShowingCanvas(can.gameObject.GetComponent<Canvas>());
+                UIManager.instance.changeShowingCanvas(null);
+                UIManager.instance.RefreshMultiSelectPanel(misSelected);
             }
             else
             {
-                UIManager.instance.changeShowingCanvas(null);
+                UIManager.instance.RefreshMultiSelectPanel(null);
+                if (miSelected != null)
+                {
+                    Transform can = miSelected.transform.Find("Canvas");
+                    if (can != null)
+                        UIManager.instance.changeShowingCanvas(can.gameObject.GetComponent<Canvas>());
+                    else
+                        UIManager.instance.changeShowingCanvas(null);
+                }
             }
         }
         lastMiS = miSelected;
+        lastMisCount = misSelected.Count;
+        UpdateHighlights();
         if (Input.GetMouseButtonDown(0))
         {
             if (sdt.state != 0)
@@ -247,34 +262,28 @@ public class ToolController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.G))
         {
-            if (sdt.state != 1 && sdt.mi != null)
+            if (sdt.state != 1 && (sdt.mi != null || MultiSelectMode))
                 CtrlZer.instance.checkPointTransformOnly();
             sdt.tChangeMode(1);
         }
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            if (sdt.state != 2 && sdt.mi != null)
+            if (sdt.state != 2 && (sdt.mi != null || MultiSelectMode))
                 CtrlZer.instance.checkPointTransformOnly();
             sdt.tChangeMode(2);
         }
 
         if (Input.GetKeyDown(KeyCode.S))
         {
-            if (sdt.state != 3 && sdt.mi != null)
+            if (sdt.state != 3 && (sdt.mi != null || MultiSelectMode))
                 CtrlZer.instance.checkPointTransformOnly();
             sdt.tChangeMode(3);
         }
 
         if (Input.GetKeyDown(KeyCode.Delete))
         {
-            CtrlZer.instance.checkPoint();
-            if(!MetaMap.instance.defaultLayer.mapItems.Remove(miSelected))
-            {
-                //base
-                MetaMap.instance.baseLayer.mapItems.Remove(miSelected);
-            }
-            miSelected.gameObject.SetActive(false);
+            DeleteSelected();
         }
 
         // 复制功能 (Ctrl+C)
@@ -304,6 +313,7 @@ public class ToolController : MonoBehaviour
         HandleToolShortcuts();
 
         sdt.mi = miSelected;
+        sdt.mis = misSelected.Count > 0 ? misSelected : null;
 
         Vector2 ofst = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
 
@@ -401,6 +411,90 @@ public class ToolController : MonoBehaviour
     public LineRenderer GetDragVisualizer()
     {
         return dragVisualizer;
+    }
+
+    public string GetSelectionInfoText()
+    {
+        if (misSelected.Count > 0)
+        {
+            string result = "选中 " + misSelected.Count + " 个对象:\n";
+            foreach (var mi in misSelected)
+                result += mi.id + "\n";
+            return result;
+        }
+        if (miSelected != null)
+            return miSelected.getInfoText();
+        return "";
+    }
+
+    public void DeleteSelected()
+    {
+        CtrlZer.instance.checkPoint();
+        if (misSelected.Count > 0)
+        {
+            foreach (var mi in new List<MapItem>(misSelected))
+            {
+                if (!MetaMap.instance.defaultLayer.mapItems.Remove(mi))
+                    MetaMap.instance.baseLayer.mapItems.Remove(mi);
+                mi.gameObject.SetActive(false);
+            }
+            misSelected.Clear();
+        }
+        else if (miSelected != null)
+        {
+            if (!MetaMap.instance.defaultLayer.mapItems.Remove(miSelected))
+                MetaMap.instance.baseLayer.mapItems.Remove(miSelected);
+            miSelected.gameObject.SetActive(false);
+        }
+    }
+
+    public void ClearMultiSelect()
+    {
+        misSelected.Clear();
+    }
+
+    private void UpdateHighlights()
+    {
+        highlightedItems.RemoveWhere(item =>
+        {
+            if (item == null || !misSelected.Contains(item))
+            {
+                if (item != null) RemoveHighlightVisual(item);
+                return true;
+            }
+            return false;
+        });
+
+        foreach (var item in misSelected)
+        {
+            if (item != null && !highlightedItems.Contains(item))
+            {
+                ApplyHighlightVisual(item);
+                highlightedItems.Add(item);
+            }
+        }
+    }
+
+    private void ApplyHighlightVisual(MapItem item)
+    {
+        if (item.transform.Find("_MSHighlight") != null) return;
+
+        GameObject hl = new GameObject("_MSHighlight");
+        hl.transform.SetParent(item.transform, false);
+        hl.AddComponent<SelectionTint>();
+    }
+
+    private void RemoveHighlightVisual(MapItem item)
+    {
+        Transform hl = item.transform.Find("_MSHighlight");
+        if (hl != null) Destroy(hl.gameObject);
+
+        Renderer[] renderers = item.GetComponentsInChildren<Renderer>();
+        MaterialPropertyBlock clear = new MaterialPropertyBlock();
+        foreach (var r in renderers)
+        {
+            if (r != null) r.SetPropertyBlock(clear);
+        }
     }
 
     // 复制当前选中的建筑
@@ -551,17 +645,160 @@ public class PinTool : Tool
 }
 public class SelecterTool : Tool
 {
-    public SelecterTool(string name) : base(name)
-    {
+    private Vector3 startPosition;
+    private Vector3 lastDragPosition;
+    private GameObject hitObject;
+    private LineRenderer visualizer;
+    private bool isDragging = false;
+    private bool hasDragged = false;
+    private bool ctrlHeld = false;
+    private const float DRAG_THRESHOLD = 3f;
 
-    }
+    public SelecterTool(string name) : base(name) { }
+
     public override void startUse(Vector3 position, GameObject hitO)
     {
-        if (hitO.GetComponent<MapItem>() != null)
-            ToolController.inste.miSelected = hitO.GetComponent<MapItem>();
+        startPosition = position;
+        lastDragPosition = position;
+        hitObject = hitO;
+        isDragging = true;
+        hasDragged = false;
+        ctrlHeld = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        visualizer = ToolController.inste.GetDragVisualizer();
     }
 
+    public override void OnDragging(Vector3 currentPosition)
+    {
+        if (!isDragging) return;
+        lastDragPosition = currentPosition;
 
+        float dist = Vector3.Distance(startPosition, currentPosition);
+        if (dist > DRAG_THRESHOLD)
+        {
+            hasDragged = true;
+            if (visualizer != null)
+            {
+                visualizer.enabled = true;
+                UpdateBoxVisualizer(currentPosition);
+            }
+        }
+    }
+
+    public override void EndUse()
+    {
+        if (!isDragging) return;
+        isDragging = false;
+
+        if (visualizer != null)
+            visualizer.enabled = false;
+
+        if (hasDragged)
+            PerformBoxSelection();
+        else
+            PerformClickSelection();
+    }
+
+    private void PerformClickSelection()
+    {
+        if (hitObject == null) return;
+        MapItem clickedItem = hitObject.GetComponent<MapItem>();
+
+        if (clickedItem == null)
+        {
+            if (!ctrlHeld)
+            {
+                ToolController.inste.misSelected.Clear();
+            }
+            return;
+        }
+
+        if (clickedItem is Platform)
+        {
+            ToolController.inste.misSelected.Clear();
+            ToolController.inste.miSelected = clickedItem;
+            return;
+        }
+
+        if (ctrlHeld)
+        {
+            if (ToolController.inste.misSelected.Count == 0
+                && ToolController.inste.miSelected != null
+                && !(ToolController.inste.miSelected is Platform))
+            {
+                ToolController.inste.misSelected.Add(ToolController.inste.miSelected);
+            }
+
+            if (ToolController.inste.misSelected.Contains(clickedItem))
+                ToolController.inste.misSelected.Remove(clickedItem);
+            else
+                ToolController.inste.misSelected.Add(clickedItem);
+
+            if (ToolController.inste.misSelected.Count == 1)
+                ToolController.inste.miSelected = ToolController.inste.misSelected[0];
+            else if (ToolController.inste.misSelected.Count > 1)
+                ToolController.inste.miSelected = clickedItem;
+        }
+        else
+        {
+            ToolController.inste.misSelected.Clear();
+            ToolController.inste.miSelected = clickedItem;
+        }
+    }
+
+    private void PerformBoxSelection()
+    {
+        float minX = Mathf.Min(startPosition.x, lastDragPosition.x);
+        float maxX = Mathf.Max(startPosition.x, lastDragPosition.x);
+        float minZ = Mathf.Min(startPosition.z, lastDragPosition.z);
+        float maxZ = Mathf.Max(startPosition.z, lastDragPosition.z);
+
+        Collider[] colliders = Physics.OverlapBox(
+            new Vector3((minX + maxX) / 2, startPosition.y, (minZ + maxZ) / 2),
+            new Vector3((maxX - minX) / 2, 50f, (maxZ - minZ) / 2),
+            Quaternion.identity,
+            (1 << 6) | (1 << 7)
+        );
+
+        if (!ctrlHeld)
+            ToolController.inste.misSelected.Clear();
+
+        foreach (Collider col in colliders)
+        {
+            GameObject root = col.gameObject.transform.root.gameObject;
+            MapItem mi = root.GetComponent<MapItem>();
+            if (mi == null) continue;
+            if (mi is Platform) continue;
+            if (!ToolController.inste.misSelected.Contains(mi))
+                ToolController.inste.misSelected.Add(mi);
+        }
+
+        if (ToolController.inste.misSelected.Count > 0)
+            ToolController.inste.miSelected = ToolController.inste.misSelected[0];
+
+        Debug.Log("框选完成，选中 " + ToolController.inste.misSelected.Count + " 个对象");
+    }
+
+    private void UpdateBoxVisualizer(Vector3 currentPosition)
+    {
+        if (visualizer == null) return;
+
+        float y = Mathf.Max(startPosition.y, currentPosition.y) + 10f;
+        Vector3 p1 = new Vector3(startPosition.x, y, startPosition.z);
+        Vector3 p2 = new Vector3(currentPosition.x, y, startPosition.z);
+        Vector3 p3 = new Vector3(currentPosition.x, y, currentPosition.z);
+        Vector3 p4 = new Vector3(startPosition.x, y, currentPosition.z);
+
+        visualizer.positionCount = 5;
+        visualizer.SetPosition(0, p1);
+        visualizer.SetPosition(1, p2);
+        visualizer.SetPosition(2, p3);
+        visualizer.SetPosition(3, p4);
+        visualizer.SetPosition(4, p1);
+
+        float pulse = 1f + 0.2f * Mathf.Sin(Time.time * 5f);
+        visualizer.startWidth = 1.5f * pulse;
+        visualizer.endWidth = 1.5f * pulse;
+    }
 }
 public class DragTool : Tool
 {
@@ -1044,6 +1281,7 @@ public class heightChanger : Tool
 public class SideTool
 {
     public MapItem mi = null;
+    public List<MapItem> mis = null;
     public int state = 0;//0null;1g;2r;3s
     public SideTool()
     {
@@ -1062,38 +1300,42 @@ public class SideTool
         }
     }
 
-    public void update(Vector2 offset,Vector2 Pos)
+    public void update(Vector2 offset, Vector2 Pos)
     {
-        if (mi == null) return;
-        if (state == 1)//g
+        if (state == 0) return;
+
+        if (mis != null && mis.Count > 0)
         {
-
-            MeRect mr = mi as MeRect;
-            if (mr != null)
-            {
-                Vector2 tof = new Vector2(offset.x, -1f * offset.y);
-                mr.grab(tof);
-            }
-
+            foreach (var item in mis)
+                ApplyTransform(item, offset, Pos);
         }
-        if (state == 2)//r
+        else if (mi != null)
         {
-            MeRect mr = mi as MeRect;
+            ApplyTransform(mi, offset, Pos);
+        }
+    }
+
+    private void ApplyTransform(MapItem item, Vector2 offset, Vector2 Pos)
+    {
+        if (state == 1)
+        {
+            MeRect mr = item as MeRect;
             if (mr != null)
-            {
-                mr.rotate(  (offset.x * (Pos - new Vector2(0.5f, 0.5f)).y - offset.y * (Pos - new Vector2(0.5f, 0.5f)).x)/ (Pos - new Vector2(0.5f, 0.5f)).magnitude);
-            }
+                mr.grab(new Vector2(offset.x, -1f * offset.y));
+        }
+        if (state == 2)
+        {
+            MeRect mr = item as MeRect;
+            if (mr != null)
+                mr.rotate((offset.x * (Pos - new Vector2(0.5f, 0.5f)).y - offset.y * (Pos - new Vector2(0.5f, 0.5f)).x) / (Pos - new Vector2(0.5f, 0.5f)).magnitude);
         }
         if (state == 3)
         {
-            MeRect mr = mi as MeRect;
+            MeRect mr = item as MeRect;
             if (mr != null)
-            {
                 mr.scale(offset.x);
-            }
-
         }
-        mi.scatterThis();
+        item.scatterThis();
     }
 }
 public class WallDrawer : Tool
@@ -1807,5 +2049,35 @@ public class HeightSmudge : Tool
 
         data.SetHeights(0, 0, heights);
         lastPos = currentPos;
+    }
+}
+public class SelectionTint : MonoBehaviour
+{
+    private static readonly Color TINT_TARGET = new Color(0f, 1f, 1f, 1f);
+    private const float STRENGTH = 0.35f;
+    private MaterialPropertyBlock mpb;
+
+    void Awake()
+    {
+        mpb = new MaterialPropertyBlock();
+    }
+
+    void LateUpdate()
+    {
+        if (transform.parent == null) return;
+
+        Renderer[] renderers = transform.parent.GetComponentsInChildren<Renderer>();
+        foreach (var r in renderers)
+        {
+            if (r.gameObject == gameObject) continue;
+            if (r.sharedMaterial == null || !r.sharedMaterial.HasProperty("_Color")) continue;
+
+            Color original = r.material.color;
+            Color tinted = Color.Lerp(original, TINT_TARGET, STRENGTH);
+
+            r.GetPropertyBlock(mpb);
+            mpb.SetColor("_Color", tinted);
+            r.SetPropertyBlock(mpb);
+        }
     }
 }

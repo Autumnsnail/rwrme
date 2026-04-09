@@ -23,6 +23,10 @@ public class MapImporter : MonoBehaviour
 
     public static MapImporter instate;
 
+    [HideInInspector] public float pageWorldX = 1024f;
+    [HideInInspector] public float pageWorldZ = 1024f;
+    [HideInInspector] public float svgCanvasSize = 2048f;
+
     public GameObject BuildingPref;
     public GameObject PlatformPref;
     public GameObject WallPref;
@@ -67,6 +71,23 @@ public class MapImporter : MonoBehaviour
         if (tcr.GetValue("MaxHeight") != null)
         {
             maxHeight = tcr.GetFloat("MaxHeight");
+        }
+        if (tcr.GetValue("PageWorldX") != null)
+            pageWorldX = tcr.GetFloat("PageWorldX");
+        if (tcr.GetValue("PageWorldZ") != null)
+            pageWorldZ = tcr.GetFloat("PageWorldZ");
+
+        // Read SVG canvas size for coordinate mapping
+        string svgPath = Path.Combine(Application.dataPath, basePath, "objects.svg");
+        if (File.Exists(svgPath))
+        {
+            XmlDocument svgDoc = new XmlDocument();
+            svgDoc.Load(svgPath);
+            XmlElement svgRoot = svgDoc.DocumentElement;
+            if (svgRoot.HasAttribute("width"))
+            {
+                float.TryParse(svgRoot.GetAttribute("width"), out svgCanvasSize);
+            }
         }
 
         GrayScaleImage grayImage = LoadGrayScaleImage(Path.Combine(Application.dataPath, basePath, mapName));
@@ -248,7 +269,7 @@ public class MapImporter : MonoBehaviour
                                                             .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
                                                         if (properties.ContainsKey("height"))
                                                         {
-                                                            BheightF = int.Parse(properties["height"]);
+                                                            BheightF = Mathf.RoundToInt(float.Parse(properties["height"]));
                                                         }
                                                         else
                                                         {
@@ -647,9 +668,14 @@ public class MapImporter : MonoBehaviour
                             if(rece.GetAttribute("inkscape:label").StartsWith("#general"))
                             {
                                 Debug.Log("find gs :" + rece.ToString());
-                                XmlElement desc = rece.ChildNodes[0] as XmlElement;
-                                MetaMap.instance.m_settings = desc.InnerText;
-                                UIManager.instance.mms[7].transform.GetChild(0).gameObject.GetComponent<TMPro.TMP_InputField>().SetTextWithoutNotify(desc.InnerText);
+                                XmlNode descNode = null;
+                                foreach (XmlNode child in rece.ChildNodes)
+                                {
+                                    if (child.Name == "desc") { descNode = child; break; }
+                                }
+                                if (descNode == null) continue;
+                                MetaMap.instance.m_settings = descNode.InnerText;
+                                UIManager.instance.mms[7].transform.GetChild(0).gameObject.GetComponent<TMPro.TMP_InputField>().SetTextWithoutNotify(descNode.InnerText);
                                 return;
                             }
                         }
@@ -821,20 +847,19 @@ public class MapImporter : MonoBehaviour
 
         if (trs == string.Empty) return;
 
-        //translate matrix rotate
+        //translate matrix rotate scale
         if (trs.StartsWith("translate"))
         {
-            string cleanString = trs.Replace("translate(", "").Replace(")", "");
-            string[] parts = cleanString.Split(',');
+            string cleanString = trs.Replace("translate(", "").Replace(")", "").Trim();
+            string[] parts = cleanString.Split(new char[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
             float x = float.Parse(parts[0]);
-            float y = float.Parse(parts[1]);
+            float y = parts.Length > 1 ? float.Parse(parts[1]) : 0f;
             offset = new Vector2(x, y);
         }
         else if (trs.StartsWith("matrix"))
         {
-            string cleanString = trs.Replace("matrix(", "").Replace(")", "");
-            //Debug.Log("MapImporter.cs" + cleanString);
-            string[] parts = cleanString.Split(',');
+            string cleanString = trs.Replace("matrix(", "").Replace(")", "").Trim();
+            string[] parts = cleanString.Split(new char[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
             float a = float.Parse(parts[0]);
             float b = float.Parse(parts[1]);
             float c = float.Parse(parts[2]);
@@ -848,16 +873,26 @@ public class MapImporter : MonoBehaviour
         }
         else if (trs.StartsWith("rotate"))
         {
-            string cleanString = trs.Replace("rotate(", "").Replace(")", "");
-            angle = float.Parse(cleanString);
+            string cleanString = trs.Replace("rotate(", "").Replace(")", "").Trim();
+            string[] parts = cleanString.Split(new char[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            angle = float.Parse(parts[0]);
             rotate = Matrix2x2.CreateRotation(angle);
+            if (parts.Length >= 3)
+            {
+                float cx = float.Parse(parts[1]);
+                float cy = float.Parse(parts[2]);
+                offset = new Vector2(
+                    cx - cx * Mathf.Cos(angle * Mathf.Deg2Rad) + cy * Mathf.Sin(angle * Mathf.Deg2Rad),
+                    cy - cx * Mathf.Sin(angle * Mathf.Deg2Rad) - cy * Mathf.Cos(angle * Mathf.Deg2Rad)
+                );
+            }
         }
         else if(trs.StartsWith("scale"))
         {
-            string cleanString = trs.Replace("scale(", "").Replace(")", "");
-            string[] parts = cleanString.Split(',');
+            string cleanString = trs.Replace("scale(", "").Replace(")", "").Trim();
+            string[] parts = cleanString.Split(new char[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
             float x = float.Parse(parts[0]);
-            float y = float.Parse(parts[1]);
+            float y = parts.Length > 1 ? float.Parse(parts[1]) : x;
             scale = new Vector2(x, y);
         }
         else

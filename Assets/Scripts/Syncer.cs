@@ -103,7 +103,9 @@ public class Syncer : MonoBehaviour
             }
         }
 
-        teerainData.size = new Vector3(teerainData.size.x,m_mm.m_metaTerrain.maxHeight, teerainData.size.z);
+        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : teerainData.size.x;
+        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : teerainData.size.z;
+        teerainData.size = new Vector3(worldX, m_mm.m_metaTerrain.maxHeight, worldZ);
         teerainData.SetHeights(0, 0, heights);
 
     }

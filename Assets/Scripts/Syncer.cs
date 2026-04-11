@@ -19,7 +19,7 @@ public class Syncer : MonoBehaviour
     void Start()
     {
         instence = this;
-        // Æô¶¯Ð­³Ì
+        // ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½
         //StartCoroutine(StartupRoutine());
         runToInit();
         updateMap();
@@ -27,33 +27,33 @@ public class Syncer : MonoBehaviour
     }
     IEnumerator StartupRoutine()
     {
-        // µÈ´ýÒ»Ö¡£¬ÈÃÆäËûStart·½·¨ÏÈÖ´ÐÐ
+        // ï¿½È´ï¿½Ò»Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Startï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½
         yield return null;
 
-        // Ö´ÐÐµÚÒ»¸ö³õÊ¼»¯º¯Êý
+        // Ö´ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         runToInit();
 
 
-        // »òÕßÊ¹ÓÃÕæÊµÊ±¼ä£¨²»ÊÜTime.timeScaleÓ°Ïì£©
+        // ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ÊµÊ±ï¿½ä£¨ï¿½ï¿½ï¿½ï¿½Time.timeScaleÓ°ï¿½ì£©
         yield return new WaitForSecondsRealtime(2.0f);
 
-        // Ö´ÐÐ¸üÐÂµØÍ¼º¯Êý
+        // Ö´ï¿½Ð¸ï¿½ï¿½Âµï¿½Í¼ï¿½ï¿½ï¿½ï¿½
         updateMap();
 
-        // Èç¹ûÐèÒª£¬¿ÉÒÔÔÚÕâÀïÌí¼Ó¸ü¶àµÈ´ýºÍ²Ù×÷
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¸ï¿½ï¿½ï¿½È´ï¿½ï¿½Í²ï¿½ï¿½ï¿½
 
     }
     private void runToInit()
     {
-        // Èç¹ûÃ»ÓÐÖ¸¶¨µØÐÎ£¬³¢ÊÔ»ñÈ¡µ±Ç°µØÐÎ
+        // ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Î£ï¿½ï¿½ï¿½ï¿½Ô»ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½
         if (m_terrain == null)
         {
             m_terrain = Terrain.activeTerrain;
-            Debug.Log($"[µØÐÎ±à¼­Æ÷] Î´Ö¸¶¨µØÐÎ£¬Ê¹ÓÃµ±Ç°¼¤»îµØÐÎ: {m_terrain?.name ?? "Î´ÕÒµ½"}");
+            Debug.Log($"[ï¿½ï¿½ï¿½Î±à¼­ï¿½ï¿½] Î´Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Î£ï¿½Ê¹ï¿½Ãµï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {m_terrain?.name ?? "Î´ï¿½Òµï¿½"}");
         }
         if (m_terrain == null)
         {
-            Debug.LogError("[µØÐÎ±à¼­Æ÷] ´íÎó£ºÎ´ÕÒµ½¿ÉÓÃµÄµØÐÎ£¡");
+            Debug.LogError("[ï¿½ï¿½ï¿½Î±à¼­ï¿½ï¿½] ï¿½ï¿½ï¿½ï¿½Î´ï¿½Òµï¿½ï¿½ï¿½ï¿½ÃµÄµï¿½ï¿½Î£ï¿½");
             return;
         }
 
@@ -64,7 +64,7 @@ public class Syncer : MonoBehaviour
         }
         if (m_mm == null)
         {
-            Debug.LogError("mmmNull£¡");
+            Debug.LogError("mmmNullï¿½ï¿½");
             return;
         }
 
@@ -83,7 +83,7 @@ public class Syncer : MonoBehaviour
 
     public void setHeightFromMeta()
     {
-        Debug.Log("¿ªÊ¼Ó¦ÓÃ»Ò¶ÈÍ¼µ½µØÐÎ...");
+        Debug.Log("ï¿½ï¿½Ê¼Ó¦ï¿½Ã»Ò¶ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½...");
         
         TerrainData teerainData = m_terrain.terrainData;
         
@@ -103,7 +103,9 @@ public class Syncer : MonoBehaviour
             }
         }
 
-        teerainData.size = new Vector3(teerainData.size.x,m_mm.m_metaTerrain.maxHeight, teerainData.size.z);
+        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : teerainData.size.x;
+        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : teerainData.size.z;
+        teerainData.size = new Vector3(worldX, m_mm.m_metaTerrain.maxHeight, worldZ);
         teerainData.SetHeights(0, 0, heights);
 
     }
@@ -151,7 +153,7 @@ public class Syncer : MonoBehaviour
         MapItem[] allItems = FindObjectsOfType<MapItem>(true);
         foreach (MapItem item in allItems)
         {
-            // ¹Ø¼ü£º¼ì²é gameObject ÊÇ·ñÔÚ³¡¾°ÖÐ
+            // ï¿½Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ gameObject ï¿½Ç·ï¿½ï¿½Ú³ï¿½ï¿½ï¿½ï¿½ï¿½
             if (!MetaMap.instance.defaultLayer.mapItems.Contains(item))
             {
                 Destroy(item.gameObject);

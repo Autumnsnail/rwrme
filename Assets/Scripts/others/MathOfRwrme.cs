@@ -90,7 +90,7 @@ public class Matrix2x2
     }
 
     /// <summary>
-    /// 矩阵与向量乘法
+    /// ?????????????
     /// </summary>
     public Vector2 Multiply(Vector2 vector)
     {
@@ -101,7 +101,7 @@ public class Matrix2x2
     }
 
     /// <summary>
-    /// 重载 * 操作符
+    /// ???? * ??????
     /// </summary>
     public static Vector2 operator *(Matrix2x2 matrix, Vector2 vector)
     {
@@ -109,9 +109,9 @@ public class Matrix2x2
     }
 
     /// <summary>
-    /// 创建旋转矩阵
+    /// ???????????
     /// </summary>
-    /// <param name="angleDegrees">旋转角度（度）</param>
+    /// <param name="angleDegrees">??????????</param>
     public static Matrix2x2 CreateRotation(float angleDegrees)
     {
         float radians = angleDegrees * Mathf.Deg2Rad;
@@ -125,7 +125,7 @@ public class Matrix2x2
     }
 
     /// <summary>
-    /// 创建缩放矩阵
+    /// ???????????
     /// </summary>
     public static Matrix2x2 CreateScale(Vector2 scale)
     {
@@ -136,7 +136,7 @@ public class Matrix2x2
     }
 
     /// <summary>
-    /// 从矩阵字符串创建（兼容你之前的格式）
+    /// ??????????????????????????????
     /// </summary>
     public static Matrix2x2 FromMatrixString(string matrixString)
     {
@@ -153,7 +153,7 @@ public class Matrix2x2
             );
         }
 
-        throw new System.ArgumentException("无效的矩阵字符串格式");
+        throw new System.ArgumentException("??锟斤拷?????????????");
     }
 
     public override string ToString()

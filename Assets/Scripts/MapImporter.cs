@@ -895,18 +895,16 @@ public class MapImporter : MonoBehaviour
         {
             string cleanString = trs.Replace("rotate(", "").Replace(")", "").Trim();
             string[] parts = cleanString.Split(new char[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
-            //angle = -1*float.Parse(parts[0]); 
-            angle = float.Parse(parts[0]);
-
-
-            rotate = Matrix2x2.CreateRotation(angle);
+            float svgAngle = float.Parse(parts[0]);
+            angle = -svgAngle;
+            rotate = Matrix2x2.CreateRotation(svgAngle);
             if (parts.Length >= 3)
             {
                 float cx = float.Parse(parts[1]);
                 float cy = float.Parse(parts[2]);
                 offset = new Vector2(
-                    cx - cx * Mathf.Cos(angle * Mathf.Deg2Rad) + cy * Mathf.Sin(angle * Mathf.Deg2Rad),
-                    cy - cx * Mathf.Sin(angle * Mathf.Deg2Rad) - cy * Mathf.Cos(angle * Mathf.Deg2Rad)
+                    cx - cx * Mathf.Cos(svgAngle * Mathf.Deg2Rad) + cy * Mathf.Sin(svgAngle * Mathf.Deg2Rad),
+                    cy - cx * Mathf.Sin(svgAngle * Mathf.Deg2Rad) - cy * Mathf.Cos(svgAngle * Mathf.Deg2Rad)
                 );
             }
         }

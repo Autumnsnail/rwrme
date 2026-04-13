@@ -51,7 +51,7 @@ public class Building : MeRect
             Vector3 troPos=new Vector3(0,0,0);
             VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex,ref troPos);
             go.transform.localPosition = troPos;
-            go.transform.rotation = Quaternion.Euler(0f, -1 * rotation, 0f);
+            go.transform.rotation = Quaternion.Euler(0f, -1* rotation, 0f);
             GameObject rf = go.transform.GetChild(1).gameObject;
             if(rf != null)
             {

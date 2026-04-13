@@ -115,6 +115,15 @@ public class MapImporter : MonoBehaviour
                     if (ele.GetAttribute("inkscape:label").StartsWith("bases.default"))
                     {
                         Debug.Log("import bases");
+                        float raLayer = 0;
+                        Matrix2x2 rmLayer = Matrix2x2.CreateRotation(0);
+                        Vector2 ovLayer = Vector2.zero;
+                        Vector2 scLayer = Vector2.one;
+
+                        if (ele.HasAttribute("transform"))
+                        {
+                            dealWithTransform(ele.GetAttribute("transform"), ref rmLayer, ref raLayer, ref ovLayer,ref scLayer);
+                        }
                         foreach (XmlNode baseNode in ele.ChildNodes)
                         {
                             if (baseNode.Name == "rect")
@@ -133,13 +142,20 @@ public class MapImporter : MonoBehaviour
                                     Vector2 offV = Vector2.zero;
                                     Vector2 scale = Vector2.one;
                                     dealWithTransform(trans, ref rotM, ref angle, ref offV,ref scale);
-
+                                    angle += angle;
                                     position = rotM * position;
                                     position = position*scale;
                                     position = position + offV;
+
+                                    angle += raLayer;
+                                    position = rmLayer * position;
+                                    position = position * scLayer;
+                                    position += ovLayer;
                                     
                                     cWidth = cWidth * scale.x;
                                     cHeight = cHeight * scale.y;
+                                    
+                                    
                                     if(cWidth<0)
                                     {
                                         position.x += cWidth;
@@ -202,10 +218,12 @@ public class MapImporter : MonoBehaviour
                         float raLayer = 0;
                         Matrix2x2 rmLayer = Matrix2x2.CreateRotation(0);
                         Vector2 ovLayer = Vector2.zero;
+                        Vector2 scLayer = Vector2.one;
 
                         if (ele.HasAttribute("transform"))
                         {
-                            dealWithTransform(ele.GetAttribute("transform"), ref rmLayer, ref raLayer, ref ovLayer);
+                            dealWithTransform(ele.GetAttribute("transform"), ref rmLayer, ref raLayer, ref ovLayer, ref scLayer);
+                            //dealWithTransform(sele.GetAttribute("transform"), ref _rmGroup, ref _raGroup, ref _ovGroup, ref _scGroup);
                         }
 
                         foreach (XmlNode snode in node.ChildNodes)
@@ -248,6 +266,7 @@ public class MapImporter : MonoBehaviour
                                                 position = _rmGroup * position;
                                                 position += _ovGroup;
                                                 angle += raLayer;
+                                                position = position * scLayer;
                                                 position = rmLayer * position;
                                                 position += ovLayer;
 
@@ -263,6 +282,7 @@ public class MapImporter : MonoBehaviour
                                                     bool roof = false;
                                                     foreach (XmlNode de in r.ChildNodes)
                                                     {
+                                                        Debug.Log(de.InnerText);
                                                         var properties = de.InnerText.Split(';')
                                                             .Where(p => p.Contains('='))
                                                             .Select(p => p.Split('=', 2))
@@ -875,7 +895,10 @@ public class MapImporter : MonoBehaviour
         {
             string cleanString = trs.Replace("rotate(", "").Replace(")", "").Trim();
             string[] parts = cleanString.Split(new char[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            //angle = -1*float.Parse(parts[0]); 
             angle = float.Parse(parts[0]);
+
+
             rotate = Matrix2x2.CreateRotation(angle);
             if (parts.Length >= 3)
             {

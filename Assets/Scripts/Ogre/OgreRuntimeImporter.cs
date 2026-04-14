@@ -132,20 +132,49 @@ public class OgreRuntimeImporter : MonoBehaviour
     /// <param name="mergeIntoRuntimeLibrary">为 true 时合并进 <see cref="RuntimeMeshLibrary"/>（同键覆盖）</param>
     /// <param name="options">为空时使用 PlayerPrefs 中的转换器路径等</param>
     /// <param name="progress">可选进度：(当前序号, 总数, 相对路径)</param>
+    /// <param name="alsoImportFromMapImporterSvgPath">
+    /// 为 true 时，除了 <paramref name="directoryPath"/> 外，还会尝试从 <c>MapImporter</c> 当前使用的
+    /// <c>objects.svg</c> 所在目录读取 mesh（即 <c>Application.dataPath + MapImporter.basePath</c>）。
+    /// </param>
     /// <returns>本次导入的相对路径 -> 子网格列表（新字典，与库内容相同引用若 merge 为 true）</returns>
     public static async Task<Dictionary<string, List<MeshLoader.Result>>> ImportDirectoryAsync(
         string directoryPath,
         bool recursive = true,
         bool mergeIntoRuntimeLibrary = true,
         Options options = null,
-        IProgress<(int current, int total, string relativePath)> progress = null)
+        IProgress<(int current, int total, string relativePath)> progress = null,
+        bool alsoImportFromMapImporterSvgPath = true)
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
             throw new ArgumentException("directoryPath is null/empty", nameof(directoryPath));
 
-        var rootFull = Path.GetFullPath(directoryPath);
-        if (!Directory.Exists(rootFull))
-            throw new DirectoryNotFoundException($"Directory not found: {rootFull}");
+        // 多根目录导入：先导入用户指定目录，再导入 MapImporter 目录，让 MapImporter 在键冲突时优先覆盖。
+        var roots = new List<string>();
+        var specifiedRoot = Path.GetFullPath(directoryPath);
+        roots.Add(specifiedRoot);
+
+        if (alsoImportFromMapImporterSvgPath)
+        {
+            var mapRoot = TryGetMapImporterObjectsSvgDirectory();
+            if (!string.IsNullOrWhiteSpace(mapRoot))
+                roots.Add(mapRoot);
+        }
+
+        roots = roots
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var r in roots)
+        {
+            if (!Directory.Exists(r))
+                Debug.LogWarning($"[OgreRuntimeImporter] ImportDirectoryAsync: directory not found, skip: {r}");
+        }
+
+        roots = roots.Where(Directory.Exists).ToList();
+        if (roots.Count == 0)
+            throw new DirectoryNotFoundException($"Directory not found: {specifiedRoot}");
 
         options ??= new Options();
         if (string.IsNullOrWhiteSpace(options.OgreXmlConverterPath))
@@ -155,52 +184,86 @@ public class OgreRuntimeImporter : MonoBehaviour
 
         var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-        var meshBinary = new List<string>();
-        foreach (var f in Directory.EnumerateFiles(rootFull, "*.mesh", searchOption))
-        {
-            if (f.EndsWith(".mesh.xml", StringComparison.OrdinalIgnoreCase))
-                continue;
-            meshBinary.Add(f);
-        }
-
-        var meshXmlOnly = new List<string>();
-        foreach (var f in Directory.EnumerateFiles(rootFull, "*.mesh.xml", searchOption))
-        {
-            var partner = GetPartnerBinaryMeshPath(f);
-            if (partner != null && File.Exists(partner))
-                continue;
-            meshXmlOnly.Add(f);
-        }
-
-        var ordered = meshBinary
-            .Concat(meshXmlOnly)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
         var result = new Dictionary<string, List<MeshLoader.Result>>(StringComparer.OrdinalIgnoreCase);
-        var total = ordered.Count;
 
-        for (var i = 0; i < ordered.Count; i++)
+        // 预先构建总任务列表，便于 progress 显示总数。
+        var jobs = new List<(string rootFull, string abs, string relativeKey)>();
+        foreach (var rootFull in roots)
         {
-            var abs = ordered[i];
-            var relative = NormalizeRelativeKey(Path.GetRelativePath(rootFull, abs));
-            progress?.Report((i + 1, total, relative));
+            var meshBinary = new List<string>();
+            foreach (var f in Directory.EnumerateFiles(rootFull, "*.mesh", searchOption))
+            {
+                if (f.EndsWith(".mesh.xml", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                meshBinary.Add(f);
+            }
+
+            var meshXmlOnly = new List<string>();
+            foreach (var f in Directory.EnumerateFiles(rootFull, "*.mesh.xml", searchOption))
+            {
+                var partner = GetPartnerBinaryMeshPath(f);
+                if (partner != null && File.Exists(partner))
+                    continue;
+                meshXmlOnly.Add(f);
+            }
+
+            var ordered = meshBinary
+                .Concat(meshXmlOnly)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var abs in ordered)
+            {
+                var relative = NormalizeRelativeKey(Path.GetRelativePath(rootFull, abs));
+                jobs.Add((rootFull, abs, relative));
+            }
+        }
+
+        var total = jobs.Count;
+        for (var i = 0; i < jobs.Count; i++)
+        {
+            var job = jobs[i];
+            progress?.Report((i + 1, total, job.relativeKey));
 
             try
             {
-                var submeshes = await ImportAsync(abs, options);
-                result[relative] = submeshes;
+                var submeshes = await ImportAsync(job.abs, options);
+                result[job.relativeKey] = submeshes;
                 if (mergeIntoRuntimeLibrary)
-                    RuntimeMeshLibrary[relative] = submeshes;
+                    RuntimeMeshLibrary[job.relativeKey] = submeshes;
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[OgreRuntimeImporter] Skip or fail: {abs}\n{ex.Message}");
+                Debug.LogWarning($"[OgreRuntimeImporter] Skip or fail: {job.abs}\n{ex.Message}");
             }
         }
 
         return result;
+    }
+
+    private static string TryGetMapImporterObjectsSvgDirectory()
+    {
+        try
+        {
+            // MapImporter 使用的 objects.svg 路径：Path.Combine(Application.dataPath, basePath, "objects.svg")
+            if (MapImporter.instate == null)
+                return null;
+
+            var basePath = MapImporter.instate.basePath;
+            if (string.IsNullOrWhiteSpace(basePath))
+                return null;
+
+            var svgPath = Path.Combine(Application.dataPath, basePath, "objects.svg");
+            if (!File.Exists(svgPath))
+                return null;
+
+            return Path.GetDirectoryName(svgPath);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>从内存库按相对路径或仅文件名查找（先全键匹配，再文件名匹配）。</summary>

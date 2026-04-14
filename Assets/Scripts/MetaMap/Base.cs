@@ -8,7 +8,7 @@ public class Base : MeRect
     public Base(Vector2 pos, float r, Vector2 s, string key, int lI) : base(pos, r, s, key, lI)
     {
     }
-
+    
     void Start()
     {
     }
@@ -44,6 +44,5 @@ public class Base : MeRect
     // Update is called once per frame
     void Update()
     {
-        
     }
 }

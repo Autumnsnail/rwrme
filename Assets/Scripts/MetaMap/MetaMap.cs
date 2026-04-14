@@ -90,7 +90,7 @@ public class MetaMap : MonoBehaviour
         wallTypes.Add(new WallType("SecurityFence1", Color.gray, -1.0f, 2.5f));
         wallTypes.Add(new WallType("PlatformFence1", Color.black, -1.0f, 1.2f));
         wallTypes.Add(new WallType("PlatformFence2", Color.gray, -1.0f, 1.2f));
-        //wallTypes.Add(new WallType("FarmFence2", Color.gray, -1.0f, 1.2f)); // ÖØ¸´Ïî
+        //wallTypes.Add(new WallType("FarmFence2", Color.gray, -1.0f, 1.2f)); // ï¿½Ø¸ï¿½ï¿½ï¿½
         wallTypes.Add(new WallType("InvisibleWall1", Color.cyan, 1.2f, 2.5f));
         wallTypes.Add(new WallType("ChurchWall1", Color.gray, 0.2f, 2.5f));
         wallTypes.Add(new WallType("RuinWall1", Color.gray, 0.8f, 3.0f));
@@ -312,6 +312,10 @@ public class MeshTemplate
     public Color color=Color.white;
     public Vector3 extend = Vector3.one;
     public Vector2 size= Vector2.one;
+
+    public string meshName = "";
+    public string textureName = "";
+    public Vector4 textureAC = new Vector4(0,0,0,0);
 }
 public class PlatformSerfaceType: mapItemType
 {

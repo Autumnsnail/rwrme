@@ -1,0 +1,8 @@
+{
+    "dotnet.defaultSolution": "auto",
+    "editor.renderValidationDecorations": "on",
+    "dotrush.roslyn.projectOrSolutionFiles": [
+        "d:\\PLAY\\projects\\rwrme\\Assembly-CSharp-Editor.csproj",
+        "d:\\PLAY\\projects\\rwrme\\Assembly-CSharp.csproj"
+    ]
+}

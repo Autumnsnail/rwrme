@@ -196,7 +196,11 @@ public class Layer
 
     public void sortByIndex()
     {
-        mapItems = mapItems.OrderBy(item => item.layerIndex).ToList();
+        mapItems = mapItems
+            .OrderBy(item => item.layerIndex)
+            .ThenBy(item => item is Platform ? 0 : 1)
+            .ThenBy(item => item is Building ? 0 : 1)
+            .ToList();
     }
 }
 public class MapItem:MonoBehaviour
@@ -205,6 +209,9 @@ public class MapItem:MonoBehaviour
     public int layerIndex;
     public string material;
     //can pick by selector
+
+    public virtual float Rank => 0;
+    //rank is used to sort the items with same layerIndex
     public MapItem()
     {
         id = string.Empty;

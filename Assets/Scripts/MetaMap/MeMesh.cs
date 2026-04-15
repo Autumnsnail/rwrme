@@ -6,6 +6,8 @@ public class MeMesh : MeRect
 {
     public bool templated=false;
     public string template_ref;
+
+    public override float Rank => 0.2f;
     public MeMesh(Vector2 pos, float r, Vector2 s, string key, int lI) : base(pos, r, s, key, lI)
     {
     }
@@ -20,7 +22,7 @@ public class MeMesh : MeRect
         if (go != null)
         {
             Vector3 troPos = new Vector3(0, 0, 0);
-            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex, ref troPos);
+            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex, ref troPos,Rank);
             go.transform.localPosition = troPos;
             go.transform.localScale = Vector3.one;
             go.transform.rotation = Quaternion.Euler(0f, -1 * rotation, 0f);

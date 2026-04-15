@@ -35,6 +35,12 @@ public class ToolController : MonoBehaviour
     {
         inste = this;
         orthographicCamera = Camera.main;
+
+        // 允许射线命中 MeshCollider 的背面，否则法线/绕序反了的平台会“点不到”
+#if UNITY_2020_1_OR_NEWER
+        Physics.queriesHitBackfaces = true;
+#endif
+
         tools.Add(new SelecterTool("Selecter"));
         tools.Add(new PinTool("TankPin", GameObject.Find("PinTank")));//tool1 = Pin Tank
         tools.Add(new DrawerTool("DrawerSelect", this)); //tool2 = PainterBuilding

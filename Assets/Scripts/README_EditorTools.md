@@ -138,3 +138,8 @@
 5. 通过 UI 面板切换不同编辑模式、修改属性。
 7. 使用 `MapExporter.exportMap()` 导出地图成果。
 
+
+
+## Rank
+Rank是用于标志MapItem在layer中的子图层的位置
+  有依赖于类型的固定Rank与导入时传入的客制化Rank

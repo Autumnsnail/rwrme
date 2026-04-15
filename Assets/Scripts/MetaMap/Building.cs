@@ -5,8 +5,7 @@ public class Building : MeRect
 {
     public int height;
     public bool roof=false;
-
-    public override float Rank => 0.1f;
+    public int rank = 0;
 
     public override string getInfoText()
     {

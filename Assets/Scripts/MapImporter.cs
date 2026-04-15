@@ -732,6 +732,7 @@ public class MapImporter : MonoBehaviour
             if(rect == null) continue;
             if(rect.GetAttribute("inkscape:label").StartsWith("#mesh_template"))
             {
+                Debug.Log(rect.GetAttribute("id"));
                 float width = float.Parse( rect.GetAttribute("width"));
                 float height = float.Parse(rect.GetAttribute("height"));
                 foreach (XmlNode node2 in rect.ChildNodes)
@@ -748,6 +749,37 @@ public class MapImporter : MonoBehaviour
                 MeshTemplate template = new MeshTemplate(); 
                 template.size = new Vector2(width, height);
                 template.name = properties["name"];
+                if(properties.ContainsKey("base_template"))
+                {
+                    //check if the base template is in list by name
+                    MeshTemplate baseTemplate = MetaMap.instance.meshTemplates.FirstOrDefault(template => template.name == properties["base_template"]);
+                    if(baseTemplate != null)
+                    {
+                        template.meshName = baseTemplate.meshName;
+                        template.textureName = baseTemplate.textureName;
+                        template.textureAC = baseTemplate.textureAC;
+                        template.extend = baseTemplate.extend;
+                        template.color = baseTemplate.color;
+                        template.size = baseTemplate.size;
+                        template.name = baseTemplate.name;
+                    }
+                }
+                if (properties.ContainsKey("mesh_name"))
+                {template.meshName = properties["mesh_name"];}
+                if(properties.ContainsKey("texture0"))
+                {
+                    template.textureName = properties["texture0"];
+                }
+                if (properties.ContainsKey("texture0_atlas_cell"))
+                {
+                    string[] parts = properties["texture0_atlas_cell"].Split(' ');
+                    template.textureAC = new Vector4(
+                        float.Parse(parts[0]),
+                        float.Parse(parts[1]),
+                        float.Parse(parts[2]),
+                        float.Parse(parts[3])
+                    );
+                }
                 if (properties.ContainsKey("collision_model_size"))
                 {
                     Debug.Log("MapImporter get collision_model_size: " + properties["collision_model_size"]);

@@ -6,6 +6,8 @@ public class Building : MeRect
     public int height;
     public bool roof=false;
 
+    public override float Rank => 0.1f;
+
     public override string getInfoText()
     {
         string info = "";
@@ -21,7 +23,7 @@ public class Building : MeRect
     
     public Building(int h, string m, Vector2 pos, float r, Vector2 s, string k, int layerI) : base(pos, r, s, k, layerI)
     {
-        //Debug.Log($"Building¹¹Ôì: height={h}, material={m}, position={pos}, rotation={r}, scale={s}, key={k}");
+        //Debug.Log($"Buildingï¿½ï¿½ï¿½ï¿½: height={h}, material={m}, position={pos}, rotation={r}, scale={s}, key={k}");
         height = h;
         material = m;
     }
@@ -49,7 +51,7 @@ public class Building : MeRect
             go.transform.localScale = new Vector3(size.x/2, height * 1.5f, size.y/2);
             //go.transform.localPosition = new Vector3(bld.position.x, m_terrain.SampleHeight(new Vector3(bld.position.x, 0, bld.position.y)), bld.position.y);
             Vector3 troPos=new Vector3(0,0,0);
-            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex,ref troPos);
+            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(position), layerIndex,ref troPos,Rank);
             go.transform.localPosition = troPos;
             go.transform.rotation = Quaternion.Euler(0f, -1 * rotation, 0f);
             GameObject rf = go.transform.GetChild(1).gameObject;

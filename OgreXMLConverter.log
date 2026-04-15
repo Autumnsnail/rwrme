@@ -1,0 +1,16 @@
+00:58:44: Creating resource group General
+00:58:44: Creating resource group Internal
+00:58:44: Creating resource group Autodetect
+00:58:44: Registering ResourceManager for type Mesh
+00:58:44: Registering ResourceManager for type Material
+00:58:44: Registering ResourceManager for type Skeleton
+00:58:44: XMLMeshSerializer writing mesh data to C:/Users/11447/AppData/LocalLow/DefaultCompany/1007\OgreMeshCache\55\0a\zjx19_turret_broken.mesh.xml...
+00:58:44: Populating DOM...
+00:58:44: Writing submesh...
+00:58:44: Dedicated geometry bone assignments exported.
+00:58:44: Submesh exported.
+00:58:44: DOM populated, writing XML file..
+00:58:44: XMLMeshSerializer export successful.
+00:58:44: Unregistering ResourceManager for type Skeleton
+00:58:44: Unregistering ResourceManager for type Material
+00:58:44: Unregistering ResourceManager for type Mesh

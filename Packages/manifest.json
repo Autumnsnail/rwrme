@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.boxqkrtm.ide.cursor": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
     "com.unity.collab-proxy": "2.9.3",
     "com.unity.feature.development": "1.0.1",
     "com.unity.textmeshpro": "3.0.7",

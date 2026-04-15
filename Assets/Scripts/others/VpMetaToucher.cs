@@ -8,10 +8,10 @@ public class VpMetaToucher
     {
         layerIndex = 0;
 
-        // ½«2D×ø±ê×ª»»Îª3D×ø±ê
+        // ï¿½ï¿½2Dï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½Îª3Dï¿½ï¿½ï¿½ï¿½
         Vector3 rayStart = new Vector3(xyp.x, 100f, xyp.y);
 
-        // Ö»¼ì²â PinAble ²ã
+        // Ö»ï¿½ï¿½ï¿½ PinAble ï¿½ï¿½
         int pinAbleLayer = 6;//PinAble
 
         int layerMask = 1 << pinAbleLayer;
@@ -28,22 +28,23 @@ public class VpMetaToucher
             return true;
         }
 
-        // Ã»ÓÐÕÒµ½¿É²ÈÌ¤µÄÎïÌå
+        // Ã»ï¿½ï¿½ï¿½Òµï¿½ï¿½É²ï¿½Ì¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         worldPosition = new Vector3(xyp.x, 0, xyp.y);
         return false;
     }
 
-    public static bool getXYHeightWithLayer(Vector2 xyp, int objectLayer, ref Vector3 placementPosition)
+    public static bool getXYHeightWithLayer(Vector2 xyp, int objectLayer, ref Vector3 placementPosition,float rank = 0)
     {
-        // ´Ó¸ß´¦ÏòÏÂ·¢ÉäÉäÏß
+        //this is not actually objectLayer,it has a float offset for different types of objects
+        // ï¿½Ó¸ß´ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Vector3 rayStart = new Vector3(xyp.x, 100f, xyp.y);
 
-        // »ñÈ¡ËùÓÐ¿É²ÈÌ¤²ãµÄÅö×²
+        // ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ð¿É²ï¿½Ì¤ï¿½ï¿½ï¿½ï¿½ï¿½×²
         RaycastHit[] hits = Physics.RaycastAll(rayStart, Vector3.down, Mathf.Infinity);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-        //string result = string.Join(" | ", hits.Select((hit, index) => $"#{index}:{hit.collider.name}({hit.distance:F1})")); Debug.Log("Åö×²½á¹û: " + result);
-        // ´Ó×î¸ßµã¿ªÊ¼¼ì²é£¬ÕÒµ½µÚÒ»¸ö²ã¼¶µÍÓÚÎïÌåµÄ¿É²ÈÌ¤±íÃæ
+        //string result = string.Join(" | ", hits.Select((hit, index) => $"#{index}:{hit.collider.name}({hit.distance:F1})")); Debug.Log("ï¿½ï¿½×²ï¿½ï¿½ï¿½: " + result);
+        // ï¿½ï¿½ï¿½ï¿½ßµã¿ªÊ¼ï¿½ï¿½é£¬ï¿½Òµï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ã¼¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿É²ï¿½Ì¤ï¿½ï¿½ï¿½ï¿½
         for (int i=0;i<hits.Length;i++)
         //for (int i = hits.Length-1; i>=0; i--)
         {
@@ -51,17 +52,26 @@ public class VpMetaToucher
             int hitLayer = hit.collider.gameObject.layer;
             MapItem mi = hit.collider.gameObject.transform.root.GetComponent<MapItem>();
             //Debug.Log(hit.collider.gameObject.name);
-            // ¼ì²éÊÇ·ñÊÇ PinAble ²ã
+            // ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ PinAble ï¿½ï¿½
             if (hitLayer == 6)
             {
                 //Debug.Log(hit.collider.gameObject.name);
                 if(mi != null)
                 {
                     //Debug.Log("fundAPlacenot ground");
+                    //we put this here but is not actually correct
                     if(mi.layerIndex  < objectLayer)
                     {
                         placementPosition = hit.point;
                         return true;
+                    }
+                    else if(mi.layerIndex == objectLayer)
+                    {
+                        if(mi.Rank < rank)
+                        {
+                            placementPosition = hit.point;
+                            return true;
+                        }
                     }
                 }
                 else

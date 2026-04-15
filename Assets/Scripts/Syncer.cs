@@ -133,13 +133,18 @@ public class Syncer : MonoBehaviour
     {
         m_mm.defaultLayer.sortByIndex();
         int index = 0; 
+        string name = "";
         foreach (MapItem mapItem in m_mm.defaultLayer.mapItems)
         {
-            
             mapItem.scatterThis();
             if (index != mapItem.layerIndex)
             {
                 index = mapItem.layerIndex;
+                yield return null;
+            }
+            else if (name != mapItem.GetType().Name)
+            {
+                name = mapItem.GetType().Name;
                 yield return null;
             }
         }

@@ -31,6 +31,9 @@ public class ToolController : MonoBehaviour
     private BuildingScaleHandle activeScaleHandle;
     private Building lastHandleTarget;
 
+    private PlatformPathHandle activePlatformHandle;
+    private Platform lastPlatformHandleTarget;
+
     // 用于存储复制的建筑信息
     private Building copiedBuilding = null;
 
@@ -229,8 +232,10 @@ public class ToolController : MonoBehaviour
         lastMisCount = misSelected.Count;
         UpdateHighlights();
         UpdateScaleHandle();
+        UpdatePlatformHandle();
 
-        bool handleBusy = activeScaleHandle != null && activeScaleHandle.IsDragging;
+        bool handleBusy = (activeScaleHandle != null && activeScaleHandle.IsDragging)
+            || (activePlatformHandle != null && activePlatformHandle.IsDragging);
 
         if (Input.GetMouseButtonDown(0) && !handleBusy)
         {
@@ -549,6 +554,27 @@ public class ToolController : MonoBehaviour
             GameObject handleGO = new GameObject("_BuildingScaleHandle");
             activeScaleHandle = handleGO.AddComponent<BuildingScaleHandle>();
             activeScaleHandle.Init(target);
+        }
+    }
+
+    private void UpdatePlatformHandle()
+    {
+        Platform target = (!MultiSelectMode && miSelected is Platform p) ? p : null;
+
+        if (target == lastPlatformHandleTarget) return;
+        lastPlatformHandleTarget = target;
+
+        if (activePlatformHandle != null)
+        {
+            Destroy(activePlatformHandle.gameObject);
+            activePlatformHandle = null;
+        }
+
+        if (target != null)
+        {
+            GameObject go = new GameObject("_PlatformPathHandle");
+            activePlatformHandle = go.AddComponent<PlatformPathHandle>();
+            activePlatformHandle.Init(target);
         }
     }
 
@@ -2145,6 +2171,7 @@ public class SelectionTint : MonoBehaviour
     }
 }
 
+[DefaultExecutionOrder(-100)]
 public class BuildingScaleHandle : MonoBehaviour
 {
     public bool IsDragging { get; private set; }
@@ -2432,6 +2459,306 @@ public class BuildingScaleHandle : MonoBehaviour
     {
         if (matX != null) Destroy(matX);
         if (matZ != null) Destroy(matZ);
+        if (matHL != null) Destroy(matHL);
+    }
+}
+
+/// <summary>
+/// 选中 Platform 时在场景中与路径顶点交互：每对 R[i]—L[i] 的横连线、以及 L[i]—R[i+1] 的斜连线（与桥面四边形边一致），加可拖拽手柄（Layer2 + Collider.Raycast；拖拽时 handleBusy 屏蔽主工具）。
+/// </summary>
+[DefaultExecutionOrder(-100)]
+public class PlatformPathHandle : MonoBehaviour
+{
+    public bool IsDragging { get; private set; }
+
+    private Platform target;
+    private Transform linksRoot;
+    private Transform handlesRoot;
+
+    private List<LineRenderer> pairLines = new List<LineRenderer>();
+    /// <summary>每段 L[i] — R[i+1]，与桥面四边形对角一致。</summary>
+    private List<LineRenderer> crossLines = new List<LineRenderer>();
+    private List<BoxCollider> hitZones = new List<BoxCollider>();
+    private List<Renderer> handleRenderers = new List<Renderer>();
+
+    private Material matLine;
+    private Material matR;
+    private Material matL;
+    private Material matHL;
+
+    private int vertexCount;
+    private int hoveredSlot = -1;
+    private int dragSlot = -1;
+    private bool undoRecorded;
+
+    private const float LiftY = 0.35f;
+    private const float HitHalf = 0.55f;
+
+    public void Init(Platform plt)
+    {
+        target = plt;
+        linksRoot = new GameObject("Links").transform;
+        linksRoot.SetParent(transform, false);
+        handlesRoot = new GameObject("Handles").transform;
+        handlesRoot.SetParent(transform, false);
+
+        Shader sh = Shader.Find("Hidden/Internal-Colored");
+        if (sh == null) sh = Shader.Find("Sprites/Default");
+        if (sh == null) sh = Shader.Find("Unlit/Color");
+
+        matLine = MkMat(sh, new Color(1f, 0.92f, 0.1f, 1f));
+        matR = MkMat(sh, new Color(0.15f, 0.95f, 1f, 1f));
+        matL = MkMat(sh, new Color(1f, 0.2f, 0.85f, 1f));
+        matHL = MkMat(sh, new Color(1f, 1f, 1f, 1f));
+
+        RebuildIfNeeded();
+    }
+
+    private static Material MkMat(Shader sh, Color c)
+    {
+        Material m = new Material(sh);
+        m.color = c;
+        m.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+        m.SetInt("_ZWrite", 0);
+        m.renderQueue = 4000;
+        return m;
+    }
+
+    private static int CrossLineCount(int n) => n >= 2 ? n - 1 : 0;
+
+    private void RebuildIfNeeded()
+    {
+        int n = GetPairCount();
+        int expectedCross = CrossLineCount(n);
+        if (n == vertexCount && n == pairLines.Count && crossLines.Count == expectedCross && hitZones.Count == n * 2)
+            return;
+
+        foreach (var lr in pairLines)
+            if (lr != null) Destroy(lr.gameObject);
+        pairLines.Clear();
+        foreach (var lr in crossLines)
+            if (lr != null) Destroy(lr.gameObject);
+        crossLines.Clear();
+        foreach (Transform t in handlesRoot)
+            if (t != null) Destroy(t.gameObject);
+        hitZones.Clear();
+        handleRenderers.Clear();
+
+        vertexCount = n;
+        for (int i = 0; i < n; i++)
+        {
+            GameObject lrGo = new GameObject("PairLine_" + i);
+            lrGo.transform.SetParent(linksRoot, false);
+            LineRenderer lr = lrGo.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.useWorldSpace = true;
+            lr.startWidth = 0.22f;
+            lr.endWidth = 0.22f;
+            lr.material = matLine;
+            lr.startColor = matLine.color;
+            lr.endColor = matLine.color;
+            lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            pairLines.Add(lr);
+
+            MkVertexHandle(i, true);
+            MkVertexHandle(i, false);
+        }
+
+        for (int i = 0; i < expectedCross; i++)
+        {
+            GameObject lrGo = new GameObject("Cross_LR_" + i);
+            lrGo.transform.SetParent(linksRoot, false);
+            LineRenderer lr = lrGo.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.useWorldSpace = true;
+            lr.startWidth = 0.18f;
+            lr.endWidth = 0.18f;
+            lr.material = matLine;
+            lr.startColor = new Color(matLine.color.r, matLine.color.g, matLine.color.b, 0.85f);
+            lr.endColor = lr.startColor;
+            lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            crossLines.Add(lr);
+        }
+    }
+
+    private void MkVertexHandle(int index, bool isRight)
+    {
+        GameObject root = new GameObject((isRight ? "R_" : "L_") + index);
+        root.transform.SetParent(handlesRoot, false);
+
+        GameObject vis = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        vis.name = "Vis";
+        vis.transform.SetParent(root.transform, false);
+        vis.transform.localScale = Vector3.one * 0.38f;
+        Destroy(vis.GetComponent<Collider>());
+        Renderer rend = vis.GetComponent<Renderer>();
+        rend.material = isRight ? matR : matL;
+        rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        GameObject hitGO = new GameObject("Hit");
+        hitGO.transform.SetParent(root.transform, false);
+        hitGO.layer = 2;
+        BoxCollider box = hitGO.AddComponent<BoxCollider>();
+        box.size = Vector3.one * (HitHalf * 2f);
+        box.center = Vector3.zero;
+
+        hitZones.Add(box);
+        handleRenderers.Add(rend);
+    }
+
+    private int GetPairCount()
+    {
+        if (target == null) return 0;
+        int rc = target.positinLineR != null ? target.positinLineR.Count : 0;
+        int lc = target.positinLineL != null ? target.positinLineL.Count : 0;
+        return Mathf.Min(rc, lc);
+    }
+
+    private static void BuildPathHeights(Platform p, List<float> heightsOut)
+    {
+        heightsOut.Clear();
+        if (p.positinLineR == null) return;
+        for (int j = 0; j < p.positinLineR.Count; j++)
+        {
+            Vector3 pot = Vector3.zero;
+            VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(p.positinLineR[j]), p.layerIndex, ref pot);
+            heightsOut.Add(pot.y);
+        }
+        if (p.isDeck)
+        {
+            for (int j = 0; j < heightsOut.Count; j++)
+                heightsOut[j] += p.height;
+        }
+    }
+
+    private static Vector3 VertexWorld(Platform p, int i, bool useRight, List<float> pathHeight)
+    {
+        Vector2 svg = useRight ? p.positinLineR[i] : p.positinLineL[i];
+        Vector2 u3d = MathOfRwrme.SvgPosToU3dPos(svg);
+        float y = pathHeight[i];
+        return new Vector3(u3d.x, y + LiftY, u3d.y);
+    }
+
+    private void SyncTransforms(List<float> pathHeight, int n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            Vector3 wR = VertexWorld(target, i, true, pathHeight);
+            Vector3 wL = VertexWorld(target, i, false, pathHeight);
+            pairLines[i].SetPosition(0, wR);
+            pairLines[i].SetPosition(1, wL);
+
+            int slotR = i * 2;
+            int slotL = i * 2 + 1;
+            handlesRoot.GetChild(slotR).position = wR;
+            handlesRoot.GetChild(slotL).position = wL;
+        }
+
+        for (int i = 0; i < n - 1; i++)
+        {
+            Vector3 wLi = VertexWorld(target, i, false, pathHeight);
+            Vector3 wRNext = VertexWorld(target, i + 1, true, pathHeight);
+            crossLines[i].SetPosition(0, wLi);
+            crossLines[i].SetPosition(1, wRNext);
+        }
+    }
+
+    void Update()
+    {
+        if (target == null) { Destroy(gameObject); return; }
+
+        RebuildIfNeeded();
+        int n = GetPairCount();
+        if (n == 0)
+        {
+            linksRoot.gameObject.SetActive(false);
+            handlesRoot.gameObject.SetActive(false);
+            return;
+        }
+        linksRoot.gameObject.SetActive(true);
+        handlesRoot.gameObject.SetActive(true);
+
+        List<float> pathHeights = new List<float>();
+        BuildPathHeights(target, pathHeights);
+        if (pathHeights.Count < n)
+            return;
+
+        SyncTransforms(pathHeights, n);
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (!IsDragging)
+        {
+            for (int s = 0; s < hitZones.Count; s++)
+                handleRenderers[s].material = IsRightSlot(s) ? matR : matL;
+
+            hoveredSlot = -1;
+            float best = float.MaxValue;
+            for (int s = 0; s < hitZones.Count; s++)
+            {
+                RaycastHit hit;
+                if (hitZones[s].Raycast(ray, out hit, 800f) && hit.distance < best)
+                {
+                    best = hit.distance;
+                    hoveredSlot = s;
+                }
+            }
+            if (hoveredSlot >= 0)
+                handleRenderers[hoveredSlot].material = matHL;
+
+            if (Input.GetMouseButtonDown(0) && hoveredSlot >= 0)
+            {
+                IsDragging = true;
+                dragSlot = hoveredSlot;
+                undoRecorded = false;
+            }
+        }
+        else
+        {
+            handleRenderers[dragSlot].material = matHL;
+            ApplyDrag();
+            if (Input.GetMouseButtonUp(0))
+            {
+                IsDragging = false;
+                dragSlot = -1;
+            }
+        }
+    }
+
+    private static bool IsRightSlot(int slot) => (slot & 1) == 0;
+
+    private void ApplyDrag()
+    {
+        int layerMask = 1 << 6;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (!Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
+            return;
+
+        int i = dragSlot / 2;
+        bool right = IsRightSlot(dragSlot);
+        Vector2 svg = MathOfRwrme.U3dPosToSvgPos(new Vector2(hit.point.x, hit.point.z));
+
+        Vector2 before = right ? target.positinLineR[i] : target.positinLineL[i];
+        if (!undoRecorded && (svg - before).sqrMagnitude > 0.0004f)
+        {
+            CtrlZer.instance.checkPoint();
+            undoRecorded = true;
+        }
+
+        if (right) target.positinLineR[i] = svg;
+        else target.positinLineL[i] = svg;
+
+        target.scatterThis();
+    }
+
+    void OnDestroy()
+    {
+        if (matLine != null) Destroy(matLine);
+        if (matR != null) Destroy(matR);
+        if (matL != null) Destroy(matL);
         if (matHL != null) Destroy(matHL);
     }
 }

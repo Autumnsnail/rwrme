@@ -33,7 +33,7 @@ public class VpMetaToucher
         return false;
     }
 
-    public static bool getXYHeightWithLayer(Vector2 xyp, int objectLayer, ref Vector3 placementPosition,float rank = 0)
+    public static bool getXYHeightWithLayer(Vector2 xyp, int objectLayer, ref Vector3 placementPosition,int rank)
     {
         //this is not actually objectLayer,it has a float offset for different types of objects
         // �Ӹߴ����·�������

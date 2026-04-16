@@ -9,7 +9,7 @@ Shader "Custom/lerpLayersShader_WithContour"
         _Layer4 ("Layer 4", 2D) = "white" {}
         _Mask ("Mask 1", 2D) = "white" {}
         
-        // µÈ¸ßÏß²ÎÊý
+        // ï¿½È¸ï¿½ï¿½ß²ï¿½ï¿½ï¿½
         _ContourInterval ("Contour Interval", Range(0.1, 50)) = 5.0
         _ContourWidth ("Contour Width", Range(0.001, 0.1)) = 0.01
         _ContourColor ("Contour Color", Color) = (0, 0, 0, 1)
@@ -37,13 +37,13 @@ Shader "Custom/lerpLayersShader_WithContour"
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
-                float3 worldPos : TEXCOORD1;  // ÐÂÔö£º´«µÝÊÀ½ç×ø±ê
+                float3 worldPos : TEXCOORD1;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             };
             
             sampler2D _BaseTex, _Layer1, _Layer2, _Layer3, _Layer4, _Mask;
             float4 _BaseTex_ST;
             
-            // µÈ¸ßÏß²ÎÊý
+            // ï¿½È¸ï¿½ï¿½ß²ï¿½ï¿½ï¿½
             float _ContourInterval;
             float _ContourWidth;
             float4 _ContourColor;
@@ -54,13 +54,13 @@ Shader "Custom/lerpLayersShader_WithContour"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
-                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz; // ×ª»»µ½ÊÀ½ç¿Õ¼ä
+                o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz; // ×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½
                 return o;
             }
             
             fixed4 frag (v2f i) : SV_Target
             {
-                // Ô­ÓÐ²ÄÖÊ»ìºÏÂß¼­
+                // Ô­ï¿½Ð²ï¿½ï¿½Ê»ï¿½ï¿½ï¿½ß¼ï¿½
                 fixed4 baseColor = tex2D(_BaseTex, i.uv);
                 fixed4 layer1 = tex2D(_Layer1, i.uv);
                 fixed4 layer2 = tex2D(_Layer2, i.uv);
@@ -78,25 +78,25 @@ Shader "Custom/lerpLayersShader_WithContour"
                 result = lerp(result, layer3, mask3);
                 result = lerp(layer4, result, mask4);
                 
-                // ====== µÈ¸ßÏß¼ÆËãÂß¼­ ======
-                // 1. »ñÈ¡µ±Ç°Æ¬¶ÎµÄÊÀ½ç¸ß¶È
+                // ====== ï¿½È¸ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ß¼ï¿½ ======
+                // 1. ï¿½ï¿½ï¿½ï¿½ß¶È£ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½È¸ï¿½ï¿½ï¿½ï¿½Ü¶ï¿½ÎªÔ­ï¿½ï¿½ï¿½ï¿½ 2 ï¿½ï¿½
                 float height = i.worldPos.y;
+                float interval = _ContourInterval * 0.5;
                 
-                // 2. ¼ÆËãµ½×î½üµÈ¸ßÏßµÄ¾àÀë£¨È¡Ä£ÔËËã£©
-                float remainder = fmod(height, _ContourInterval);
+                // 2. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¸ï¿½ï¿½ß£ï¿½y = k * intervalï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½
+                float remainder = fmod(height, interval);
+                if (remainder < 0) remainder += interval;
+                float distanceToContour = min(remainder, interval - remainder);
+                float contourLine = step(distanceToContour, _ContourWidth);
                 
-                // 3. ´¦Àí¸º¸ß¶ÈµÄÈ¡Ä££¨È·±£Ê¼ÖÕÎªÕý£©
-                if (remainder < 0) remainder += _ContourInterval;
+                // 3. ï¿½ï¿½ï¿½Æ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ¡¹ï¿½ï¿½ï¿½ï¿½Í¿ï¿½ï¿½Ë®Æ½/ï¿½ï¿½ï¿½ï¿½Ë®Æ½ï¿½ï¿½ï¿½ï¿½ height ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ä£¬
+                //    remainder È«Æ¬ï¿½ï¿½Í¬ï¿½ï¿½step ï¿½ï¿½Îª 1 ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Ö»ï¿½Ú¸ß¶ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½Ð¿É¼ï¿½ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ß£ï¿½ï¿½ï¿½ï¿½æ¡¢ï¿½Û±ßµÈ£ï¿½ï¿½ï¿½
+                float heightVariation = fwidth(height);
+                float allowContour = smoothstep(0.0, max(_ContourWidth * 0.05, 1e-6), heightVariation);
+                float contourFactor = contourLine * allowContour;
                 
-                // 4. ÅÐ¶ÏÊÇ·ñÔÚµÈ¸ßÏß¿í¶È·¶Î§ÄÚ£¨Á½¶Ë¶¼¼ì²é£©
-                float distanceToContour = min(remainder, _ContourInterval - remainder);
-                float contourFactor = step(distanceToContour, _ContourWidth);
-                
-                // 5. »ìºÏµÈ¸ßÏßÑÕÉ«
-                if (contourFactor > 0.5 && _ContourIntensity > 0)
-                {
-                    result = lerp(result, _ContourColor, _ContourIntensity * contourFactor);
-                }
+                // 4. ï¿½ï¿½ÏµÈ¸ï¿½ï¿½ï¿½ï¿½ï¿½É«
+                result = lerp(result, _ContourColor, contourFactor * _ContourIntensity);
                 
                 return result;
             }

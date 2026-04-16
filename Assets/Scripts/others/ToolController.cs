@@ -28,6 +28,9 @@ public class ToolController : MonoBehaviour
 
     private HashSet<MapItem> highlightedItems = new HashSet<MapItem>();
 
+    private BuildingScaleHandle activeScaleHandle;
+    private Building lastHandleTarget;
+
     // 用于存储复制的建筑信息
     private Building copiedBuilding = null;
 
@@ -132,6 +135,18 @@ public class ToolController : MonoBehaviour
             GUI.color = Color.white;
             GUI.Label(rect, "height:" + htb.height+" hardness:"+htb.hardness +" range:"+htb.range);
         }
+
+        string modeLabel = sdt.GetModeLabel();
+        if (modeLabel != null)
+        {
+            GUIStyle style = new GUIStyle(GUI.skin.label);
+            style.fontSize = 18;
+            style.fontStyle = FontStyle.Bold;
+            style.normal.textColor = Color.yellow;
+            style.alignment = TextAnchor.MiddleCenter;
+            Rect modeRect = new Rect(Screen.width * 0.5f - 80, 10, 160, 30);
+            GUI.Label(modeRect, modeLabel, style);
+        }
     }
 
         // Update is called once per frame
@@ -207,7 +222,11 @@ public class ToolController : MonoBehaviour
         lastMiS = miSelected;
         lastMisCount = misSelected.Count;
         UpdateHighlights();
-        if (Input.GetMouseButtonDown(0))
+        UpdateScaleHandle();
+
+        bool handleBusy = activeScaleHandle != null && activeScaleHandle.IsDragging;
+
+        if (Input.GetMouseButtonDown(0) && !handleBusy)
         {
             if (sdt.state != 0)
             {
@@ -239,8 +258,7 @@ public class ToolController : MonoBehaviour
                 }
             }
         }
-        // 拖动过程中更新工具
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && !handleBusy)
         {
             if (Input.mousePosition.x / Screen.width < 0.85)
             {
@@ -255,30 +273,40 @@ public class ToolController : MonoBehaviour
             }
         }
 
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButtonUp(0) && !handleBusy)
         {
             currentTool.EndUse();
         }
 
         if (Input.GetKeyDown(KeyCode.G))
         {
-            if (sdt.state != 1 && (sdt.mi != null || MultiSelectMode))
-                CtrlZer.instance.checkPointTransformOnly();
-            sdt.tChangeMode(1);
+            if (sdt.mi != null || MultiSelectMode)
+            {
+                if (sdt.state != 1)
+                    CtrlZer.instance.checkPointTransformOnly();
+                sdt.tChangeMode(1);
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            if (sdt.state != 2 && (sdt.mi != null || MultiSelectMode))
-                CtrlZer.instance.checkPointTransformOnly();
-            sdt.tChangeMode(2);
+            if (sdt.mi != null || MultiSelectMode)
+            {
+                if (sdt.state != 2)
+                    CtrlZer.instance.checkPointTransformOnly();
+                sdt.tChangeMode(2);
+            }
         }
 
-        if (Input.GetKeyDown(KeyCode.S))
+        bool altHeld = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+        if (altHeld && Input.GetKeyDown(KeyCode.S))
         {
-            if (sdt.state != 3 && (sdt.mi != null || MultiSelectMode))
-                CtrlZer.instance.checkPointTransformOnly();
-            sdt.tChangeMode(3);
+            if (sdt.mi != null || MultiSelectMode)
+            {
+                if (sdt.state != 3)
+                    CtrlZer.instance.checkPointTransformOnly();
+                sdt.tChangeMode(3);
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.Delete))
@@ -494,6 +522,27 @@ public class ToolController : MonoBehaviour
         foreach (var r in renderers)
         {
             if (r != null) r.SetPropertyBlock(clear);
+        }
+    }
+
+    private void UpdateScaleHandle()
+    {
+        Building target = (!MultiSelectMode && miSelected is Building b) ? b : null;
+
+        if (target == lastHandleTarget) return;
+        lastHandleTarget = target;
+
+        if (activeScaleHandle != null)
+        {
+            Destroy(activeScaleHandle.gameObject);
+            activeScaleHandle = null;
+        }
+
+        if (target != null)
+        {
+            GameObject handleGO = new GameObject("_BuildingScaleHandle");
+            activeScaleHandle = handleGO.AddComponent<BuildingScaleHandle>();
+            activeScaleHandle.Init(target);
         }
     }
 
@@ -1300,6 +1349,14 @@ public class SideTool
         }
     }
 
+    public string GetModeLabel()
+    {
+        if (state == 0) return null;
+        if (state == 1) return "Grab (Alt+G)";
+        if (state == 2) return "Rotate (Alt+R)";
+        return "Scale (Alt+S)";
+    }
+
     public void update(Vector2 offset, Vector2 Pos)
     {
         if (state == 0) return;
@@ -2079,5 +2136,296 @@ public class SelectionTint : MonoBehaviour
             mpb.SetColor("_Color", tinted);
             r.SetPropertyBlock(mpb);
         }
+    }
+}
+
+public class BuildingScaleHandle : MonoBehaviour
+{
+    public bool IsDragging { get; private set; }
+
+    private Building target;
+
+    // 0=right(+X), 1=left(-X), 2=front(+Z), 3=back(-Z) in building local space
+    private GameObject[] arrows = new GameObject[4];
+    private BoxCollider[] hitZones = new BoxCollider[4];
+
+    private int draggingEdge = -1;
+    private float dragStartProj;
+    private Vector2 originalSize;
+    private bool undoRecorded;
+
+    private Material matX, matZ, matHL;
+
+    public void Init(Building b)
+    {
+        target = b;
+
+        Shader sh = Shader.Find("Hidden/Internal-Colored");
+        if (sh == null) sh = Shader.Find("Sprites/Default");
+        if (sh == null) sh = Shader.Find("Unlit/Color");
+
+        matX = MkMat(sh, new Color(1f, 0.15f, 0.15f));
+        matZ = MkMat(sh, new Color(0.15f, 0.4f, 1f));
+        matHL = MkMat(sh, new Color(1f, 1f, 0.2f));
+
+        for (int i = 0; i < 4; i++)
+        {
+            arrows[i] = MkArrowVisual(i < 2 ? matX : matZ);
+            arrows[i].transform.SetParent(transform, false);
+
+            GameObject hitGO = new GameObject("H" + i);
+            hitGO.transform.SetParent(transform, false);
+            hitGO.layer = 2;
+            hitZones[i] = hitGO.AddComponent<BoxCollider>();
+        }
+        Sync();
+    }
+
+    private Material MkMat(Shader sh, Color c)
+    {
+        Material m = new Material(sh);
+        m.color = c;
+        m.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+        m.SetInt("_ZWrite", 0);
+        m.renderQueue = 4000;
+        return m;
+    }
+
+    private GameObject MkArrowVisual(Material mat)
+    {
+        GameObject root = new GameObject("A");
+
+        // Shaft: thin stretched cube
+        GameObject shaft = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        shaft.name = "S";
+        shaft.transform.SetParent(root.transform, false);
+        Destroy(shaft.GetComponent<Collider>());
+        shaft.GetComponent<Renderer>().material = mat;
+        shaft.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        // Tip: cube rotated 45° around forward to look like a diamond/arrowhead
+        GameObject tip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        tip.name = "T";
+        tip.transform.SetParent(root.transform, false);
+        Destroy(tip.GetComponent<Collider>());
+        tip.GetComponent<Renderer>().material = mat;
+        tip.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        return root;
+    }
+
+    private void Sync()
+    {
+        if (target == null) return;
+        Transform bt = target.gameObject.transform;
+
+        // The building prefab body cube has localPosition (0.5, 0.5, -0.5)
+        // So the visible cube occupies local X:[0,1], Y:[0,1], Z:[-1,0]
+        // Edge centers at mid-height (Y=0.5):
+        Vector3 rightEdge = bt.TransformPoint(1f, 0.5f, -0.5f);
+        Vector3 leftEdge  = bt.TransformPoint(0f, 0.5f, -0.5f);
+        Vector3 frontEdge = bt.TransformPoint(0.5f, 0.5f, 0f);
+        Vector3 backEdge  = bt.TransformPoint(0.5f, 0.5f, -1f);
+
+        Vector3 wRight = bt.right;
+        Vector3 wFwd   = bt.forward;
+
+        float halfX = Vector3.Distance(rightEdge, leftEdge) * 0.5f;
+        float halfZ = Vector3.Distance(frontEdge, backEdge) * 0.5f;
+
+        float slen = Mathf.Clamp(Mathf.Min(halfX, halfZ) * 0.35f, 0.4f, 2f);
+        float tipSz = Mathf.Clamp(Mathf.Min(halfX, halfZ) * 0.25f, 0.3f, 1f);
+        float bldH = target.height * 1.5f;
+        float ah = Mathf.Clamp(bldH * 0.15f, 0.15f, 1f);
+
+        PlaceArrow(0, rightEdge, wRight, slen, tipSz, ah);
+        PlaceArrow(1, leftEdge,  -wRight, slen, tipSz, ah);
+        PlaceArrow(2, frontEdge, wFwd,   slen, tipSz, ah);
+        PlaceArrow(3, backEdge,  -wFwd,  slen, tipSz, ah);
+    }
+
+    private Vector3 WorldOutward(int edge)
+    {
+        Transform bt = target.gameObject.transform;
+        switch (edge)
+        {
+            case 0: return bt.right;
+            case 1: return -bt.right;
+            case 2: return bt.forward;
+            default: return -bt.forward;
+        }
+    }
+
+    private void PlaceArrow(int idx, Vector3 edgePos, Vector3 outDir, float slen, float tipSz, float ah)
+    {
+        Quaternion look = Quaternion.LookRotation(outDir, Vector3.up);
+
+        Transform shaft = arrows[idx].transform.GetChild(0);
+        shaft.position = edgePos + outDir * (slen * 0.5f);
+        shaft.rotation = look;
+        shaft.localScale = new Vector3(0.12f, ah, slen);
+
+        Transform tip = arrows[idx].transform.GetChild(1);
+        tip.position = edgePos + outDir * (slen + tipSz * 0.35f);
+        tip.rotation = look * Quaternion.Euler(0, 0, 45);
+        tip.localScale = new Vector3(tipSz, ah, tipSz);
+
+        float totalLen = slen + tipSz;
+        hitZones[idx].transform.position = edgePos + outDir * (totalLen * 0.5f);
+        hitZones[idx].transform.rotation = look;
+        hitZones[idx].size = new Vector3(Mathf.Max(tipSz * 2.5f, 1.5f), Mathf.Max(ah * 4, 2f), totalLen + 0.5f);
+        hitZones[idx].center = Vector3.zero;
+    }
+
+    void Update()
+    {
+        if (target == null) { Destroy(gameObject); return; }
+        Sync();
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (!IsDragging)
+        {
+            for (int i = 0; i < 4; i++)
+                SetMat(i, i < 2 ? matX : matZ);
+
+            int hovered = -1;
+            float best = float.MaxValue;
+            for (int i = 0; i < 4; i++)
+            {
+                RaycastHit hit;
+                if (hitZones[i].Raycast(ray, out hit, 500f) && hit.distance < best)
+                { best = hit.distance; hovered = i; }
+            }
+            if (hovered >= 0)
+                SetMat(hovered, matHL);
+
+            if (Input.GetMouseButtonDown(0) && hovered >= 0)
+                BeginDrag(hovered, Vector3.zero);
+        }
+        else
+        {
+            ApplyDrag(Vector3.zero);
+            if (Input.GetMouseButtonUp(0))
+                EndDrag();
+        }
+    }
+
+    private Vector3 dragStartScreen;
+    private Vector2 dragScreenDir;
+    private float dragPixelsPerHalf;
+
+    private Vector3 GetVisualCenter()
+    {
+        return target.gameObject.transform.TransformPoint(0.5f, 0.5f, -0.5f);
+    }
+
+    private Vector2 originalPosition;
+
+    private void BeginDrag(int edge, Vector3 worldHit)
+    {
+        IsDragging = true;
+        draggingEdge = edge;
+        originalSize = target.size;
+        originalPosition = target.position;
+        undoRecorded = false;
+        dragStartScreen = Input.mousePosition;
+
+        Transform bt = target.gameObject.transform;
+        Vector3 outward;
+        bool isX = edge < 2;
+        switch (edge)
+        {
+            case 0: outward = bt.right; break;
+            case 1: outward = -bt.right; break;
+            case 2: outward = bt.forward; break;
+            default: outward = -bt.forward; break;
+        }
+        float halfExt = isX ? originalSize.x / 4f : originalSize.y / 4f;
+
+        Vector3 center3D = GetVisualCenter();
+        Vector3 edge3D = center3D + outward * halfExt;
+
+        Vector3 centerScr = Camera.main.WorldToScreenPoint(center3D);
+        Vector3 edgeScr = Camera.main.WorldToScreenPoint(edge3D);
+
+        dragScreenDir = new Vector2(edgeScr.x - centerScr.x, edgeScr.y - centerScr.y);
+        dragPixelsPerHalf = dragScreenDir.magnitude;
+        if (dragPixelsPerHalf > 0.01f)
+            dragScreenDir /= dragPixelsPerHalf;
+        else
+            dragPixelsPerHalf = 1f;
+
+        SetMat(edge, matHL);
+    }
+
+    private void ApplyDrag(Vector3 worldPos)
+    {
+        Vector2 mouseDelta = new Vector2(
+            Input.mousePosition.x - dragStartScreen.x,
+            Input.mousePosition.y - dragStartScreen.y
+        );
+
+        float screenProj = Vector2.Dot(mouseDelta, dragScreenDir);
+
+        bool isX = draggingEdge < 2;
+        float origDim = isX ? originalSize.x : originalSize.y;
+        float delta = screenProj * (origDim * 0.5f) / dragPixelsPerHalf;
+
+        if (!undoRecorded && Mathf.Abs(delta) > 0.5f)
+        {
+            CtrlZer.instance.checkPointTransformOnly();
+            undoRecorded = true;
+        }
+
+        float newVal = Mathf.Max(1f, origDim + delta);
+        float dimChange = newVal - origDim;
+
+        Vector2 newSize;
+        if (isX)
+            newSize = new Vector2(newVal, originalSize.y);
+        else
+            newSize = new Vector2(originalSize.x, newVal);
+
+        // One-sided extension: the DRAGGED edge moves, the OPPOSITE edge stays fixed.
+        // Building prefab body at localPosition (0.5, 0.5, -0.5):
+        //   X grows from root rightward  (local X: 0 → size.x/2)
+        //   Z grows from root backward   (local Z: 0 → -size.y/2)
+        //
+        // Edge 0 (right):  grows right naturally, left edge at X=0 stays. No shift.
+        // Edge 1 (left):   want left to extend. Shift root LEFT by dimChange/2.
+        // Edge 2 (front):  Z grows backward naturally. Shift root FORWARD by dimChange/2
+        //                  so the back edge stays and front extends.
+        // Edge 3 (back):   grows backward naturally, front edge at Z=0 stays. No shift.
+        Quaternion rot = target.gameObject.transform.rotation;
+        Vector3 worldShift = Vector3.zero;
+
+        if (draggingEdge == 1)
+            worldShift = rot * new Vector3(-dimChange / 2f, 0f, 0f);
+        else if (draggingEdge == 2)
+            worldShift = rot * new Vector3(0f, 0f, dimChange / 2f);
+
+        target.position = originalPosition + new Vector2(worldShift.x * 2f, -worldShift.z * 2f);
+        target.size = newSize;
+        target.scatterThis();
+    }
+
+    private void EndDrag()
+    {
+        IsDragging = false;
+        draggingEdge = -1;
+    }
+
+    private void SetMat(int idx, Material mat)
+    {
+        foreach (Renderer r in arrows[idx].GetComponentsInChildren<Renderer>())
+            r.material = mat;
+    }
+
+    void OnDestroy()
+    {
+        if (matX != null) Destroy(matX);
+        if (matZ != null) Destroy(matZ);
+        if (matHL != null) Destroy(matHL);
     }
 }

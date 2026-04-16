@@ -27,6 +27,14 @@ public class Building : MeRect
         height = h;
         material = m;
     }
+    public void scaleAxis(float scaler, int axis)
+    {
+        if (axis == 0)
+            size = new Vector2(size.x + scaler, size.y);
+        else
+            size = new Vector2(size.x, size.y + scaler);
+    }
+
     public void reinit(int h, string m, Vector2 pos, float r, Vector2 s, string k, int layerI)
     {
         height = h;

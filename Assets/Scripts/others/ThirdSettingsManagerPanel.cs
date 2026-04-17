@@ -309,21 +309,57 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
     {
         try
         {
+            var modern = ResolveMicrosoftWin32OpenFolderDialogType();
+            if (modern != null)
+            {
+                var dlg = Activator.CreateInstance(modern);
+                modern.GetProperty("Title")?.SetValue(dlg, description);
+                var show = modern.GetMethod("ShowDialog", Type.EmptyTypes);
+                var result = show?.Invoke(dlg, null);
+                // OpenFolderDialog.ShowDialog() -> bool? (true == OK)
+                if (result is bool accepted && accepted)
+                {
+                    var folder = modern.GetProperty("FolderName")?.GetValue(dlg) as string;
+                    if (!string.IsNullOrEmpty(folder))
+                        return folder;
+                }
+
+                return null;
+            }
+
             var t = Type.GetType("System.Windows.Forms.FolderBrowserDialog, System.Windows.Forms");
-            if (t == null) { Debug.LogWarning("System.Windows.Forms not available; please input path manually."); return null; }
-            var dlg = Activator.CreateInstance(t);
-            t.GetProperty("Description")?.SetValue(dlg, description);
-            var show = t.GetMethod("ShowDialog", Type.EmptyTypes);
-            var result = show?.Invoke(dlg, null);
-            var selected = t.GetProperty("SelectedPath")?.GetValue(dlg) as string;
+            if (t == null) { Debug.LogWarning("Folder browse not available; please input path manually."); return null; }
+            var dlgClassic = Activator.CreateInstance(t);
+            t.GetProperty("Description")?.SetValue(dlgClassic, description);
+            var showClassic = t.GetMethod("ShowDialog", Type.EmptyTypes);
+            var resultClassic = showClassic?.Invoke(dlgClassic, null);
+            var selected = t.GetProperty("SelectedPath")?.GetValue(dlgClassic) as string;
             // DialogResult.OK == 1
-            if (result != null && Convert.ToInt32(result) == 1 && !string.IsNullOrEmpty(selected))
+            if (resultClassic != null && Convert.ToInt32(resultClassic) == 1 && !string.IsNullOrEmpty(selected))
                 return selected;
         }
         catch (Exception e)
         {
             Debug.LogWarning($"Browse folder failed; please input path manually.\n{e.Message}");
         }
+        return null;
+    }
+
+    // WPF .NET 8+ OpenFolderDialog；无 PresentationFramework 时 TryBrowseFolder 会回退到 FolderBrowserDialog。
+    private static Type ResolveMicrosoftWin32OpenFolderDialogType()
+    {
+        var t = Type.GetType("Microsoft.Win32.OpenFolderDialog, PresentationFramework");
+        if (t != null)
+            return t;
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (!string.Equals(asm.GetName().Name, "PresentationFramework", StringComparison.OrdinalIgnoreCase))
+                continue;
+            t = asm.GetType("Microsoft.Win32.OpenFolderDialog");
+            if (t != null)
+                return t;
+        }
+
         return null;
     }
 }

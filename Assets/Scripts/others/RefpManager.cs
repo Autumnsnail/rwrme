@@ -1,7 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class RefpManager : MonoBehaviour
@@ -26,21 +26,61 @@ public class RefpManager : MonoBehaviour
 
     public void importTexture()
     {
-        if (File.Exists(filePath))
+        if (refpp == null)
         {
-
-            Texture2D loadedTexture = new Texture2D(2, 2);
-            byte[] fileData = File.ReadAllBytes(filePath);
-            if (loadedTexture.LoadImage(fileData))
-            {
-                refpp.transform.GetChild(0).GetComponent<Renderer>().material.mainTexture = loadedTexture;
-                refpp.transform.position = new Vector3(0, 0, 0);
-            }
+            Debug.LogWarning("RefpManager: refpi not found.");
+            return;
         }
-        else
+
+        var path = TryBrowseTextureFile("Select reference texture");
+        if (string.IsNullOrEmpty(path))
+            return;
+
+        filePath = path;
+
+        if (!File.Exists(filePath))
         {
             Debug.Log("NoFile");
+            return;
         }
+
+        var loadedTexture = new Texture2D(2, 2);
+        var fileData = File.ReadAllBytes(filePath);
+        if (loadedTexture.LoadImage(fileData))
+        {
+            refpp.transform.GetChild(0).GetComponent<Renderer>().material.mainTexture = loadedTexture;
+            refpp.transform.position = new Vector3(0, 0, 0);
+        }
+    }
+
+    // Reflection: no hard reference to System.Windows.Forms (same idea as ThirdSettingsManagerPanel).
+    private static string TryBrowseTextureFile(string title)
+    {
+        try
+        {
+            var t = Type.GetType("System.Windows.Forms.OpenFileDialog, System.Windows.Forms");
+            if (t == null)
+            {
+                Debug.LogWarning("System.Windows.Forms not available; cannot browse for texture.");
+                return null;
+            }
+
+            const string filter = "Image files|*.png;*.jpg;*.jpeg;*.tga;*.tif;*.tiff;*.bmp;*.gif|All files|*.*";
+            var dlg = Activator.CreateInstance(t);
+            t.GetProperty("Title")?.SetValue(dlg, title);
+            t.GetProperty("Filter")?.SetValue(dlg, filter);
+            var show = t.GetMethod("ShowDialog", Type.EmptyTypes);
+            var result = show?.Invoke(dlg, null);
+            var fileName = t.GetProperty("FileName")?.GetValue(dlg) as string;
+            if (result != null && Convert.ToInt32(result) == 1 && !string.IsNullOrEmpty(fileName))
+                return fileName;
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Browse texture failed.\n{e.Message}");
+        }
+
+        return null;
     }
 
     public void setPathName(string path)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditor.EditorTools;
 using UnityEngine;
 
 public class ToolController : MonoBehaviour
@@ -34,8 +35,14 @@ public class ToolController : MonoBehaviour
     private PlatformPathHandle activePlatformHandle;
     private Platform lastPlatformHandleTarget;
 
+    private WallPathHandle activeWallHandle;
+    private Wall lastWallHandleTarget;
+
     // 用于存储复制的建筑信息
     private Building copiedBuilding = null;
+
+    public GameObject heightChangerVisPart;
+    public GameObject ToolVisPartInstance;
 
     void Start()
     {
@@ -133,6 +140,14 @@ public class ToolController : MonoBehaviour
         dragVisualizer.enabled = false;
     }
 
+    /// <summary>与鼠标按下一致：可打工具射线的屏幕区域（排除右侧 UI 与左下角一块）。</summary>
+    private static bool IsPointerInMainToolScreenArea()
+    {
+        if (Screen.width <= 0 || Screen.height <= 0) return false;
+        float nx = Input.mousePosition.x / Screen.width;
+        float ny = Input.mousePosition.y / Screen.height;
+        return nx < 0.82f && (nx > 0.21f || ny > 0.23f);
+    }
 
     void OnGUI()
     {
@@ -159,8 +174,29 @@ public class ToolController : MonoBehaviour
     }
 
         // Update is called once per frame
-        void Update()
+    void Update()
     {
+        if(currentTool.visPart==null)
+        {
+            if(ToolVisPartInstance!=null)Destroy(ToolVisPartInstance);
+        }
+        else
+        {
+            if(ToolVisPartInstance==null)
+            {
+                ToolVisPartInstance=Instantiate(currentTool.visPart,transform);
+            }
+            else
+            {
+                if(ToolVisPartInstance.GetType()!=currentTool.visPart.GetType())
+                {
+                    Destroy(ToolVisPartInstance);
+                    ToolVisPartInstance=Instantiate(currentTool.visPart);
+                }
+            }
+            //update the position of the tool vis part
+            currentTool.updateVisPart();
+        }
 
         if (currentTool.m_name == "HBS")
         {
@@ -233,9 +269,11 @@ public class ToolController : MonoBehaviour
         UpdateHighlights();
         UpdateScaleHandle();
         UpdatePlatformHandle();
+        UpdateWallHandle();
 
         bool handleBusy = (activeScaleHandle != null && activeScaleHandle.IsDragging)
-            || (activePlatformHandle != null && activePlatformHandle.IsDragging);
+            || (activePlatformHandle != null && activePlatformHandle.IsDragging)
+            || (activeWallHandle != null && activeWallHandle.IsDragging);
 
         if (Input.GetMouseButtonDown(0) && !handleBusy)
         {
@@ -246,7 +284,7 @@ public class ToolController : MonoBehaviour
             else
             {
 
-                if ( (Input.mousePosition.x / Screen.width < 0.82 ) && (Input.mousePosition.x / Screen.width > 0.21 || Input.mousePosition.y / Screen.height > 0.23) )
+                if (IsPointerInMainToolScreenArea())
                 {
 
                     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -271,7 +309,7 @@ public class ToolController : MonoBehaviour
         }
         if (Input.GetMouseButton(0) && !handleBusy)
         {
-            if (Input.mousePosition.x / Screen.width < 0.85)
+            if (IsPointerInMainToolScreenArea())
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 RaycastHit hit;
@@ -364,6 +402,8 @@ public class ToolController : MonoBehaviour
     }
     private void HandleToolShortcuts()
     {
+        // 需按住 Shift 才响应数字/F 键切工具，避免误触
+        if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)) return;
         // 不在 Ctrl 组合键时才响应工具切换，避免与 Ctrl+C/V 等冲突
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) return;
 
@@ -578,6 +618,27 @@ public class ToolController : MonoBehaviour
         }
     }
 
+    private void UpdateWallHandle()
+    {
+        Wall target = (!MultiSelectMode && miSelected is Wall w) ? w : null;
+
+        if (target == lastWallHandleTarget) return;
+        lastWallHandleTarget = target;
+
+        if (activeWallHandle != null)
+        {
+            Destroy(activeWallHandle.gameObject);
+            activeWallHandle = null;
+        }
+
+        if (target != null)
+        {
+            GameObject go = new GameObject("_WallPathHandle");
+            activeWallHandle = go.AddComponent<WallPathHandle>();
+            activeWallHandle.Init(target);
+        }
+    }
+
     // 复制当前选中的建筑
     private void CopySelectedBuilding()
     {
@@ -672,11 +733,17 @@ public class ToolController : MonoBehaviour
 public class Tool
 {
     public string m_name;
+    public GameObject visPart=null;
+    
     public Tool(string name)
     {
         m_name = name;
     }
 
+    public virtual void updateVisPart()
+    {
+
+    }
     public virtual void startUse(Vector3 Position, GameObject hitO)
     {
         Debug.Log("tryUse");
@@ -1342,6 +1409,8 @@ public class heightChanger : Tool
     {
         controller = toolController;
     }
+
+
 
     public override void startUse(Vector3 position, GameObject hitO)
     {
@@ -2035,7 +2104,55 @@ public class HeightBush : Tool
 
     public HeightBush(string name) : base(name)
     {
+        visPart = ToolController.inste.heightChangerVisPart;
     }
+
+    public override void updateVisPart()
+    {
+        if (ToolController.inste.ToolVisPartInstance == null)
+            return;
+
+        // 显示尺寸：按高度图分辨率换算为世界单位；位置见下方射线与地形交点
+        Terrain terrain = Terrain.activeTerrain;
+        if (terrain == null || terrain.terrainData == null)
+            return;
+
+        // range 与 ApplyHeightBrush 一致：高度图上的“直径”（采样意义下跨度约 2*ceil(range/2)）
+        // 预制体为直径 1 的球体，localScale 为世界空间直径（X/Z）；世界步长随 heightmapResolution 变化
+        TerrainData td = terrain.terrainData;
+        Vector3 tsz = td.size;
+        int hres = td.heightmapResolution;
+        float worldPerSampleX = tsz.x / Mathf.Max(1, hres - 1);
+        float worldPerSampleZ = tsz.z / Mathf.Max(1, hres - 1);
+        float diameterInSamples = 2f * Mathf.CeilToInt(range * 0.5f);
+        ToolController.inste.ToolVisPartInstance.transform.localScale = new Vector3(
+            diameterInSamples * worldPerSampleX,
+            1f,
+            diameterInSamples * worldPerSampleZ);
+
+        Camera cam = ToolController.inste.orthographicCamera != null
+            ? ToolController.inste.orthographicCamera
+            : Camera.main;
+        if (cam == null)
+            return;
+
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        var hits = Physics.RaycastAll(ray, Mathf.Infinity);
+        if (hits == null || hits.Length == 0)
+            return;
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        foreach (var h in hits)
+        {
+            if (h.collider == null)
+                continue;
+            if (h.collider.GetComponent<Terrain>() == null && !(h.collider is TerrainCollider))
+                continue;
+            ToolController.inste.ToolVisPartInstance.transform.position = h.point;
+            break;
+        }
+    }
+
     public override void startUse(Vector3 position, GameObject hitObject)
     {
         CtrlZer.instance.checkPointWithHeightmap();
@@ -2759,6 +2876,238 @@ public class PlatformPathHandle : MonoBehaviour
         if (matLine != null) Destroy(matLine);
         if (matR != null) Destroy(matR);
         if (matL != null) Destroy(matL);
+        if (matHL != null) Destroy(matHL);
+    }
+}
+
+/// <summary>
+/// 选中 Wall 时在场景中显示路径折线与顶点手柄；Layer2 碰撞体 + Raycast，拖拽投影到地形（Layer6）更新 SVG 顶点（与 PlatformPathHandle 一致）。
+/// </summary>
+[DefaultExecutionOrder(-100)]
+public class WallPathHandle : MonoBehaviour
+{
+    public bool IsDragging { get; private set; }
+
+    private Wall target;
+    private Transform linksRoot;
+    private Transform handlesRoot;
+
+    private List<LineRenderer> segmentLines = new List<LineRenderer>();
+    private List<BoxCollider> hitZones = new List<BoxCollider>();
+    private List<Renderer> handleRenderers = new List<Renderer>();
+
+    private Material matLine;
+    private Material matV;
+    private Material matHL;
+
+    private int vertexCount = -1;
+    private int hoveredSlot = -1;
+    private int dragSlot = -1;
+    private bool undoRecorded;
+
+    private const float LiftY = 0.35f;
+    private const float HitHalf = 0.55f;
+
+    public void Init(Wall wall)
+    {
+        target = wall;
+        linksRoot = new GameObject("Links").transform;
+        linksRoot.SetParent(transform, false);
+        handlesRoot = new GameObject("Handles").transform;
+        handlesRoot.SetParent(transform, false);
+
+        Shader sh = Shader.Find("Hidden/Internal-Colored");
+        if (sh == null) sh = Shader.Find("Sprites/Default");
+        if (sh == null) sh = Shader.Find("Unlit/Color");
+
+        matLine = MkMat(sh, new Color(1f, 0.88f, 0.15f, 1f));
+        matV = MkMat(sh, new Color(0.25f, 0.92f, 1f, 1f));
+        matHL = MkMat(sh, Color.white);
+
+        RebuildIfNeeded();
+    }
+
+    private static Material MkMat(Shader sh, Color c)
+    {
+        Material m = new Material(sh);
+        m.color = c;
+        m.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+        m.SetInt("_ZWrite", 0);
+        m.renderQueue = 4000;
+        return m;
+    }
+
+    private int GetVertexCount()
+    {
+        if (target == null || target.positionLine == null) return 0;
+        return target.positionLine.Count;
+    }
+
+    private void RebuildIfNeeded()
+    {
+        int n = GetVertexCount();
+        int expectedSeg = n >= 2 ? n - 1 : 0;
+        if (n == vertexCount && segmentLines.Count == expectedSeg && hitZones.Count == n)
+            return;
+
+        foreach (var lr in segmentLines)
+            if (lr != null) Destroy(lr.gameObject);
+        segmentLines.Clear();
+        foreach (Transform t in handlesRoot)
+            if (t != null) Destroy(t.gameObject);
+        hitZones.Clear();
+        handleRenderers.Clear();
+
+        vertexCount = n;
+
+        for (int i = 0; i < expectedSeg; i++)
+        {
+            GameObject lrGo = new GameObject("Seg_" + i);
+            lrGo.transform.SetParent(linksRoot, false);
+            LineRenderer lr = lrGo.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.useWorldSpace = true;
+            lr.startWidth = 0.2f;
+            lr.endWidth = 0.2f;
+            lr.material = matLine;
+            lr.startColor = matLine.color;
+            lr.endColor = matLine.color;
+            lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            segmentLines.Add(lr);
+        }
+
+        for (int i = 0; i < n; i++)
+            MkVertexHandle(i);
+    }
+
+    private void MkVertexHandle(int index)
+    {
+        GameObject root = new GameObject("V_" + index);
+        root.transform.SetParent(handlesRoot, false);
+
+        GameObject vis = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        vis.name = "Vis";
+        vis.transform.SetParent(root.transform, false);
+        vis.transform.localScale = Vector3.one * 0.36f;
+        Destroy(vis.GetComponent<Collider>());
+        Renderer rend = vis.GetComponent<Renderer>();
+        rend.material = matV;
+        rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        GameObject hitGO = new GameObject("Hit");
+        hitGO.transform.SetParent(root.transform, false);
+        hitGO.layer = 2;
+        BoxCollider box = hitGO.AddComponent<BoxCollider>();
+        box.size = Vector3.one * (HitHalf * 2f);
+        box.center = Vector3.zero;
+
+        hitZones.Add(box);
+        handleRenderers.Add(rend);
+    }
+
+    private Vector3 VertexWorld(int i)
+    {
+        Vector2 svg = target.positionLine[i];
+        Vector3 pot = Vector3.zero;
+        VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(svg), target.layerIndex, ref pot, target.Rank);
+        return new Vector3(pot.x, pot.y + LiftY, pot.z);
+    }
+
+    private void SyncTransforms(int n)
+    {
+        for (int i = 0; i < n - 1; i++)
+        {
+            segmentLines[i].SetPosition(0, VertexWorld(i));
+            segmentLines[i].SetPosition(1, VertexWorld(i + 1));
+        }
+
+        for (int i = 0; i < n; i++)
+            handlesRoot.GetChild(i).position = VertexWorld(i);
+    }
+
+    void Update()
+    {
+        if (target == null) { Destroy(gameObject); return; }
+
+        RebuildIfNeeded();
+        int n = GetVertexCount();
+        if (n == 0)
+        {
+            linksRoot.gameObject.SetActive(false);
+            handlesRoot.gameObject.SetActive(false);
+            return;
+        }
+        linksRoot.gameObject.SetActive(true);
+        handlesRoot.gameObject.SetActive(true);
+
+        SyncTransforms(n);
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (!IsDragging)
+        {
+            for (int s = 0; s < handleRenderers.Count; s++)
+                handleRenderers[s].material = matV;
+
+            hoveredSlot = -1;
+            float best = float.MaxValue;
+            for (int s = 0; s < hitZones.Count; s++)
+            {
+                RaycastHit hit;
+                if (hitZones[s].Raycast(ray, out hit, 800f) && hit.distance < best)
+                {
+                    best = hit.distance;
+                    hoveredSlot = s;
+                }
+            }
+            if (hoveredSlot >= 0)
+                handleRenderers[hoveredSlot].material = matHL;
+
+            if (Input.GetMouseButtonDown(0) && hoveredSlot >= 0)
+            {
+                IsDragging = true;
+                dragSlot = hoveredSlot;
+                undoRecorded = false;
+            }
+        }
+        else
+        {
+            handleRenderers[dragSlot].material = matHL;
+            ApplyDrag();
+            if (Input.GetMouseButtonUp(0))
+            {
+                IsDragging = false;
+                dragSlot = -1;
+            }
+        }
+    }
+
+    private void ApplyDrag()
+    {
+        int layerMask = 1 << 6;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (!Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
+            return;
+
+        int i = dragSlot;
+        Vector2 svg = MathOfRwrme.U3dPosToSvgPos(new Vector2(hit.point.x, hit.point.z));
+        Vector2 before = target.positionLine[i];
+        if (!undoRecorded && (svg - before).sqrMagnitude > 0.0004f)
+        {
+            CtrlZer.instance.checkPoint();
+            undoRecorded = true;
+        }
+
+        target.positionLine[i] = svg;
+        target.scatterThis();
+    }
+
+    void OnDestroy()
+    {
+        if (matLine != null) Destroy(matLine);
+        if (matV != null) Destroy(matV);
         if (matHL != null) Destroy(matHL);
     }
 }

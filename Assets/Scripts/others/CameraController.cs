@@ -11,6 +11,13 @@ public class DualModeCameraController : MonoBehaviour
     public float flightMouseSensitivity = 2f;
     public bool invertY = false;
 
+    [Tooltip("飞行模式下滚轮调节移动速度；与 Mouse ScrollWheel 相乘后作为 Exp 指数")]
+    public float flightScrollWheelIntensity = 3f;
+    public float minFlightMoveSpeed = 0.25f;
+    public float maxFlightMoveSpeed = 150f;
+    public float minFlightFastMoveSpeed = 0.5f;
+    public float maxFlightFastMoveSpeed = 450f;
+
     [Header("俯视角模式设置")]
     public float topDownMoveSpeed = 10f;
     public float topDownDragSpeed = 2f;
@@ -23,7 +30,6 @@ public class DualModeCameraController : MonoBehaviour
     [Header("通用设置")]
     public KeyCode toggleModeKey = KeyCode.Tab;
 
-    // 私有变量
     private Vector3 flightRotation = Vector3.zero;
     private Vector3 topDownPosition;
     private bool isCursorLocked = true;
@@ -51,18 +57,14 @@ public class DualModeCameraController : MonoBehaviour
             }
         }
 
-        // 初始化飞行模式
         flightRotation.x = transform.eulerAngles.x;
         flightRotation.y = transform.eulerAngles.y;
 
-        // 初始化俯视角位置
         topDownPosition = transform.position;
         topDownPosition.y = topDownHeight;
 
-        // 根据当前模式初始化相机设置
         InitializeCameraMode();
 
-        // 锁定鼠标
         LockCursor();
     }
 
@@ -83,39 +85,32 @@ public class DualModeCameraController : MonoBehaviour
 
     void SetupTopDownCamera()
     {
-        // 设置为正交相机
         cam.orthographic = true;
         cam.orthographicSize = orthographicSize;
 
-        // 设置俯视角位置和旋转
         transform.position = topDownPosition;
         transform.rotation = Quaternion.Euler(90f, 0f, 0f);
     }
 
     void SetupFlightCamera()
     {
-        // 设置为透视相机
         cam.orthographic = false;
 
-        // 恢复飞行模式的旋转
         transform.rotation = Quaternion.Euler(flightRotation.x, flightRotation.y, 0f);
     }
 
     void Update()
     {
-        // 切换模式
         if (Input.GetKeyDown(toggleModeKey))
         {
             ToggleCameraMode();
         }
 
-        // 切换鼠标锁定状态（仅在飞行模式下有效）
         if (Input.GetKeyDown(KeyCode.Escape) && currentMode == CameraMode.FreeFlight)
         {
             ToggleCursorLock();
         }
 
-        // 根据当前模式更新相机
         switch (currentMode)
         {
             case CameraMode.FreeFlight:
@@ -131,31 +126,25 @@ public class DualModeCameraController : MonoBehaviour
     {
         if (currentMode == CameraMode.FreeFlight)
         {
-            // 切换到俯视角模式
             currentMode = CameraMode.TopDown;
 
-            // 保存当前位置，但调整高度
             topDownPosition = transform.position;
             topDownPosition.y = topDownHeight;
 
             SetupTopDownCamera();
 
-            // 在俯视角模式下解锁鼠标以便拖动
             UnlockCursor();
 
         }
         else
         {
-            // 切换到飞行模式
             currentMode = CameraMode.FreeFlight;
 
-            // 重置旋转为当前方向
             flightRotation.y = transform.eulerAngles.y;
             flightRotation.x = transform.eulerAngles.x;
 
             SetupFlightCamera();
 
-            // 在飞行模式下锁定鼠标
             LockCursor();
 
         }
@@ -165,7 +154,6 @@ public class DualModeCameraController : MonoBehaviour
     {
         if (isCursorLocked)
         {
-            // 鼠标视角控制
             float mouseX = Input.GetAxis("Mouse X") * flightMouseSensitivity;
             float mouseY = Input.GetAxis("Mouse Y") * flightMouseSensitivity * (invertY ? 1f : -1f);
 
@@ -176,7 +164,6 @@ public class DualModeCameraController : MonoBehaviour
             transform.rotation = Quaternion.Euler(flightRotation.x, flightRotation.y, 0f);
         }
 
-        // 移动控制
         Vector3 moveDirection = Vector3.zero;
 
         if (Input.GetKey(KeyCode.W)) moveDirection += transform.forward;
@@ -184,40 +171,48 @@ public class DualModeCameraController : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) moveDirection -= transform.right;
         if (Input.GetKey(KeyCode.D)) moveDirection += transform.right;
 
-        // 垂直移动 (Q和E键)
         if (Input.GetKey(KeyCode.Q)) moveDirection -= Vector3.up;
         if (Input.GetKey(KeyCode.E)) moveDirection += Vector3.up;
 
-        // 标准化移动方向并应用速度
         if (moveDirection != Vector3.zero)
         {
             moveDirection.Normalize();
             float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? flightFastMoveSpeed : flightMoveSpeed;
             transform.position += moveDirection * currentSpeed * Time.deltaTime;
         }
+
+        ApplyFlightScrollSpeedAdjust();
+    }
+
+    void ApplyFlightScrollSpeedAdjust()
+    {
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (Mathf.Abs(scroll) < 1e-5f) return;
+
+        float speedRatio = flightFastMoveSpeed / Mathf.Max(0.001f, flightMoveSpeed);
+        float scale = Mathf.Exp(scroll * flightScrollWheelIntensity);
+        flightMoveSpeed = Mathf.Clamp(flightMoveSpeed * scale, minFlightMoveSpeed, maxFlightMoveSpeed);
+        flightFastMoveSpeed = Mathf.Clamp(flightMoveSpeed * speedRatio, minFlightFastMoveSpeed, maxFlightFastMoveSpeed);
+        if (flightFastMoveSpeed < flightMoveSpeed * 1.01f)
+            flightFastMoveSpeed = Mathf.Min(maxFlightFastMoveSpeed, flightMoveSpeed * 1.01f);
     }
 
     void UpdateTopDownMode()
     {
-        // 鼠标拖动控制
         HandleMouseDrag();
 
-        // 键盘移动控制（可选）
         HandleKeyboardMovement();
 
-        // 鼠标滚轮缩放
         HandleZoom();
 
-        // 更新相机位置
         transform.position = topDownPosition;
 
-        // 确保相机始终朝下
         transform.rotation = Quaternion.Euler(90f, 0f, 0f);
     }
 
+
     void HandleMouseDrag()
     {
-        // 鼠标中键或右键拖动
         if (Input.GetMouseButtonDown(2) || Input.GetMouseButtonDown(1))
         {
             isDragging = true;
@@ -229,13 +224,10 @@ public class DualModeCameraController : MonoBehaviour
             Vector3 currentMousePosition = Input.mousePosition;
             Vector3 mouseDelta = currentMousePosition - lastMousePosition;
 
-            // 使用屏幕像素偏移来计算移动，避免世界坐标计算的抖动
-            if (mouseDelta.magnitude > 0.1f) // 添加一个小阈值避免微小移动
+            if (mouseDelta.magnitude > 0.1f)
             {
-                // 将屏幕像素偏移转换为世界空间移动
                 Vector3 worldDelta = new Vector3(-mouseDelta.x, 0, -mouseDelta.y) * topDownDragSpeed * 0.01f;
 
-                // 根据正交大小调整移动速度，这样缩放时拖动感觉更自然
                 worldDelta *= cam.orthographicSize;
 
                 topDownPosition += worldDelta;
@@ -252,7 +244,6 @@ public class DualModeCameraController : MonoBehaviour
 
     void HandleKeyboardMovement()
     {
-        // 键盘移动控制（可选功能）
         Vector3 moveDirection = Vector3.zero;
 
         if (Input.GetKey(KeyCode.W)) moveDirection += Vector3.forward;
@@ -273,7 +264,7 @@ public class DualModeCameraController : MonoBehaviour
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0 && cam != null)
         {
-            cam.orthographicSize -= scroll * zoomSpeed* cam.orthographicSize*0.005f;
+            cam.orthographicSize -= scroll * zoomSpeed * cam.orthographicSize * 0.005f;
             cam.orthographicSize = Mathf.Clamp(cam.orthographicSize, minOrthoSize, maxOrthoSize);
             orthographicSize = cam.orthographicSize;
         }
@@ -305,32 +296,33 @@ public class DualModeCameraController : MonoBehaviour
         Cursor.visible = true;
     }
 
-    // 在Inspector中显示当前模式
     void OnGUI()
     {
         GUIStyle style = new GUIStyle();
         style.normal.textColor = Color.white;
         style.fontSize = 16;
 
-        string modeText = currentMode == CameraMode.FreeFlight ? "飞行模式（透视）" : "俯视角模式（正交）";
-        string cursorText = isCursorLocked ? "鼠标锁定" : "鼠标自由";
+        string modeText = currentMode == CameraMode.FreeFlight ? "\u98de\u884c\u6a21\u5f0f\uff08\u900f\u89c6\uff09" : "\u4fef\u89c6\u89d2\u6a21\u5f0f\uff08\u6b63\u4ea4\uff09";
+        string cursorText = isCursorLocked ? "\u9f20\u6807\u9501\u5b9a" : "\u9f20\u6807\u81ea\u7531";
         string controlsText = currentMode == CameraMode.TopDown ?
-            "中键/右键拖动 | 滚轮缩放 | WASD移动" :
-            "鼠标视角 | WASD移动 | Q/E升降";
+            "\u4e2d\u952e/\u53f3\u952e\u62d6\u52a8 | \u6eda\u8f6e\u7f29\u653e | WASD\u79fb\u52a8" :
+            "\u9f20\u6807\u89c6\u89d2 | WASD\u79fb\u52a8 | Q/E\u5347\u964d | \u6eda\u8f6e\u8c03\u901f\u5ea6";
 
-        GUI.Label(new Rect(10, 10, 400, 30), $"相机模式: {modeText}", style);
+        GUI.Label(new Rect(10, 10, 400, 30), "\u76f8\u673a\u6a21\u5f0f: " + modeText, style);
 
         if (currentMode == CameraMode.FreeFlight)
         {
-            GUI.Label(new Rect(10, 30, 400, 30), $"状态: {cursorText} (ESC切换)", style);
+            GUI.Label(new Rect(10, 30, 400, 30), "\u72b6\u6001: " + cursorText + " (ESC\u5207\u6362)", style);
+            GUI.Label(new Rect(10, 90, 400, 30),
+                "\u79fb\u52a8\u901f\u5ea6: " + flightMoveSpeed.ToString("F1") + " / \u52a0\u901f " + flightFastMoveSpeed.ToString("F1"), style);
         }
 
-        GUI.Label(new Rect(10, 50, 600, 30), $"控制: {controlsText}", style);
-        GUI.Label(new Rect(10, 70, 400, 30), $"按 Tab 切换模式", style);
+        GUI.Label(new Rect(10, 50, 600, 30), "\u63a7\u5236: " + controlsText, style);
+        GUI.Label(new Rect(10, 70, 400, 30), "\u6309 Tab \u5207\u6362\u6a21\u5f0f", style);
 
         if (currentMode == CameraMode.TopDown && cam != null)
         {
-            GUI.Label(new Rect(10, 90, 400, 30), $"正交大小: {cam.orthographicSize:F1}", style);
+            GUI.Label(new Rect(10, 110, 400, 30), "\u6b63\u4ea4\u5927\u5c0f: " + cam.orthographicSize.ToString("F1"), style);
         }
     }
 }

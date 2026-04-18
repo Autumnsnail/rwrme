@@ -15057,6 +15057,8 @@ MonoBehaviour:
   dragVisualizer: {fileID: 0}
   miSelected: {fileID: 0}
   misSelected: []
+  heightChangerVisPart: {fileID: 4189373161999733817, guid: de6e0715fe9430b459017543c4955aa8, type: 3}
+  ToolVisPartInstance: {fileID: 0}
 --- !u!114 &1307524972
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -578,6 +578,7 @@ public class MapExporter : MonoBehaviour
 
         exportTerrainHeightmap();
         exportTerrainAlphamap();
+        exportMapConfig();
     }
 
     /// <summary>
@@ -616,11 +617,12 @@ public class MapExporter : MonoBehaviour
         // 创建灰度纹理（使用 R8 单通道格式）
         Texture2D exportTexture = new Texture2D(resolution, resolution, TextureFormat.R8, false);
 
-        // 找到实际的高度范围（用于归一化）
+        // 与 MapImporter.ConvertTextureToGrayScaleImage / Syncer 一致：PNG 灰度 = Unity 高度 [0,1] 线性映射到 0..255，
+        // 不使用 min-max 拉伸，否则重导入会破坏绝对标高。
         float actualMin = float.MaxValue;
         float actualMax = float.MinValue;
+        byte[] grayPixels = new byte[resolution * resolution];
 
-        // 首先扫描一遍找到实际高度范围
         for (int y = 0; y < resolution; y++)
         {
             for (int x = 0; x < resolution; x++)
@@ -628,41 +630,13 @@ public class MapExporter : MonoBehaviour
                 float height = heights[y, x];
                 if (height < actualMin) actualMin = height;
                 if (height > actualMax) actualMax = height;
-            }
-        }
 
-        Debug.Log($"实际高度范围: {actualMin:F3} 到 {actualMax:F3}");
-
-        // 转换高度数据为灰度字节数组
-        byte[] grayPixels = new byte[resolution * resolution];
-
-        for (int y = 0; y < resolution; y++)
-        {
-            for (int x = 0; x < resolution; x++)
-            {
-                // 获取高度值
-                float height = heights[y, x];
-
-                // 将高度值归一化到0-1范围
-                float normalizedHeight;
-                if (actualMax > actualMin)
-                {
-                    normalizedHeight = (height - actualMin) / (actualMax - actualMin);
-                }
-                else
-                {
-                    normalizedHeight = 0.5f; // 如果地形完全平坦，使用中间值
-                }
-
-                // 计算像素索引
                 int pixelIndex = y * resolution + x;
-
-                // 转换为0-255的灰度值
-                grayPixels[pixelIndex] = (byte)(normalizedHeight * 255);
+                grayPixels[pixelIndex] = (byte)Mathf.Clamp(Mathf.RoundToInt(height * 255f), 0, 255);
             }
 
             // 每处理10%报告一次进度
-            if (y % (resolution / 10) == 0)
+            if (resolution >= 10 && y % (resolution / 10) == 0)
             {
                 float progress = (float)y / resolution * 100f;
                 Debug.Log($"导出进度: {progress:F1}%");
@@ -694,7 +668,7 @@ public class MapExporter : MonoBehaviour
         Debug.Log($"✓ 地形高度图已导出至: {filePath}");
         Debug.Log($"✓ 文件大小: {pngData.Length / 1024} KB");
         Debug.Log($"✓ 图片格式: 灰度PNG (单通道 8 位)");
-        Debug.Log($"✓ 导出的高度范围: {actualMin:F3} 到 {actualMax:F3}");
+        Debug.Log($"✓ 归一化高度采样范围: {actualMin:F3} ~ {actualMax:F3}（世界竖直尺度 terrain size.y = {terrainData.size.y:F1}m）");
         Debug.Log("=== 地形高度图导出完成！ ===");
 
 #if UNITY_EDITOR
@@ -748,9 +722,57 @@ public class MapExporter : MonoBehaviour
         }
 
     }
-    public void exportBuildings()
-    {
 
+    public void exportMapConfig()
+    {
+        string filePath = Path.Combine(Application.dataPath, basePath, "map_config.xml");
+        if(m_mm.m_metaMapConfig!=null)
+        {
+            if(m_mm.m_metaMapConfig.includeLayers.Find(x=>x=="bases.default")==null)
+            {
+                m_mm.m_metaMapConfig.includeLayers.Add("bases.default");
+            }
+        }
+        //use xml method to export map config
+        XmlDocument xmlDoc = new XmlDocument();
+        XmlElement root = xmlDoc.CreateElement("map_config");
+        root.SetAttribute("min_factions", m_mm.m_metaMapConfig.minFactions.ToString());
+        root.SetAttribute("max_factions", m_mm.m_metaMapConfig.maxFactions.ToString());
+        root.SetAttribute("add_neutral_last", m_mm.m_metaMapConfig.addNeutralLast.ToString());
+        foreach(string layer in m_mm.m_metaMapConfig.includeLayers)
+        {
+            XmlElement includeLayer = xmlDoc.CreateElement("include_layer");
+            includeLayer.SetAttribute("name", layer);
+            root.AppendChild(includeLayer);
+        }
+        xmlDoc.AppendChild(root);
+        foreach(string faction in m_mm.m_metaMapConfig.factionFiles)
+        {
+            XmlElement factionElement = xmlDoc.CreateElement("faction");
+            factionElement.SetAttribute("file", faction);
+            root.AppendChild(factionElement);
+        }
+        //weapon 
+        XmlElement weaponsElement = xmlDoc.CreateElement("weapon");
+        weaponsElement.SetAttribute("file", m_mm.m_metaMapConfig.weaponFile);
+        root.AppendChild(weaponsElement);
+        //projectiles
+        XmlElement projectilesElement = xmlDoc.CreateElement("projectile");
+        projectilesElement.SetAttribute("file", m_mm.m_metaMapConfig.projectileFile);
+        root.AppendChild(projectilesElement);
+        //calls
+        XmlElement callsElement = xmlDoc.CreateElement("call");
+        callsElement.SetAttribute("file", m_mm.m_metaMapConfig.callFile);
+        root.AppendChild(callsElement);
+        //carry_items
+        XmlElement carryItemsElement = xmlDoc.CreateElement("carry_item");
+        carryItemsElement.SetAttribute("file", m_mm.m_metaMapConfig.carryItemFile);
+        root.AppendChild(carryItemsElement);
+        //vehicles
+        XmlElement vehiclesElement = xmlDoc.CreateElement("vehicle");
+        vehiclesElement.SetAttribute("file", m_mm.m_metaMapConfig.vehicleFile);
+        root.AppendChild(vehiclesElement);
+        xmlDoc.Save(filePath);
     }
 
     // Update is called once per frame

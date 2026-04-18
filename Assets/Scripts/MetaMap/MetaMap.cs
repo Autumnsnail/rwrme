@@ -1,4 +1,4 @@
-
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -13,6 +13,7 @@ public class MetaMap : MonoBehaviour
     public Layer defaultLayer;//default: L1,L2,L3,L4...
     public Layer baseLayer;//base.default
 
+    public MetaMapConfig m_metaMapConfig;
     public string m_settings;
 
     public Texture2D CombinedAlpha;
@@ -33,6 +34,8 @@ public class MetaMap : MonoBehaviour
         m_metaTerrain = new MetaTerrain();
         defaultLayer = new Layer();
         baseLayer = new Layer();
+
+        m_metaMapConfig = new MetaMapConfig();
 
         buildingTypes = new List<BuildingType>();
         wallTypes = new List<WallType>();
@@ -96,8 +99,6 @@ public class MetaMap : MonoBehaviour
         wallTypes.Add(new WallType("RuinWall1", Color.gray, 0.8f, 3.0f));
     }
 
-
-    // Update is called once per frame
     void Update()
     {
         
@@ -166,6 +167,42 @@ public class GrayScaleImage
         pngInfo = texture.EncodeToPNG();
         return pngInfo;
     }
+}
+
+/// <summary>
+/// 与 <c>map/map_config.xml</c> 根节点 <c>map_config</c> 对应：根属性 + 子节点 <c>file</c> 路径。
+/// </summary>
+[Serializable]
+public class MetaMapConfig
+{
+    /// <summary>map_config/@min_factions</summary>
+    public int minFactions;
+
+    /// <summary>map_config/@max_factions</summary>
+    public int maxFactions;
+
+    /// <summary>map_config/@add_neutral_last（XML 中通常为 0/1）</summary>
+    public int addNeutralLast;
+
+    /// <summary>各 faction/@file</summary>
+    public List<string> factionFiles = new List<string>();
+
+    /// <summary>weapon/@file</summary>
+    public string weaponFile;
+
+    /// <summary>projectile/@file</summary>
+    public string projectileFile;
+
+    /// <summary>call/@file</summary>
+    public string callFile;
+
+    public List<string> includeLayers = new List<string>();
+
+    /// <summary>carry_item/@file</summary>
+    public string carryItemFile;
+
+    /// <summary>vehicle/@file</summary>
+    public string vehicleFile;
 }
 public class MetaTerrain
 {

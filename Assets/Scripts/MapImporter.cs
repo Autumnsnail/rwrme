@@ -689,26 +689,8 @@ public class MapImporter : MonoBehaviour
                                                 }
                                                 if (bPath.GetAttribute("id").StartsWith("wall"))
                                                 {
-
-                                                    GameObject go = Instantiate(WallPref);
-                                                    Wall gs = go.GetComponent<Wall>();
-                                                    //gs.SubWallPref = SubWallPref;//DONE!
                                                     string pathData1 = bPath.Attributes["d"].Value;
-                                                    gs.positionLine = SvgPathParser.Parse(pathData1);
-
-                                                    for (int i = 0; i < gs.positionLine.Count; i++)
-                                                    {
-                                                        gs.positionLine[i] = gs.positionLine[i] * _scPath;
-                                                        gs.positionLine[i] = _rmPath * gs.positionLine[i];
-                                                        gs.positionLine[i] += _ovPath;
-
-                                                        gs.positionLine[i] = gs.positionLine[i] * _scGroup;
-                                                        gs.positionLine[i] = _rmGroup * gs.positionLine[i];
-                                                        gs.positionLine[i] += _ovGroup;
-                                                        gs.positionLine[i] = rmLayer * gs.positionLine[i];
-                                                        gs.positionLine[i] += ovLayer;
-
-                                                    }
+                                                    List<List<Vector2>> wallSegments = SvgPathParser.ParseSegments(pathData1);
 
                                                     XmlNode descNode = bPath.FirstChild;
                                                     var properties = descNode.InnerText.Split(';')
@@ -716,10 +698,31 @@ public class MapImporter : MonoBehaviour
                                                         .Select(p => p.Split('=', 2))
                                                         .GroupBy(k => k[0].Trim(), v => v[1].Trim())
                                                         .ToDictionary(g => g.Key, g => g.First());
-                                                    if (properties.ContainsKey("template")) gs.material = properties["template"];
-                                                    MetaMap.instance.defaultLayer.mapItems.Add(gs);
-                                                    gs.id = MetaMap.instance.getNewItemId("wall");
-                                                    gs.layerIndex = number;
+
+                                                    foreach (var segment in wallSegments)
+                                                    {
+                                                        GameObject go = Instantiate(WallPref);
+                                                        Wall gs = go.GetComponent<Wall>();
+                                                        gs.positionLine = segment;
+
+                                                        for (int i = 0; i < gs.positionLine.Count; i++)
+                                                        {
+                                                            gs.positionLine[i] = gs.positionLine[i] * _scPath;
+                                                            gs.positionLine[i] = _rmPath * gs.positionLine[i];
+                                                            gs.positionLine[i] += _ovPath;
+
+                                                            gs.positionLine[i] = gs.positionLine[i] * _scGroup;
+                                                            gs.positionLine[i] = _rmGroup * gs.positionLine[i];
+                                                            gs.positionLine[i] += _ovGroup;
+                                                            gs.positionLine[i] = rmLayer * gs.positionLine[i];
+                                                            gs.positionLine[i] += ovLayer;
+                                                        }
+
+                                                        if (properties.ContainsKey("template")) gs.material = properties["template"];
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(gs);
+                                                        gs.id = MetaMap.instance.getNewItemId("wall");
+                                                        gs.layerIndex = number;
+                                                    }
                                                 }
 
                                             }

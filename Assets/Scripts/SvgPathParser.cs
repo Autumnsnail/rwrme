@@ -7,13 +7,26 @@ public static class SvgPathParser
 {
     public static List<Vector2> Parse(string pathData, float stepLength = -1f)
     {
+        List<List<Vector2>> segments = ParseSegments(pathData, stepLength);
         List<Vector2> result = new List<Vector2>();
-        if (string.IsNullOrEmpty(pathData)) return result;
+        foreach (var seg in segments)
+            result.AddRange(seg);
+        return result;
+    }
+
+    public static List<List<Vector2>> ParseSegments(string pathData, float stepLength = -1f)
+    {
+        List<List<Vector2>> segments = new List<List<Vector2>>();
+        if (string.IsNullOrEmpty(pathData)) return segments;
+
+        List<Vector2> current_segment = new List<Vector2>();
+        segments.Add(current_segment);
 
         StringReader reader = new StringReader(pathData.Trim());
         Vector2 current = Vector2.zero;
         Vector2 start = Vector2.zero;
         bool startSet = false;
+        bool firstMove = true;
 
         bool relative = true;
         bool curve = false;
@@ -34,102 +47,110 @@ public static class SvgPathParser
                 {
                     case 'M':
                         curve = false; relative = false; hvMode = 0;
-                        if (result.Count > 0)
+                        if (!firstMove && current_segment.Count > 0)
                         {
-                            // mid-path M acts as a jump; keep accumulated points
+                            current_segment = new List<Vector2>();
+                            segments.Add(current_segment);
                         }
-                        ReadAbsolutePosition(reader, result, current, stepLength, out current);
+                        firstMove = false;
+                        startSet = false;
+                        ReadAbsolutePosition(reader, current_segment, current, stepLength, out current);
                         break;
 
                     case 'm':
                         curve = false; relative = true; hvMode = 0;
-                        Vector2 offset = current;
-                        ReadRelativePosition(reader, result, current, stepLength, out current);
+                        if (!firstMove && current_segment.Count > 0)
+                        {
+                            current_segment = new List<Vector2>();
+                            segments.Add(current_segment);
+                        }
+                        firstMove = false;
+                        startSet = false;
+                        ReadRelativePosition(reader, current_segment, current, stepLength, out current);
                         break;
 
                     case 'L':
                         curve = false; relative = false; hvMode = 0;
-                        ReadAbsolutePosition(reader, result, current, stepLength, out current);
+                        ReadAbsolutePosition(reader, current_segment, current, stepLength, out current);
                         break;
 
                     case 'l':
                         curve = false; relative = true; hvMode = 0;
-                        ReadRelativeLineTo(reader, result, current, stepLength, out current);
+                        ReadRelativeLineTo(reader, current_segment, current, stepLength, out current);
                         break;
 
                     case 'H':
                         curve = false; relative = false; hvMode = 1;
-                        ReadStraightLine(reader, result, ref current, false, 1, stepLength);
+                        ReadStraightLine(reader, current_segment, ref current, false, 1, stepLength);
                         break;
                     case 'h':
                         curve = false; relative = true; hvMode = 1;
-                        ReadStraightLine(reader, result, ref current, true, 1, stepLength);
+                        ReadStraightLine(reader, current_segment, ref current, true, 1, stepLength);
                         break;
                     case 'V':
                         curve = false; relative = false; hvMode = 2;
-                        ReadStraightLine(reader, result, ref current, false, 2, stepLength);
+                        ReadStraightLine(reader, current_segment, ref current, false, 2, stepLength);
                         break;
                     case 'v':
                         curve = false; relative = true; hvMode = 2;
-                        ReadStraightLine(reader, result, ref current, true, 2, stepLength);
+                        ReadStraightLine(reader, current_segment, ref current, true, 2, stepLength);
                         break;
 
                     case 'C':
                         curve = true; relative = false; hvMode = 0;
-                        ReadCurveTo(reader, result, ref current, false, stepLength);
+                        ReadCurveTo(reader, current_segment, ref current, false, stepLength);
                         break;
                     case 'c':
                         curve = true; relative = true; hvMode = 0;
-                        ReadCurveTo(reader, result, ref current, true, stepLength);
+                        ReadCurveTo(reader, current_segment, ref current, true, stepLength);
                         break;
 
                     case 'Z':
                     case 'z':
                         if (startSet)
-                            AddWithInterpolation(result, current, start, stepLength);
+                            AddWithInterpolation(current_segment, current, start, stepLength);
                         current = start;
                         break;
 
                     default:
-                        // Unknown command, skip
                         break;
                 }
             }
             else if (IsNumberStart(peeked))
             {
-                // Implicit continuation of previous command
                 if (!curve)
                 {
                     if (hvMode == 0)
                     {
                         if (!relative)
-                            ReadAbsolutePosition(reader, result, current, stepLength, out current);
+                            ReadAbsolutePosition(reader, current_segment, current, stepLength, out current);
                         else
-                            ReadRelativeLineTo(reader, result, current, stepLength, out current);
+                            ReadRelativeLineTo(reader, current_segment, current, stepLength, out current);
                     }
                     else
                     {
-                        ReadStraightLine(reader, result, ref current, relative, hvMode, stepLength);
+                        ReadStraightLine(reader, current_segment, ref current, relative, hvMode, stepLength);
                     }
                 }
                 else
                 {
-                    ReadCurveTo(reader, result, ref current, relative, stepLength);
+                    ReadCurveTo(reader, current_segment, ref current, relative, stepLength);
                 }
             }
             else
             {
-                reader.Read(); // consume unrecognized character
+                reader.Read();
             }
 
-            if (!startSet && result.Count > 0)
+            if (!startSet && current_segment.Count > 0)
             {
-                start = result[0];
+                start = current_segment[0];
                 startSet = true;
             }
         }
 
-        return result;
+        segments.RemoveAll(s => s.Count == 0);
+        return segments;
     }
 
     // --- Command readers (matching RWR behavior) ---

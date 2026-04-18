@@ -7,16 +7,16 @@ public class Wall : MePath
 {
     public GameObject SubWallPref;
 
-    
+
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
     public override string getInfoText()
     {
@@ -37,14 +37,17 @@ public class Wall : MePath
         for (int i = 0;i<positionLine.Count-1;i++)
         {
             Vector2 start2 = MathOfRwrme.SvgPosToU3dPos(positionLine[i]);
-            Vector3 start=Vector3.zero;int ind = 0;
-            VpMetaToucher.getXYHeight(start2, ref start, ref ind);
+            Vector3 start=Vector3.zero;
+            VpMetaToucher.getXYHeightWithLayer(start2, layerIndex,ref start,Rank);
             Vector2 end2 = MathOfRwrme.SvgPosToU3dPos(positionLine[i+1]);
             Vector3 end = Vector3.zero;
-            VpMetaToucher.getXYHeight(end2, ref end, ref ind);
+            VpMetaToucher.getXYHeightWithLayer(end2, layerIndex,ref end,Rank);
 
-            float segmentLength = Vector3.Distance(start, end);
-            Vector3 direction = (end - start).normalized;
+            // 墙立在 XZ 平面上沿水平延伸：长度必须用 Δx、Δz，不能把 Vector3 隐式转成 Vector2（会丢掉 Z，只剩 x 与高度 y）
+            Vector3 delta = end - start;
+            float segmentLength = new Vector2(delta.x, delta.z).magnitude;
+
+            Vector3 direction = delta.normalized;
 
             float dep = 1;
             float hei = 1;
@@ -66,12 +69,16 @@ public class Wall : MePath
             wall.transform.localPosition = start;
             wall.transform.localScale = new Vector3(segmentLength, hei, dep);
 
-            Vector3 horizontalProjection = new Vector3(direction.x, 0, direction.z).normalized;
-            float yawAngle = Mathf.Atan2(horizontalProjection.z, horizontalProjection.x) * Mathf.Rad2Deg;
-            wall.transform.localRotation = Quaternion.AngleAxis(-yawAngle, Vector3.up);
-            Vector3 currentRight = wall.transform.right; // Ӧ��Y����ת���X��
-            float rollAngle = Vector3.SignedAngle(currentRight, direction, wall.transform.forward);
-            wall.transform.localRotation *= Quaternion.AngleAxis(rollAngle, Vector3.forward);
+            // 仅绕本地 Y 轴对齐水平朝向（XZ），不随线段俯仰做 roll
+            Vector3 flat = new Vector3(direction.x, 0f, direction.z);
+            if (flat.sqrMagnitude < 1e-8f)
+                wall.transform.localRotation = Quaternion.identity;
+            else
+            {
+                flat.Normalize();
+                float yawAngle = Mathf.Atan2(flat.z, flat.x) * Mathf.Rad2Deg;
+                wall.transform.localRotation = Quaternion.AngleAxis(-yawAngle, Vector3.up);
+            }
 
 
 

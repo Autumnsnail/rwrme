@@ -97,6 +97,90 @@ public class MapImporter : MonoBehaviour
         gameObject.GetComponent<MetaMap>().m_metaTerrain.fileName = mapName;
 
     }
+
+    /// <summary>
+    /// 读取 <c>map_config.xml</c>，写入 <see cref="MetaMap.m_metaMapConfig"/>（与 <see cref="importTerrain"/> 相同从 <c>basePath</c> 取路径）。
+    /// </summary>
+    public void importMapConfig()
+    {
+        string xmlPath = Path.Combine(Application.dataPath, basePath, "map_config.xml");
+        if (!File.Exists(xmlPath))
+        {
+            Debug.LogWarning("MapImporter: map_config.xml 不存在，跳过: " + xmlPath);
+            return;
+        }
+
+        MetaMap mm = gameObject.GetComponent<MetaMap>();
+        if (mm == null)
+        {
+            Debug.LogError("MapImporter: 未找到 MetaMap 组件");
+            return;
+        }
+        if (mm.m_metaMapConfig == null)
+            mm.m_metaMapConfig = new MetaMapConfig();
+
+        MetaMapConfig cfg = mm.m_metaMapConfig;
+        cfg.factionFiles.Clear();
+
+        try
+        {
+            XmlDocument doc = new XmlDocument();
+            doc.Load(xmlPath);
+            XmlElement root = doc.DocumentElement;
+            if (root == null || root.LocalName != "map_config")
+            {
+                Debug.LogError("MapImporter: map_config.xml 根节点应为 map_config");
+                return;
+            }
+
+            if (root.HasAttribute("min_factions"))
+                int.TryParse(root.GetAttribute("min_factions"), out cfg.minFactions);
+            if (root.HasAttribute("max_factions"))
+                int.TryParse(root.GetAttribute("max_factions"), out cfg.maxFactions);
+            if (root.HasAttribute("add_neutral_last"))
+                int.TryParse(root.GetAttribute("add_neutral_last"), out cfg.addNeutralLast);
+
+            foreach (XmlNode node in root.ChildNodes)
+            {
+                if (node.NodeType != XmlNodeType.Element) continue;
+                if (!(node is XmlElement el)) continue;
+                string fileAttr = el.GetAttribute("file");
+                switch (el.LocalName)
+                {
+                    case "faction":
+                        if (!string.IsNullOrEmpty(fileAttr))
+                            cfg.factionFiles.Add(fileAttr);
+                        break;
+                    case "include_layer":
+                        if (!string.IsNullOrEmpty(fileAttr))
+                            cfg.includeLayers.Add(fileAttr);
+                        break;
+                    case "weapon":
+                        cfg.weaponFile = fileAttr;
+                        break;
+                    case "projectile":
+                        cfg.projectileFile = fileAttr;
+                        break;
+                    case "call":
+                        cfg.callFile = fileAttr;
+                        break;
+                    case "carry_item":
+                        cfg.carryItemFile = fileAttr;
+                        break;
+                    case "vehicle":
+                        cfg.vehicleFile = fileAttr;
+                        break;
+                }
+            }
+
+            Debug.Log($"MapImporter: importMapConfig 完成 factions={cfg.factionFiles.Count} weapon={cfg.weaponFile}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("MapImporter: importMapConfig 失败: " + ex.Message);
+        }
+    }
+
     public void importObjects()
     {
         Debug.Log("start to Import Objects");
@@ -112,7 +196,7 @@ public class MapImporter : MonoBehaviour
             {
                 if (node is XmlElement ele)
                 {
-                    if (ele.GetAttribute("inkscape:label").StartsWith("bases.default"))
+                    if (ele.GetAttribute("inkscape:label").StartsWith("bases.default") ||ele.GetAttribute("inkscape:label")=="bases")//default bases but bases.default used more frequently
                     {
                         Debug.Log("import bases");
                         foreach (XmlNode baseNode in ele.ChildNodes)
@@ -263,10 +347,14 @@ public class MapImporter : MonoBehaviour
                                                     bool roof = false;
                                                     foreach (XmlNode de in r.ChildNodes)
                                                     {
+                                                        //Debug.Log("MapImporter : " + de.InnerText);
                                                         var properties = de.InnerText.Split(';')
+                                                            .Select(p => p.Trim())
+                                                            .Where(p => p.Length > 0 && !p.StartsWith("#"))
                                                             .Where(p => p.Contains('='))
                                                             .Select(p => p.Split('=', 2))
-                                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                                            .Where(kv => kv.Length == 2 && kv[0].Trim().Length > 0)
+                                                            .ToDictionary(kv => kv[0].Trim(), kv => kv[1].Trim());
                                                         if (properties.ContainsKey("height"))
                                                         {
                                                             BheightF = Mathf.RoundToInt(float.Parse(properties["height"]));
@@ -310,9 +398,12 @@ public class MapImporter : MonoBehaviour
                                                     {
                                                         if (de.Name != "desc") continue;
                                                         var properties = de.InnerText.Split(';')
+                                                            .Select(p => p.Trim())
+                                                            .Where(p => p.Length > 0 && !p.StartsWith("#"))
                                                             .Where(p => p.Contains('='))
                                                             .Select(p => p.Split('=', 2))
-                                                            .ToDictionary(k => k[0].Trim(), v => v[1].Trim());
+                                                            .Where(kv => kv.Length == 2 && kv[0].Trim().Length > 0)
+                                                            .ToDictionary(kv => kv[0].Trim(), kv => kv[1].Trim());
                                                         if(properties.ContainsKey("type"))
                                                         {
                                                             ItemSupply stspl = Instantiate(ItemSupplyPref).GetComponent<ItemSupply>();
@@ -732,7 +823,7 @@ public class MapImporter : MonoBehaviour
             if(rect == null) continue;
             if(rect.GetAttribute("inkscape:label").StartsWith("#mesh_template"))
             {
-                Debug.Log(rect.GetAttribute("id"));
+//                Debug.Log(rect.GetAttribute("id"));
                 float width = float.Parse( rect.GetAttribute("width"));
                 float height = float.Parse(rect.GetAttribute("height"));
                 foreach (XmlNode node2 in rect.ChildNodes)
@@ -943,6 +1034,7 @@ public class MapImporter : MonoBehaviour
     {
         importTemplates();
         importGeneralSetting();
+        importMapConfig();
         importObjects();
         importTerrain();
         importTerrainCombinAplha();

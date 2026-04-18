@@ -12,6 +12,8 @@ public class Platform : PathPair
     public bool isBridge = false;
     public bool isDeck = false;//upHeight
     public float height = 0.0f;
+    
+    public override float Rank => 0.0f;
 
     void Start()
     {
@@ -195,7 +197,7 @@ public class Platform : PathPair
     void GenerateQuadFloor(List<Vector3> vps)
     {
 
-        // ´´½¨Íø¸ñ
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Mesh mesh = new Mesh();
 
         List<int> triangles = new List<int>();
@@ -203,12 +205,12 @@ public class Platform : PathPair
         {
             int baseIndex = i * 2;
 
-            // µÚÒ»¸öÈý½ÇÐÎ£¨×óÏÂ¡¢¡¢ÓÒÏÂ×óÉÏ£©
+            // ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î£ï¿½ï¿½ï¿½ï¿½Â¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½
             triangles.Add(baseIndex);         // column1[i]
             triangles.Add(baseIndex + 1);     // column2[i]
             triangles.Add(baseIndex + 2);     // column1[i+1]
 
-            // µÚ¶þ¸öÈý½ÇÐÎ£¨×óÉÏ¡¢¡¢ÓÒÏÂÓÒÉÏ£©
+            // ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î£ï¿½ï¿½ï¿½ï¿½Ï¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½
             triangles.Add(baseIndex + 1);     // column2[i]
             triangles.Add(baseIndex + 3);     // column2[i+1]
             triangles.Add(baseIndex + 2);     // column1[i+1]
@@ -231,39 +233,39 @@ public class Platform : PathPair
 
         List<int> triangles = new List<int>();
 
-        // ÕýÃæÈý½ÇÐÎ
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         for (int i = 0; i < vps.Count - 3; i = i + 2)
         {
-            // µÚÒ»¸öÈý½ÇÐÎ
-            triangles.Add(i);         // ×óÏÂ i
-            triangles.Add(i + 1);     // ×óÉÏ i
-            triangles.Add(i + 2);     // ÓÒÏÂ i+1
+            // ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            triangles.Add(i);         // ï¿½ï¿½ï¿½ï¿½ i
+            triangles.Add(i + 1);     // ï¿½ï¿½ï¿½ï¿½ i
+            triangles.Add(i + 2);     // ï¿½ï¿½ï¿½ï¿½ i+1
 
-            // µÚ¶þ¸öÈý½ÇÐÎ
-            triangles.Add(i + 1);     // ×óÉÏ i
-            triangles.Add(i + 3);     // ÓÒÉÏ i+1
-            triangles.Add(i + 2);     // ÓÒÏÂ i+1
+            // ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            triangles.Add(i + 1);     // ï¿½ï¿½ï¿½ï¿½ i
+            triangles.Add(i + 3);     // ï¿½ï¿½ï¿½ï¿½ i+1
+            triangles.Add(i + 2);     // ï¿½ï¿½ï¿½ï¿½ i+1
         }
         for (int i = vps.Count - 1; i >= 3; i = i - 2)
         {
-            triangles.Add(i);         // ×óÏÂ i
-            triangles.Add(i - 2);     // ×óÉÏ i
-            triangles.Add(i - 1);     // ÓÒÏÂ i+1
+            triangles.Add(i);         // ï¿½ï¿½ï¿½ï¿½ i
+            triangles.Add(i - 2);     // ï¿½ï¿½ï¿½ï¿½ i
+            triangles.Add(i - 1);     // ï¿½ï¿½ï¿½ï¿½ i+1
 
-            // µÚ¶þ¸öÈý½ÇÐÎ
-            triangles.Add(i - 1);     // ×óÉÏ i
-            triangles.Add(i - 2);     // ÓÒÉÏ i+1
-            triangles.Add(i - 3);     // ÓÒÏÂ i+1
+            // ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            triangles.Add(i - 1);     // ï¿½ï¿½ï¿½ï¿½ i
+            triangles.Add(i - 2);     // ï¿½ï¿½ï¿½ï¿½ i+1
+            triangles.Add(i - 3);     // ï¿½ï¿½ï¿½ï¿½ i+1
         }
 
 
-        // 3. ÉèÖÃÍø¸ñÊý¾Ý
+        // 3. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         mesh.vertices = allVertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
-        // 4. Ó¦ÓÃÍø¸ñ
+        // 4. Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         gameObject.transform.GetChild(0).gameObject.GetComponent<MeshFilter>().mesh = mesh;
         //gameObject.transform.GetChild(0).gameObject.GetComponent<MeshCollider>().sharedMesh = mesh;
     }
@@ -271,7 +273,7 @@ public class Platform : PathPair
     void GenerateQuadBaseWall(List<Vector3> vps)
     {
 
-        // ´´½¨Íø¸ñ
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Mesh mesh = new Mesh();
 
         List<int> triangles = new List<int>();

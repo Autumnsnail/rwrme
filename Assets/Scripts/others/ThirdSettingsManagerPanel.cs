@@ -281,8 +281,25 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
         return (input, btn);
     }
 
-    // Uses reflection so the project doesn't require a hard reference to System.Windows.Forms.
     private static string TryBrowseFile(string title, string extensionWithoutDot)
+    {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+        try
+        {
+            var filter = $"{extensionWithoutDot.ToUpperInvariant()} files|*.{extensionWithoutDot}|All files|*.*";
+            return RuntimeWindowsDialogs.ShowOpenFile(title, filter);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Browse file failed; please input path manually.\n{e.Message}");
+            return null;
+        }
+#else
+        return TryBrowseFileWinForms(title, extensionWithoutDot);
+#endif
+    }
+
+    private static string TryBrowseFileWinForms(string title, string extensionWithoutDot)
     {
         try
         {
@@ -294,7 +311,6 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
             var show = t.GetMethod("ShowDialog", Type.EmptyTypes);
             var result = show?.Invoke(dlg, null);
             var fileName = t.GetProperty("FileName")?.GetValue(dlg) as string;
-            // DialogResult.OK == 1
             if (result != null && Convert.ToInt32(result) == 1 && !string.IsNullOrEmpty(fileName))
                 return fileName;
         }
@@ -307,6 +323,23 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
 
     private static string TryBrowseFolder(string description)
     {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+        try
+        {
+            return RuntimeWindowsDialogs.ShowBrowseFolder(description);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Browse folder failed; please input path manually.\n{e.Message}");
+            return null;
+        }
+#else
+        return TryBrowseFolderFallback(description);
+#endif
+    }
+
+    private static string TryBrowseFolderFallback(string description)
+    {
         try
         {
             var modern = ResolveMicrosoftWin32OpenFolderDialogType();
@@ -316,7 +349,6 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
                 modern.GetProperty("Title")?.SetValue(dlg, description);
                 var show = modern.GetMethod("ShowDialog", Type.EmptyTypes);
                 var result = show?.Invoke(dlg, null);
-                // OpenFolderDialog.ShowDialog() -> bool? (true == OK)
                 if (result is bool accepted && accepted)
                 {
                     var folder = modern.GetProperty("FolderName")?.GetValue(dlg) as string;
@@ -334,7 +366,6 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
             var showClassic = t.GetMethod("ShowDialog", Type.EmptyTypes);
             var resultClassic = showClassic?.Invoke(dlgClassic, null);
             var selected = t.GetProperty("SelectedPath")?.GetValue(dlgClassic) as string;
-            // DialogResult.OK == 1
             if (resultClassic != null && Convert.ToInt32(resultClassic) == 1 && !string.IsNullOrEmpty(selected))
                 return selected;
         }

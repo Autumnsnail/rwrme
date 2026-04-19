@@ -53,9 +53,20 @@ public class RefpManager : MonoBehaviour
         }
     }
 
-    // Reflection: no hard reference to System.Windows.Forms (same idea as ThirdSettingsManagerPanel).
     private static string TryBrowseTextureFile(string title)
     {
+        const string filter = "Image files|*.png;*.jpg;*.jpeg;*.tga;*.tif;*.tiff;*.bmp;*.gif|All files|*.*";
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+        try
+        {
+            return RuntimeWindowsDialogs.ShowOpenFile(title, filter);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"Browse texture failed.\n{e.Message}");
+            return null;
+        }
+#else
         try
         {
             var t = Type.GetType("System.Windows.Forms.OpenFileDialog, System.Windows.Forms");
@@ -65,7 +76,6 @@ public class RefpManager : MonoBehaviour
                 return null;
             }
 
-            const string filter = "Image files|*.png;*.jpg;*.jpeg;*.tga;*.tif;*.tiff;*.bmp;*.gif|All files|*.*";
             var dlg = Activator.CreateInstance(t);
             t.GetProperty("Title")?.SetValue(dlg, title);
             t.GetProperty("Filter")?.SetValue(dlg, filter);
@@ -81,6 +91,7 @@ public class RefpManager : MonoBehaviour
         }
 
         return null;
+#endif
     }
 
     public void setPathName(string path)

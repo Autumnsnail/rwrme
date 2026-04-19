@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditor.EditorTools;
 using UnityEngine;
 
 public class ToolController : MonoBehaviour

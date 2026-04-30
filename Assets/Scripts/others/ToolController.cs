@@ -429,6 +429,14 @@ public class ToolController : MonoBehaviour
         {
             currentTool.escape();
             axisLock = 0;
+            if (miSelected != null || misSelected.Count > 0)
+            {
+                miSelected = null;
+                misSelected.Clear();
+                UIManager.instance.changeShowingCanvas(null);
+                UIManager.instance.RefreshMultiSelectPanel(null);
+                UIManager.instance.RefreshVertexPanel(null);
+            }
         }
 
         HandleToolShortcuts();

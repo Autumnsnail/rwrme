@@ -16,12 +16,21 @@ public class CtrlZer : MonoBehaviour
         public Vector2 size;
     }
 
+    private struct PathData
+    {
+        public MapItem item;
+        public List<Vector2> positionLine;       // for MePath (Wall)
+        public List<Vector2> positinLineL;       // for PathPair (Platform)
+        public List<Vector2> positinLineR;       // for PathPair (Platform)
+    }
+
     private struct Snapshot
     {
         public bool transformOnly;
         public List<MapItem> defaultItems;
         public List<MapItem> baseItems;
         public List<ItemTransformData> transformData;
+        public List<PathData> pathData;
         public float[,] heightmapData;
         public Color[] maskPixels;
         public int maskWidth;
@@ -42,6 +51,20 @@ public class CtrlZer : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Z))
             {
+                if (ToolController.inste != null)
+                {
+                    var tool = ToolController.inste.currentTool;
+                    if (tool is WallDrawer wd && wd.drawing)
+                    {
+                        wd.RemoveLastVertex();
+                        return;
+                    }
+                    if (tool is PlatformDrawer pd && pd.IsDrawing)
+                    {
+                        pd.RemoveLastVertex();
+                        return;
+                    }
+                }
                 Undo();
             }
             if (Input.GetKeyDown(KeyCode.Y))
@@ -56,30 +79,50 @@ public class CtrlZer : MonoBehaviour
         var defItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems);
         var bsItems = new List<MapItem>(MetaMap.instance.baseLayer.mapItems);
         var transforms = new List<ItemTransformData>();
+        var paths = new List<PathData>();
 
-        CaptureTransforms(defItems, transforms);
-        CaptureTransforms(bsItems, transforms);
+        CaptureItemData(defItems, transforms, paths);
+        CaptureItemData(bsItems, transforms, paths);
 
         return new Snapshot
         {
             defaultItems = defItems,
             baseItems = bsItems,
-            transformData = transforms
+            transformData = transforms,
+            pathData = paths
         };
     }
 
-    private void CaptureTransforms(List<MapItem> items, List<ItemTransformData> output)
+    private void CaptureItemData(List<MapItem> items, List<ItemTransformData> transforms, List<PathData> paths)
     {
         foreach (var item in items)
         {
             if (item is MeRect mr)
             {
-                output.Add(new ItemTransformData
+                transforms.Add(new ItemTransformData
                 {
                     item = mr,
                     position = mr.position,
                     rotation = mr.rotation,
                     size = mr.size
+                });
+            }
+
+            if (item is MePath mp)
+            {
+                paths.Add(new PathData
+                {
+                    item = mp,
+                    positionLine = new List<Vector2>(mp.positionLine)
+                });
+            }
+            else if (item is PathPair pp)
+            {
+                paths.Add(new PathData
+                {
+                    item = pp,
+                    positinLineL = new List<Vector2>(pp.positinLineL),
+                    positinLineR = new List<Vector2>(pp.positinLineR)
                 });
             }
         }
@@ -282,6 +325,23 @@ public class CtrlZer : MonoBehaviour
                     mr.position = td.position;
                     mr.rotation = td.rotation;
                     mr.size = td.size;
+                }
+            }
+        }
+
+        if (snapshot.pathData != null)
+        {
+            foreach (var pd in snapshot.pathData)
+            {
+                if (pd.item == null) continue;
+                if (pd.item is MePath mp && pd.positionLine != null)
+                {
+                    mp.positionLine = new List<Vector2>(pd.positionLine);
+                }
+                else if (pd.item is PathPair pp)
+                {
+                    if (pd.positinLineL != null) pp.positinLineL = new List<Vector2>(pd.positinLineL);
+                    if (pd.positinLineR != null) pp.positinLineR = new List<Vector2>(pd.positinLineR);
                 }
             }
         }

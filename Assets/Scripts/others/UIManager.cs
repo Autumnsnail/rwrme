@@ -104,11 +104,13 @@ public class UIManager : MonoBehaviour
     public void updatebBT()
     {
         Debug.Log("UIManager:update bBt");
-        TMP_Dropdown dd =        ddBT.GetComponent<TMP_Dropdown>();
+        TMP_Dropdown dd = ddBT.GetComponent<TMP_Dropdown>();
+        int saved = dd.value;
         dd.ClearOptions();
         List<BuildingType> btp = MetaMap.instance.buildingTypes;
         List<string> optionTexts = btp.Select(bt => bt.name).ToList();
         dd.AddOptions(optionTexts);
+        dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
     }
     public void changebtc(int ind)
     {
@@ -128,12 +130,17 @@ public class UIManager : MonoBehaviour
     {
         TMP_Dropdown dd = ddWT.GetComponent<TMP_Dropdown>();
         TMP_Dropdown dt = ddWTP.GetComponent<TMP_Dropdown>();
+        int savedDD = dd.value;
+        int savedDT = dt.value;
         dd.ClearOptions();
         dt.ClearOptions();
         List<WallType> btp = MetaMap.instance.wallTypes;
         List<string> optionTexts = btp.Select(bt => bt.name).ToList();
         dd.AddOptions(optionTexts);
         dt.AddOptions(optionTexts);
+        int maxIdx = Mathf.Max(0, optionTexts.Count - 1);
+        dd.SetValueWithoutNotify(Mathf.Clamp(savedDD, 0, maxIdx));
+        dt.SetValueWithoutNotify(Mathf.Clamp(savedDT, 0, maxIdx));
     }
     public void changewtc(int ind)
     {
@@ -166,10 +173,12 @@ public class UIManager : MonoBehaviour
     public void updateMTD()
     {
         TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
+        int saved = dd.value;
         dd.ClearOptions();
         List<MeshTemplate> btp = MetaMap.instance.meshTemplates;
         List<string> optionTexts = btp.Select(bt => bt.name).ToList();
         dd.AddOptions(optionTexts);
+        dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
     }
 
     
@@ -481,6 +490,274 @@ public class UIManager : MonoBehaviour
             HideMultiSelectPanel();
         else
             RefreshMultiSelectPanel(ToolController.inste.misSelected);
+    }
+
+    #endregion
+
+    #region VertexPanel
+
+    private GameObject vertexPanel;
+    private Transform vertexContent;
+    private MapItem vertexTarget;
+
+    public void RefreshVertexPanel(MapItem item)
+    {
+        Wall wall = item as Wall;
+        Platform plat = item as Platform;
+
+        if (wall == null && plat == null)
+        {
+            HideVertexPanel();
+            return;
+        }
+
+        if (vertexPanel == null) CreateVertexPanel();
+        vertexTarget = item;
+        vertexPanel.SetActive(true);
+        RebuildVertexEntries();
+    }
+
+    private void HideVertexPanel()
+    {
+        if (vertexPanel != null)
+            vertexPanel.SetActive(false);
+        vertexTarget = null;
+    }
+
+    private void CreateVertexPanel()
+    {
+        vertexPanel = new GameObject("VertexPanel");
+        vertexPanel.transform.SetParent(transform, false);
+
+        RectTransform pRect = vertexPanel.AddComponent<RectTransform>();
+        pRect.anchorMin = new Vector2(0.82f, 0.02f);
+        pRect.anchorMax = new Vector2(0.99f, 0.98f);
+        pRect.offsetMin = Vector2.zero;
+        pRect.offsetMax = Vector2.zero;
+
+        Image bg = vertexPanel.AddComponent<Image>();
+        bg.color = new Color(0.10f, 0.10f, 0.12f, 0.95f);
+
+        VerticalLayoutGroup vlg = vertexPanel.AddComponent<VerticalLayoutGroup>();
+        vlg.spacing = 4;
+        vlg.padding = new RectOffset(6, 6, 6, 6);
+        vlg.childAlignment = TextAnchor.UpperCenter;
+        vlg.childForceExpandWidth = true;
+        vlg.childForceExpandHeight = false;
+
+        GameObject headerGO = new GameObject("Header");
+        headerGO.transform.SetParent(vertexPanel.transform, false);
+        TextMeshProUGUI hdr = headerGO.AddComponent<TextMeshProUGUI>();
+        hdr.text = "Vertices";
+        hdr.fontSize = 16;
+        hdr.fontStyle = FontStyles.Bold;
+        hdr.color = new Color(0.3f, 0.85f, 0.85f);
+        hdr.alignment = TextAlignmentOptions.Center;
+        if (hdr.font == null) hdr.font = TMP_Settings.defaultFontAsset;
+        headerGO.AddComponent<LayoutElement>().preferredHeight = 24;
+
+        GameObject scrollGO = new GameObject("Scroll");
+        scrollGO.transform.SetParent(vertexPanel.transform, false);
+        scrollGO.AddComponent<LayoutElement>().flexibleHeight = 1;
+
+        ScrollRect sr = scrollGO.AddComponent<ScrollRect>();
+        sr.horizontal = false;
+        sr.vertical = true;
+        sr.scrollSensitivity = 30;
+        sr.movementType = ScrollRect.MovementType.Clamped;
+
+        GameObject vpGO = new GameObject("VP");
+        vpGO.transform.SetParent(scrollGO.transform, false);
+        RectTransform vpR = vpGO.AddComponent<RectTransform>();
+        vpR.anchorMin = Vector2.zero;
+        vpR.anchorMax = Vector2.one;
+        vpR.offsetMin = Vector2.zero;
+        vpR.offsetMax = Vector2.zero;
+        vpGO.AddComponent<Image>().color = Color.white;
+        vpGO.AddComponent<Mask>().showMaskGraphic = false;
+
+        GameObject contentGO = new GameObject("Content");
+        contentGO.transform.SetParent(vpGO.transform, false);
+        RectTransform cRect = contentGO.AddComponent<RectTransform>();
+        cRect.anchorMin = new Vector2(0, 1);
+        cRect.anchorMax = new Vector2(1, 1);
+        cRect.pivot = new Vector2(0.5f, 1);
+        cRect.sizeDelta = Vector2.zero;
+
+        VerticalLayoutGroup cvlg = contentGO.AddComponent<VerticalLayoutGroup>();
+        cvlg.spacing = 2;
+        cvlg.padding = new RectOffset(2, 2, 2, 2);
+        cvlg.childForceExpandWidth = true;
+        cvlg.childForceExpandHeight = false;
+        contentGO.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        sr.content = cRect;
+        sr.viewport = vpR;
+        vertexContent = contentGO.transform;
+
+        vertexPanel.SetActive(false);
+    }
+
+    private void RebuildVertexEntries()
+    {
+        if (vertexContent == null) return;
+        for (int i = vertexContent.childCount - 1; i >= 0; i--)
+            Destroy(vertexContent.GetChild(i).gameObject);
+
+        Wall wall = vertexTarget as Wall;
+        Platform plat = vertexTarget as Platform;
+
+        if (wall != null)
+        {
+            AddSectionLabel("Path (" + wall.positionLine.Count + " pts)");
+            for (int i = 0; i < wall.positionLine.Count; i++)
+                AddVertexRow(wall.positionLine, i, "W");
+            AddAddButton(wall.positionLine, "W");
+        }
+        else if (plat != null)
+        {
+            AddSectionLabel("Right (" + plat.positinLineR.Count + " pts)");
+            for (int i = 0; i < plat.positinLineR.Count; i++)
+                AddVertexRow(plat.positinLineR, i, "R");
+            AddAddButton(plat.positinLineR, "R");
+
+            AddSectionLabel("Left (" + plat.positinLineL.Count + " pts)");
+            for (int i = 0; i < plat.positinLineL.Count; i++)
+                AddVertexRow(plat.positinLineL, i, "L");
+            AddAddButton(plat.positinLineL, "L");
+        }
+    }
+
+    private void AddSectionLabel(string text)
+    {
+        GameObject go = MakeTMP(vertexContent, "Sec", text, 13, new Color(0.9f, 0.8f, 0.3f));
+        go.AddComponent<LayoutElement>().preferredHeight = 20;
+    }
+
+    private void AddVertexRow(List<Vector2> list, int index, string tag)
+    {
+        GameObject row = new GameObject("V" + tag + index);
+        row.transform.SetParent(vertexContent, false);
+        row.AddComponent<LayoutElement>().preferredHeight = 28;
+
+        HorizontalLayoutGroup hlg = row.AddComponent<HorizontalLayoutGroup>();
+        hlg.spacing = 3;
+        hlg.padding = new RectOffset(2, 2, 1, 1);
+        hlg.childAlignment = TextAnchor.MiddleLeft;
+        hlg.childForceExpandWidth = false;
+        hlg.childForceExpandHeight = true;
+
+        GameObject idxGO = MakeTMP(row.transform, "Idx", index.ToString(), 11, Color.gray);
+        idxGO.AddComponent<LayoutElement>().preferredWidth = 20;
+
+        int capturedIdx = index;
+        List<Vector2> capturedList = list;
+
+        TMP_InputField xField = CreateCoordField(row.transform, "X", list[index].x);
+        xField.onEndEdit.AddListener(val =>
+        {
+            if (float.TryParse(val, out float f) && capturedIdx < capturedList.Count)
+            {
+                capturedList[capturedIdx] = new Vector2(f, capturedList[capturedIdx].y);
+                vertexTarget.scatterThis();
+            }
+        });
+
+        TMP_InputField yField = CreateCoordField(row.transform, "Y", list[index].y);
+        yField.onEndEdit.AddListener(val =>
+        {
+            if (float.TryParse(val, out float f) && capturedIdx < capturedList.Count)
+            {
+                capturedList[capturedIdx] = new Vector2(capturedList[capturedIdx].x, f);
+                vertexTarget.scatterThis();
+            }
+        });
+
+        GameObject delGO = new GameObject("Del");
+        delGO.transform.SetParent(row.transform, false);
+        Image delBg = delGO.AddComponent<Image>();
+        delBg.color = new Color(0.6f, 0.15f, 0.15f, 0.85f);
+        Button delBtn = delGO.AddComponent<Button>();
+        delBtn.onClick.AddListener(() =>
+        {
+            if (capturedIdx < capturedList.Count && capturedList.Count > 1)
+            {
+                CtrlZer.instance.checkPointTransformOnly();
+                capturedList.RemoveAt(capturedIdx);
+                vertexTarget.scatterThis();
+                RebuildVertexEntries();
+            }
+        });
+        delGO.AddComponent<LayoutElement>().preferredWidth = 22;
+        GameObject xGO = MakeTMP(delGO.transform, "X", "\u2715", 12, Color.white);
+        xGO.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+        RectTransform xr = xGO.GetComponent<RectTransform>();
+        xr.anchorMin = Vector2.zero; xr.anchorMax = Vector2.one;
+        xr.offsetMin = Vector2.zero; xr.offsetMax = Vector2.zero;
+    }
+
+    private TMP_InputField CreateCoordField(Transform parent, string label, float val)
+    {
+        GameObject go = new GameObject(label);
+        go.transform.SetParent(parent, false);
+        go.AddComponent<LayoutElement>().flexibleWidth = 1;
+
+        Image bg = go.AddComponent<Image>();
+        bg.color = new Color(0.18f, 0.18f, 0.22f, 1f);
+
+        TMP_InputField field = go.AddComponent<TMP_InputField>();
+        field.contentType = TMP_InputField.ContentType.DecimalNumber;
+
+        GameObject textArea = new GameObject("TextArea");
+        textArea.transform.SetParent(go.transform, false);
+        RectTransform taRect = textArea.AddComponent<RectTransform>();
+        taRect.anchorMin = Vector2.zero; taRect.anchorMax = Vector2.one;
+        taRect.offsetMin = new Vector2(4, 0); taRect.offsetMax = new Vector2(-4, 0);
+        textArea.AddComponent<RectMask2D>();
+
+        GameObject textGO = new GameObject("Text");
+        textGO.transform.SetParent(textArea.transform, false);
+        TextMeshProUGUI tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.fontSize = 11;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.MidlineLeft;
+        if (tmp.font == null) tmp.font = TMP_Settings.defaultFontAsset;
+        RectTransform tRect = textGO.GetComponent<RectTransform>();
+        tRect.anchorMin = Vector2.zero; tRect.anchorMax = Vector2.one;
+        tRect.offsetMin = Vector2.zero; tRect.offsetMax = Vector2.zero;
+
+        field.textComponent = tmp;
+        field.textViewport = taRect;
+        field.text = val.ToString("F1");
+
+        return field;
+    }
+
+    private void AddAddButton(List<Vector2> list, string tag)
+    {
+        GameObject go = new GameObject("Add" + tag);
+        go.transform.SetParent(vertexContent, false);
+        go.AddComponent<LayoutElement>().preferredHeight = 24;
+
+        Image bg = go.AddComponent<Image>();
+        bg.color = new Color(0.15f, 0.4f, 0.15f, 0.85f);
+
+        Button btn = go.AddComponent<Button>();
+        List<Vector2> capturedList = list;
+        btn.onClick.AddListener(() =>
+        {
+            CtrlZer.instance.checkPointTransformOnly();
+            Vector2 last = capturedList.Count > 0 ? capturedList[capturedList.Count - 1] : Vector2.zero;
+            capturedList.Add(last + new Vector2(10, 0));
+            vertexTarget.scatterThis();
+            RebuildVertexEntries();
+        });
+
+        GameObject label = MakeTMP(go.transform, "Lbl", "+ Add Point", 12, Color.white);
+        label.GetComponent<TextMeshProUGUI>().alignment = TextAlignmentOptions.Center;
+        RectTransform lr = label.GetComponent<RectTransform>();
+        lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one;
+        lr.offsetMin = Vector2.zero; lr.offsetMax = Vector2.zero;
     }
 
     #endregion

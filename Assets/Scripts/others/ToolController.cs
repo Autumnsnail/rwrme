@@ -1,8 +1,10 @@
 
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class ToolController : MonoBehaviour
 {
@@ -36,6 +38,9 @@ public class ToolController : MonoBehaviour
 
     private WallPathHandle activeWallHandle;
     private Wall lastWallHandleTarget;
+
+    public int axisLock = 0; // 0=none, 1=lock X (free X, fix Z), 2=lock Z (free Z, fix X)
+    private Vector3 lockOrigin;
 
     // 用于存储复制的建筑信息
     private Building copiedBuilding = null;
@@ -170,11 +175,36 @@ public class ToolController : MonoBehaviour
             Rect modeRect = new Rect(Screen.width * 0.5f - 80, 10, 160, 30);
             GUI.Label(modeRect, modeLabel, style);
         }
+
+        if (axisLock != 0)
+        {
+            GUIStyle lockStyle = new GUIStyle(GUI.skin.label);
+            lockStyle.fontSize = 16;
+            lockStyle.fontStyle = FontStyle.Bold;
+            lockStyle.normal.textColor = axisLock == 1 ? Color.red : Color.cyan;
+            lockStyle.alignment = TextAnchor.MiddleCenter;
+            string lockLabel = axisLock == 1 ? "Lock: X" : "Lock: Z(Y)";
+            Rect lockRect = new Rect(Screen.width * 0.5f - 60, 40, 120, 25);
+            GUI.Label(lockRect, lockLabel, lockStyle);
+        }
     }
 
         // Update is called once per frame
     void Update()
     {
+        if (EventSystem.current != null &&
+            EventSystem.current.currentSelectedGameObject != null &&
+            EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                float nx = Input.mousePosition.x / Screen.width;
+                if (nx < 0.82f)
+                    EventSystem.current.SetSelectedGameObject(null);
+            }
+            return;
+        }
+
         if(currentTool.visPart==null)
         {
             if(ToolVisPartInstance!=null)Destroy(ToolVisPartInstance);
@@ -261,6 +291,7 @@ public class ToolController : MonoBehaviour
                     else
                         UIManager.instance.changeShowingCanvas(null);
                 }
+                UIManager.instance.RefreshVertexPanel(miSelected);
             }
         }
         lastMiS = miSelected;
@@ -273,6 +304,17 @@ public class ToolController : MonoBehaviour
         bool handleBusy = (activeScaleHandle != null && activeScaleHandle.IsDragging)
             || (activePlatformHandle != null && activePlatformHandle.IsDragging)
             || (activeWallHandle != null && activeWallHandle.IsDragging);
+
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            if (axisLock == 1) axisLock = 0;
+            else { axisLock = 1; lockOrigin = GetLastToolPosition(); }
+        }
+        if (Input.GetKeyDown(KeyCode.Y))
+        {
+            if (axisLock == 2) axisLock = 0;
+            else { axisLock = 2; lockOrigin = GetLastToolPosition(); }
+        }
 
         if (Input.GetMouseButtonDown(0) && !handleBusy)
         {
@@ -295,7 +337,8 @@ public class ToolController : MonoBehaviour
                     }
                     if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
                     {
-                        Vector3 hitPosition = hit.point;
+                        Vector3 hitPosition = ApplyAxisLock(hit.point);
+                        lockOrigin = hitPosition;
 
                         GameObject hitObject = hit.collider.gameObject.transform.root.gameObject;
                         Debug.Log("ToolManager:hit at" + hitObject.ToSafeString());
@@ -315,7 +358,7 @@ public class ToolController : MonoBehaviour
                 int layerMask = 1 << 6;
                 if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
                 {
-                    Vector3 currentPosition = hit.point;
+                    Vector3 currentPosition = ApplyAxisLock(hit.point);
                     currentTool.OnDragging(currentPosition);
                 }
             }
@@ -380,10 +423,12 @@ public class ToolController : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.Space))
         {
             currentTool.space();
+            axisLock = 0;
         }
         if(Input.GetKeyDown(KeyCode.Escape))
         {
             currentTool.escape();
+            axisLock = 0;
         }
 
         HandleToolShortcuts();
@@ -435,6 +480,7 @@ public class ToolController : MonoBehaviour
     {
         Debug.Log("ToolController:" + tools[ind].GetType().Name);
         currentTool = tools[ind];
+        axisLock = 0;
     }
     public void setHeightSetter(int offset)
     {
@@ -489,6 +535,21 @@ public class ToolController : MonoBehaviour
     public LineRenderer GetDragVisualizer()
     {
         return dragVisualizer;
+    }
+
+    private Vector3 lastToolHitPos;
+
+    private Vector3 ApplyAxisLock(Vector3 pos)
+    {
+        lastToolHitPos = pos;
+        if (axisLock == 1) pos.z = lockOrigin.z;
+        else if (axisLock == 2) pos.x = lockOrigin.x;
+        return pos;
+    }
+
+    private Vector3 GetLastToolPosition()
+    {
+        return lastToolHitPos;
     }
 
     public string GetSelectionInfoText()
@@ -1293,12 +1354,15 @@ public class BaseTool : Tool
 
     private void createBase()
     {
+        Vector2 dis = MathOfRwrme.U3dPosToSvgPos(new Vector2(currentPosition.x, currentPosition.z)) - MathOfRwrme.U3dPosToSvgPos(new Vector2(startPosition.x, startPosition.z));
+        if (Mathf.Abs(dis.x) < 5f && Mathf.Abs(dis.y) < 5f)
+        {
+            Debug.Log("Base too small, cancelled");
+            return;
+        }
         GameObject go = ToolController.inste.InsOnePref(MapImporter.instate.BasePref);
         Base bs = go.GetComponent<Base>();
-        Vector2 dis = MathOfRwrme.U3dPosToSvgPos(new Vector2(currentPosition.x, currentPosition.z)) - MathOfRwrme.U3dPosToSvgPos(new Vector2(startPosition.x, startPosition.z));
         bs.position = MathOfRwrme.U3dPosToSvgPos(new Vector2(startPosition.x, startPosition.z));
-        if (Mathf.Approximately(dis.x, 0f)) dis.x = 0.001f;
-        if (Mathf.Approximately(dis.y, 0f)) dis.y = 0.001f;
         bs.size = new Vector2(Mathf.Abs(dis.x), Mathf.Abs(dis.y));
         
         if(bs.size.x < 0f)
@@ -1476,21 +1540,19 @@ public class SideTool
     {
         if (state == 1)
         {
-            MeRect mr = item as MeRect;
-            if (mr != null)
-                mr.grab(new Vector2(offset.x, -1f * offset.y));
+            Vector2 grabOff = new Vector2(offset.x, -1f * offset.y);
+            int al = ToolController.inste.axisLock;
+            if (al == 1) grabOff.y = 0;
+            else if (al == 2) grabOff.x = 0;
+            item.grab(grabOff);
         }
         if (state == 2)
         {
-            MeRect mr = item as MeRect;
-            if (mr != null)
-                mr.rotate((offset.x * (Pos - new Vector2(0.5f, 0.5f)).y - offset.y * (Pos - new Vector2(0.5f, 0.5f)).x) / (Pos - new Vector2(0.5f, 0.5f)).magnitude);
+            item.rotate((offset.x * (Pos - new Vector2(0.5f, 0.5f)).y - offset.y * (Pos - new Vector2(0.5f, 0.5f)).x) / (Pos - new Vector2(0.5f, 0.5f)).magnitude);
         }
         if (state == 3)
         {
-            MeRect mr = item as MeRect;
-            if (mr != null)
-                mr.scale(offset.x);
+            item.scale(offset.x);
         }
         item.scatterThis();
     }
@@ -1552,6 +1614,21 @@ public class WallDrawer : Tool
         }
     }
 
+    public void RemoveLastVertex()
+    {
+        if (PointSelected.Count > 0)
+        {
+            PointSelected.RemoveAt(PointSelected.Count - 1);
+            PathDrawed.RemoveAt(PathDrawed.Count - 1);
+            UpdateVisualizer();
+        }
+        if (PointSelected.Count == 0)
+        {
+            drawing = false;
+            ToolController.inste.dragVisualizer.enabled = false;
+        }
+    }
+
     private void UpdateVisualizer()
     {
 
@@ -1575,6 +1652,7 @@ public class PlatformDrawer : Tool
     List<Vector3> endLine;
     List<Vector2> endLineDrawed;
     //0 stop,1,drawingstart,2:drawing end;
+    public bool IsDrawing => drawing > 0;
     public PlatformDrawer(string name) : base(name)
     {
         drawing = 0;
@@ -1659,6 +1737,28 @@ public class PlatformDrawer : Tool
             drawing = 2;
         }
 
+    }
+
+    public void RemoveLastVertex()
+    {
+        if (drawing == 2 && endLine.Count > 0)
+        {
+            endLine.RemoveAt(endLine.Count - 1);
+            endLineDrawed.RemoveAt(endLineDrawed.Count - 1);
+        }
+        else if (drawing == 1 && startLine.Count > 0)
+        {
+            startLine.RemoveAt(startLine.Count - 1);
+            startLineDrawed.RemoveAt(startLineDrawed.Count - 1);
+        }
+
+        if (drawing == 1 && startLine.Count == 0)
+        {
+            drawing = 0;
+            ToolController.inste.dragVisualizer.enabled = false;
+        }
+
+        UpdateVisualizer();
     }
 
     private void UpdateVisualizer()
@@ -2826,6 +2926,7 @@ public class PlatformPathHandle : MonoBehaviour
 
             if (Input.GetMouseButtonDown(0) && hoveredSlot >= 0)
             {
+                CtrlZer.instance.checkPoint();
                 IsDragging = true;
                 dragSlot = hoveredSlot;
                 undoRecorded = false;
@@ -3065,6 +3166,7 @@ public class WallPathHandle : MonoBehaviour
 
             if (Input.GetMouseButtonDown(0) && hoveredSlot >= 0)
             {
+                CtrlZer.instance.checkPoint();
                 IsDragging = true;
                 dragSlot = hoveredSlot;
                 undoRecorded = false;

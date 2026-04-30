@@ -27,6 +27,29 @@ public class Wall : MePath
         info += "template = " + material;
         return info;
     }
+    public override void grab(Vector2 offset)
+    {
+        for (int i = 0; i < positionLine.Count; i++)
+            positionLine[i] += offset;
+    }
+
+    public override void rotate(float scaler)
+    {
+        if (positionLine.Count == 0) return;
+        Vector2 center = Vector2.zero;
+        foreach (var p in positionLine) center += p;
+        center /= positionLine.Count;
+
+        float rad = scaler * -2f * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+        for (int i = 0; i < positionLine.Count; i++)
+        {
+            Vector2 d = positionLine[i] - center;
+            positionLine[i] = center + new Vector2(d.x * cos - d.y * sin, d.x * sin + d.y * cos);
+        }
+    }
+
     public override void scatterThis()
     {
         GameObject go = this.gameObject;

@@ -680,13 +680,23 @@ public class UIManager : MonoBehaviour
         Button delBtn = delGO.AddComponent<Button>();
         delBtn.onClick.AddListener(() =>
         {
-            if (capturedIdx < capturedList.Count && capturedList.Count > 1)
+            if (capturedIdx >= capturedList.Count || capturedList.Count <= 2) return;
+            Platform plat = vertexTarget as Platform;
+            if (plat != null)
             {
-                CtrlZer.instance.checkPointTransformOnly();
-                capturedList.RemoveAt(capturedIdx);
-                vertexTarget.scatterThis();
-                RebuildVertexEntries();
+                var otherList = (capturedList == plat.positinLineR) ? plat.positinLineL : plat.positinLineR;
+                if (otherList.Count <= 2) return;
             }
+            CtrlZer.instance.checkPoint();
+            capturedList.RemoveAt(capturedIdx);
+            if (plat != null)
+            {
+                var otherList = (capturedList == plat.positinLineR) ? plat.positinLineL : plat.positinLineR;
+                if (capturedIdx < otherList.Count)
+                    otherList.RemoveAt(capturedIdx);
+            }
+            vertexTarget.scatterThis();
+            RebuildVertexEntries();
         });
         delGO.AddComponent<LayoutElement>().preferredWidth = 22;
         GameObject xGO = MakeTMP(delGO.transform, "X", "\u2715", 12, Color.white);

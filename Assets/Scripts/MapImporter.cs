@@ -813,8 +813,16 @@ public class MapImporter : MonoBehaviour
     {
         Debug.Log("start to Import GeneralSettings");
         XmlDocument xmlDoc = new XmlDocument();
-        string file = Directory.GetFiles(Path.Combine(Application.dataPath, "templates"), "*.xml").FirstOrDefault();
-        string templatePath = Path.Combine(Application.dataPath, "templates", file);
+        string templatesDir = Path.Combine(Application.dataPath, "templates");
+        string templatePath = Directory.GetFiles(templatesDir, "*.xml")
+            .OrderBy(p => Path.GetFileName(p))
+            .FirstOrDefault(); // GetFiles 返回全路径
+
+        if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
+        {
+            Debug.LogError("MapImporter: 找不到模板 xml（*.xml），目录: " + templatesDir);
+            return;
+        }
         xmlDoc.Load(templatePath);
         XmlElement root = xmlDoc.DocumentElement;
         XmlElement eg = root.FirstChild as XmlElement;
@@ -1158,7 +1166,7 @@ public class TerrainConfigReader
             }
 
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
         }
     }

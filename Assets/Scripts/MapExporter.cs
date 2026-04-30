@@ -1,5 +1,6 @@
 
 using System.IO;
+using System.Linq;
 using System.Xml;           // .NET 标准 XML
 using UnityEngine;
 
@@ -14,6 +15,17 @@ public class MapExporter : MonoBehaviour
     
     [Header("导出路径配置")]
     public string basePath = "map"; // 基础路径
+
+    private string FindTemplatePathLikeImporter()
+    {
+        // 与 MapImporter.importTemplates 逻辑保持一致：在 templates 目录中寻找任意 *.xml，按文件名排序取第一个。
+        string templatesDir = Path.Combine(Application.dataPath, "templates");
+        if (!Directory.Exists(templatesDir)) return null;
+
+        return Directory.GetFiles(templatesDir, "*.xml")
+            .OrderBy(p => Path.GetFileName(p))
+            .FirstOrDefault(); // GetFiles 返回全路径
+    }
 
     void Start()
     {
@@ -76,7 +88,12 @@ public class MapExporter : MonoBehaviour
         xmlDoc.AppendChild(rootElement);
 
         XmlDocument templateDoc = new XmlDocument(); 
-        string templatePath = Path.Combine(Application.dataPath, "templates", "vn_no_bti.xml");
+        string templatePath = FindTemplatePathLikeImporter();
+        if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
+        {
+            Debug.LogError("MapExporter: 找不到模板 xml（*.xml），目录: " + Path.Combine(Application.dataPath, "templates"));
+            return;
+        }
         XmlReaderSettings settings = new XmlReaderSettings();
         settings.DtdProcessing = DtdProcessing.Ignore;
         settings.ValidationType = ValidationType.None; 

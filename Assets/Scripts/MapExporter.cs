@@ -704,7 +704,7 @@ public class MapExporter : MonoBehaviour
                     case 2: value = srcPixels[p].g; break;
                     case 3: value = srcPixels[p].b; break;
                     case 4: value = srcPixels[p].a;
-                        value = (byte)(255 - value);
+                        // value = (byte)(255 - value);
                         break;
                 }
 

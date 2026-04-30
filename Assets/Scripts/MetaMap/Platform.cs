@@ -41,6 +41,37 @@ public class Platform : PathPair
         return info;
     }
 
+    public override void grab(Vector2 offset)
+    {
+        for (int i = 0; i < positinLineR.Count; i++) positinLineR[i] += offset;
+        for (int i = 0; i < positinLineL.Count; i++) positinLineL[i] += offset;
+    }
+
+    public override void rotate(float scaler)
+    {
+        Vector2 center = Vector2.zero;
+        int total = positinLineR.Count + positinLineL.Count;
+        if (total == 0) return;
+        foreach (var p in positinLineR) center += p;
+        foreach (var p in positinLineL) center += p;
+        center /= total;
+
+        float rad = scaler * -2f * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+
+        for (int i = 0; i < positinLineR.Count; i++)
+        {
+            Vector2 d = positinLineR[i] - center;
+            positinLineR[i] = center + new Vector2(d.x * cos - d.y * sin, d.x * sin + d.y * cos);
+        }
+        for (int i = 0; i < positinLineL.Count; i++)
+        {
+            Vector2 d = positinLineL[i] - center;
+            positinLineL[i] = center + new Vector2(d.x * cos - d.y * sin, d.x * sin + d.y * cos);
+        }
+    }
+
     public override void scatterThis()
     {
         Vector3 pot = new Vector3();

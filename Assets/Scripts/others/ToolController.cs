@@ -279,6 +279,7 @@ public class ToolController : MonoBehaviour
             {
                 UIManager.instance.changeShowingCanvas(null);
                 UIManager.instance.RefreshMultiSelectPanel(misSelected);
+                UIManager.instance.RefreshVertexPanel(null);
             }
             else
             {
@@ -924,6 +925,7 @@ public class SelecterTool : Tool
             if (!ctrlHeld)
             {
                 ToolController.inste.misSelected.Clear();
+                ToolController.inste.miSelected = null;
             }
             return;
         }

@@ -12,7 +12,9 @@ public class MetaMap : MonoBehaviour
     public MetaTerrain m_metaTerrain;
     public Layer defaultLayer;//default: L1,L2,L3,L4...
     public Layer baseLayer;//base.default
-
+    public Layer offroadLayer;
+    /// <summary>越野路径取高、VpMetaToucher 等使用的逻辑层号（原 Offroad.heightSampleLayer）。</summary>
+    public int offroadHeightSampleLayer = 4;
     public MetaMapConfig m_metaMapConfig;
     public string m_settings;
 
@@ -34,6 +36,7 @@ public class MetaMap : MonoBehaviour
         m_metaTerrain = new MetaTerrain();
         defaultLayer = new Layer();
         baseLayer = new Layer();
+        offroadLayer = new Layer();
 
         m_metaMapConfig = new MetaMapConfig();
 
@@ -50,7 +53,10 @@ public class MetaMap : MonoBehaviour
 
     public string getNewItemId(string startWith)
     {
-        return startWith + (defaultLayer.mapItems.Count+baseLayer.mapItems.Count).ToString() + "rwrme";
+        int n = defaultLayer.mapItems.Count + baseLayer.mapItems.Count;
+        if (offroadLayer != null && offroadLayer.mapItems != null)
+            n += offroadLayer.mapItems.Count;
+        return startWith + n.ToString() + "rwrme";
     }
 
     private void setBts()

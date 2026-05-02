@@ -1,7 +1,39 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using UnityEngine;
+
+/// <summary>单段三次贝塞尔，全部为绝对 SVG 坐标（与 Inkscape / SVG 文档一致）。</summary>
+[Serializable]
+public struct SvgCubicAbsolute
+{
+    public Vector2 P0;
+    public Vector2 C1;
+    public Vector2 C2;
+    public Vector2 P3;
+}
+
+/// <summary>解析后的路径图元（绝对坐标），不含展平采样点。</summary>
+public enum SvgPathOpKind
+{
+    MoveTo,
+    LineTo,
+    CubicTo,
+    ClosePath
+}
+
+[Serializable]
+public struct SvgPathOp
+{
+    public SvgPathOpKind Kind;
+    /// <summary>MoveTo / LineTo 的终点。</summary>
+    public Vector2 P;
+    /// <summary>CubicTo 时有效：绝对控制点与终点。</summary>
+    public Vector2 CubicC1;
+    public Vector2 CubicC2;
+    public Vector2 CubicP3;
+}
 
 public static class SvgPathParser
 {
@@ -360,5 +392,221 @@ public static class SvgPathParser
     static bool IsNumberStart(char c)
     {
         return char.IsDigit(c) || c == '-' || c == '+' || c == '.';
+    }
+
+    // --- 曲线结构解析（不展平为折线）---
+
+    /// <summary>
+    /// 解析 SVG path 的 <c>d</c>，输出绝对坐标的图元序列（Move / Line / Cubic / Close）。
+    /// 支持 Mm Ll Hh Vv Cc 及命令后隐式重复的坐标、Zz。
+    /// CubicTo 时 <see cref="SvgPathOp.P"/> 为 P0，<see cref="SvgPathOp.CubicP3"/> 为终点。
+    /// </summary>
+    public static List<SvgPathOp> ParsePathDataToOps(string pathData)
+    {
+        var ops = new List<SvgPathOp>();
+        if (string.IsNullOrWhiteSpace(pathData)) return ops;
+
+        StringReader reader = new StringReader(pathData.Trim());
+        Vector2 pen = Vector2.zero;
+        Vector2 subpathStart = Vector2.zero;
+        bool relative = true;
+        bool curve = false;
+        int hvMode = 0;
+
+        while (reader.Peek() != -1)
+        {
+            SkipWhitespaceAndCommas(reader);
+            if (reader.Peek() == -1) break;
+
+            char peeked = (char)reader.Peek();
+
+            if (char.IsLetter(peeked))
+            {
+                char cmd = (char)reader.Read();
+                switch (cmd)
+                {
+                    case 'M':
+                        curve = false;
+                        relative = false;
+                        hvMode = 0;
+                        pen = ReadXY(reader);
+                        subpathStart = pen;
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.MoveTo, P = pen });
+                        break;
+
+                    case 'm':
+                        curve = false;
+                        relative = true;
+                        hvMode = 0;
+                        {
+                            Vector2 d = ReadXY(reader);
+                            pen += d;
+                        }
+                        subpathStart = pen;
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.MoveTo, P = pen });
+                        break;
+
+                    case 'L':
+                        curve = false;
+                        relative = false;
+                        hvMode = 0;
+                        pen = ReadXY(reader);
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        break;
+
+                    case 'l':
+                        curve = false;
+                        relative = true;
+                        hvMode = 0;
+                        pen += ReadXY(reader);
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        break;
+
+                    case 'H':
+                        curve = false;
+                        relative = false;
+                        hvMode = 1;
+                        pen = new Vector2(ReadFloat(reader), pen.y);
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        break;
+                    case 'h':
+                        curve = false;
+                        relative = true;
+                        hvMode = 1;
+                        pen.x += ReadFloat(reader);
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        break;
+                    case 'V':
+                        curve = false;
+                        relative = false;
+                        hvMode = 2;
+                        pen = new Vector2(pen.x, ReadFloat(reader));
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        break;
+                    case 'v':
+                        curve = false;
+                        relative = true;
+                        hvMode = 2;
+                        pen.y += ReadFloat(reader);
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        break;
+
+                    case 'C':
+                        curve = true;
+                        relative = false;
+                        hvMode = 0;
+                        AppendCubicOp(reader, ops, ref pen, false);
+                        break;
+                    case 'c':
+                        curve = true;
+                        relative = true;
+                        hvMode = 0;
+                        AppendCubicOp(reader, ops, ref pen, true);
+                        break;
+
+                    case 'Z':
+                    case 'z':
+                        curve = false;
+                        hvMode = 0;
+                        pen = subpathStart;
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.ClosePath });
+                        break;
+
+                    default:
+                        curve = false;
+                        hvMode = 0;
+                        break;
+                }
+            }
+            else if (IsNumberStart(peeked))
+            {
+                if (!curve)
+                {
+                    if (hvMode == 0)
+                    {
+                        if (!relative)
+                        {
+                            pen = ReadXY(reader);
+                            ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        }
+                        else
+                        {
+                            pen += ReadXY(reader);
+                            ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                        }
+                    }
+                    else
+                    {
+                        float v = ReadFloat(reader);
+                        if (relative)
+                        {
+                            if (hvMode == 1) pen.x += v;
+                            else pen.y += v;
+                        }
+                        else
+                        {
+                            if (hvMode == 1) pen.x = v;
+                            else pen.y = v;
+                        }
+                        ops.Add(new SvgPathOp { Kind = SvgPathOpKind.LineTo, P = pen });
+                    }
+                }
+                else
+                {
+                    AppendCubicOp(reader, ops, ref pen, relative);
+                }
+            }
+            else
+            {
+                reader.Read();
+            }
+        }
+
+        return ops;
+    }
+
+    static void AppendCubicOp(StringReader reader, List<SvgPathOp> ops, ref Vector2 pen, bool isRelative)
+    {
+        Vector2 p0 = pen;
+        Vector2 cp1 = ReadXY(reader);
+        Vector2 cp2 = ReadXY(reader);
+        Vector2 p3 = ReadXY(reader);
+        if (isRelative)
+        {
+            cp1 += p0;
+            cp2 += p0;
+            p3 += p0;
+        }
+        ops.Add(new SvgPathOp
+        {
+            Kind = SvgPathOpKind.CubicTo,
+            P = p0,
+            CubicC1 = cp1,
+            CubicC2 = cp2,
+            CubicP3 = p3
+        });
+        pen = p3;
+    }
+
+    /// <summary>
+    /// 从 <c>d</c> 中只提取各段三次贝塞尔（绝对坐标），顺序与路径一致；直线段不产生条目。
+    /// 与 <see cref="Parse"/> 的展平折线不同，保留真实曲线控制点。
+    /// </summary>
+    public static List<SvgCubicAbsolute> ParsePathDataToAbsoluteCubics(string pathData)
+    {
+        var ops = ParsePathDataToOps(pathData);
+        var cubics = new List<SvgCubicAbsolute>(ops.Count / 2);
+        foreach (SvgPathOp op in ops)
+        {
+            if (op.Kind != SvgPathOpKind.CubicTo) continue;
+            cubics.Add(new SvgCubicAbsolute
+            {
+                P0 = op.P,
+                C1 = op.CubicC1,
+                C2 = op.CubicC2,
+                P3 = op.CubicP3
+            });
+        }
+        return cubics;
     }
 }

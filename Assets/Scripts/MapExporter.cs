@@ -1,6 +1,7 @@
-
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml;           // .NET 标准 XML
 using UnityEngine;
 
@@ -55,6 +56,61 @@ public class MapExporter : MonoBehaviour
         }
         
         Debug.Log("MapExporter Init");
+    }
+
+    /// <summary>
+    /// 首点相对 <c>m</c>；直线段用显式相对 <c>l</c>（不可在 <c>c</c> 后用隐式直线：Unity VectorGraphics 会把隐式数字仍当作 <c>，需 6 个数而报错）。
+    /// 曲线为相对 <c>，与 <see cref="SvgPathParser.ParsePathDataToOps"/> / MapImporter 一致。
+    /// </summary>
+    static string BuildOffroadSvgPathD(Offroad ofr)
+    {
+        var pts = ofr.positionLine;
+        if (pts == null || pts.Count < 2) return string.Empty;
+
+        var sb = new StringBuilder();
+        Vector2 penAbs = Vector2.zero;
+        bool hasCurve = ofr.curve != null && ofr.curve.Count == pts.Count;
+        bool hasCp = ofr.controlPoints != null && ofr.controlPoints.Count >= 2;
+        int cpIdx = 0;
+
+        sb.Append('m').Append(' ');
+        AppendSvgCoordPair(sb, pts[0].x - penAbs.x, pts[0].y - penAbs.y);
+        penAbs = pts[0];
+
+        for (int i = 1; i < pts.Count; i++)
+        {
+            bool cubic = hasCurve && hasCp && ofr.curve[i] && cpIdx + 1 < ofr.controlPoints.Count;
+            if (cubic)
+            {
+                Vector2 p0 = pts[i - 1];
+                Vector2 c1 = ofr.controlPoints[cpIdx++];
+                Vector2 c2 = ofr.controlPoints[cpIdx++];
+                Vector2 p3 = pts[i];
+                sb.Append(" c ");
+                AppendSvgCoordPair(sb, c1.x - p0.x, c1.y - p0.y);
+                sb.Append(' ');
+                AppendSvgCoordPair(sb, c2.x - p0.x, c2.y - p0.y);
+                sb.Append(' ');
+                AppendSvgCoordPair(sb, p3.x - p0.x, p3.y - p0.y);
+                penAbs = p3;
+            }
+            else
+            {
+                Vector2 d = pts[i] - penAbs;
+                sb.Append(" l ");
+                AppendSvgCoordPair(sb, d.x, d.y);
+                penAbs = pts[i];
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    static void AppendSvgCoordPair(StringBuilder sb, float x, float y)
+    {
+        sb.Append(x.ToString(CultureInfo.InvariantCulture));
+        sb.Append(',');
+        sb.Append(y.ToString(CultureInfo.InvariantCulture));
     }
 
     public void exportMap() 
@@ -577,6 +633,36 @@ public class MapExporter : MonoBehaviour
             basesLayer.AppendChild(cbs);
         }
         rootElement.AppendChild(basesLayer);
+
+        // export offroad（与 Platform 一致：相对 m + 隐式 l；曲线段为相对 c，与 MapImporter / SvgPathParser 解析一致）
+        if (MetaMap.instance.offroadLayer != null && MetaMap.instance.offroadLayer.mapItems != null
+            && MetaMap.instance.offroadLayer.mapItems.Count > 0)
+        {
+            XmlElement offroadGroup = xmlDoc.CreateElement("g");
+            offroadGroup.SetAttribute("groupmode", inkscapeNs, "layer");
+            offroadGroup.SetAttribute("id", "layer774");//Offroad
+            offroadGroup.SetAttribute("label", inkscapeNs, "offroad");
+            offroadGroup.SetAttribute("insensitive", sodipodiNs, "true");
+            for (int i = 0; i < MetaMap.instance.offroadLayer.mapItems.Count; i++)
+            {
+                Offroad ofr = MetaMap.instance.offroadLayer.mapItems[i] as Offroad;
+                if (ofr == null || ofr.positionLine == null || ofr.positionLine.Count < 2) continue;
+
+                string pcd = BuildOffroadSvgPathD(ofr);
+                if (string.IsNullOrWhiteSpace(pcd)) continue;
+
+                XmlElement ofrE = xmlDoc.CreateElement("path");
+                string nodetypes = new string('c', ofr.positionLine.Count);
+                ofrE.SetAttribute("nodetypes", sodipodiNs, nodetypes);
+                ofrE.SetAttribute("label", inkscapeNs, ofr.id + "_offroad");
+                ofrE.SetAttribute("connector-curvature", inkscapeNs, "0");
+                ofrE.SetAttribute("id", "path"+(i+1)+"_navigation");
+                ofrE.SetAttribute("d", pcd);
+                ofrE.SetAttribute("style", "fill:none;stroke:#00aa44;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new");
+                offroadGroup.AppendChild(ofrE);
+            }
+            rootElement.AppendChild(offroadGroup);
+        }
 
         Debug.Log("MapExport");
         string fullPath = System.IO.Path.Combine(Application.dataPath, basePath, m_mm.m_metaTerrain.fileName);

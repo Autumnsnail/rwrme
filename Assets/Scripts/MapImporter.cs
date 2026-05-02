@@ -39,6 +39,7 @@ public class MapImporter : MonoBehaviour
     public GameObject VehiclePref;
     public GameObject ItemSupplyPref;
     public GameObject CratePref;
+    public GameObject OffroadPref;
 
     public Material cbdTl;
 
@@ -444,6 +445,7 @@ public class MapImporter : MonoBehaviour
                                                 {
                                                     XmlElement rdsc = bRect.FirstChild as XmlElement;
                                                     if (rdsc == null) continue;
+//                                                    Debug.Log("MapImporter : spawn has properties :" + rdsc.InnerText);
                                                     var properties = rdsc.InnerText.Split(';')
                                                         .Where(p => p.Contains('='))
                                                         .Select(p => p.Split('=', 2))
@@ -465,6 +467,7 @@ public class MapImporter : MonoBehaviour
                                                             }
                                                             else
                                                             {
+                                                                if(!properties.ContainsKey("key"))continue;
                                                                 vc.key = properties["key"];
                                                             }
                                                             vc.id = MetaMap.instance.getNewItemId("spawn_vehicle");
@@ -734,6 +737,11 @@ public class MapImporter : MonoBehaviour
                             }
                         }
                     }
+                    if (ele.GetAttribute("inkscape:label").StartsWith("offroad"))
+                    {
+                        Debug.Log("import offroad");
+                        ImportOffroadFromGroup(ele);
+                    }
                 }
             }
         }
@@ -884,7 +892,7 @@ public class MapImporter : MonoBehaviour
                 }
                 if (properties.ContainsKey("collision_model_size"))
                 {
-                    Debug.Log("MapImporter get collision_model_size: " + properties["collision_model_size"]);
+//                    Debug.Log("MapImporter get collision_model_size: " + properties["collision_model_size"]);
                     string inputS = Regex.Replace(properties["collision_model_size"], @"\s+", " ").Trim();
                     string[] parts = inputS.Split(' ');
                     Vector3 vector = new Vector3(
@@ -1127,6 +1135,159 @@ public class MapImporter : MonoBehaviour
         foreach (var pair in loadedMaps)
         {
             Debug.Log($"{pair.Key}: {pair.Value.Width}x{pair.Value.Height}");
+        }
+    }
+
+    static void ApplyOffroadTransformStep(ref Vector2 p, Matrix2x2 rm, Vector2 ov, Vector2 sc)
+    {
+        p *= sc;
+        p = rm * p;
+        p += ov;
+    }
+
+    /// <summary>用 <see cref="SvgPathParser.ParsePathDataToOps"/> 结果构造锚点、曲线标记与控制点（每段 Cubic 两个控制点）。</summary>
+    static void BuildOffroadFromPathOps(List<SvgPathOp> ops, out List<Vector2> anchors, out List<bool> curveFlags, out List<Vector2> controlPoints)
+    {
+        anchors = new List<Vector2>();
+        curveFlags = new List<bool>();
+        controlPoints = new List<Vector2>();
+        Vector2 subpathStart = Vector2.zero;
+        const float eps = 1e-4f;
+
+        foreach (SvgPathOp op in ops)
+        {
+            switch (op.Kind)
+            {
+                case SvgPathOpKind.MoveTo:
+                    anchors.Add(op.P);
+                    curveFlags.Add(false);
+                    subpathStart = op.P;
+                    break;
+                case SvgPathOpKind.LineTo:
+                    if (anchors.Count > 0 && (anchors[anchors.Count - 1] - op.P).sqrMagnitude < eps * eps)
+                        break;
+                    anchors.Add(op.P);
+                    curveFlags.Add(false);
+                    break;
+                case SvgPathOpKind.CubicTo:
+                    Vector2 p0 = op.P;
+                    if (anchors.Count == 0)
+                    {
+                        anchors.Add(p0);
+                        curveFlags.Add(false);
+                    }
+                    else if ((anchors[anchors.Count - 1] - p0).sqrMagnitude > eps * eps)
+                    {
+                        anchors.Add(p0);
+                        curveFlags.Add(false);
+                    }
+                    anchors.Add(op.CubicP3);
+                    curveFlags.Add(true);
+                    controlPoints.Add(op.CubicC1);
+                    controlPoints.Add(op.CubicC2);
+                    break;
+                case SvgPathOpKind.ClosePath:
+                    if (anchors.Count > 0 && (anchors[anchors.Count - 1] - subpathStart).sqrMagnitude > eps * eps)
+                    {
+                        anchors.Add(subpathStart);
+                        curveFlags.Add(false);
+                    }
+                    break;
+            }
+        }
+    }
+
+    static void TransformOffroadPointList(List<Vector2> pts, Matrix2x2 _rmPath, Vector2 _ovPath, Vector2 _scPath,
+        List<(Matrix2x2 rm, Vector2 ov, Vector2 sc)> ancestorChain, Matrix2x2 rmOff, Vector2 ovOff, Vector2 scOff)
+    {
+        for (int i = 0; i < pts.Count; i++)
+        {
+            Vector2 p = pts[i];
+            ApplyOffroadTransformStep(ref p, _rmPath, _ovPath, _scPath);
+            for (int gi = ancestorChain.Count - 1; gi >= 0; gi--)
+            {
+                var g = ancestorChain[gi];
+                ApplyOffroadTransformStep(ref p, g.rm, g.ov, g.sc);
+            }
+            ApplyOffroadTransformStep(ref p, rmOff, ovOff, scOff);
+            pts[i] = p;
+        }
+    }
+
+    void ImportOffroadFromGroup(XmlElement offroadGroup)
+    {
+        float raOff = 0f;
+        Matrix2x2 rmOff = Matrix2x2.CreateRotation(0f);
+        Vector2 ovOff = Vector2.zero;
+        Vector2 scOff = Vector2.one;
+        if (offroadGroup.HasAttribute("transform"))
+            dealWithTransform(offroadGroup.GetAttribute("transform"), ref rmOff, ref raOff, ref ovOff, ref scOff);
+
+        var emptyChain = new List<(Matrix2x2 rm, Vector2 ov, Vector2 sc)>();
+        ImportOffroadRecursive(offroadGroup, emptyChain, rmOff, ovOff, scOff);
+    }
+
+    void ImportOffroadRecursive(XmlElement parent, List<(Matrix2x2 rm, Vector2 ov, Vector2 sc)> ancestorChain,
+        Matrix2x2 rmOff, Vector2 ovOff, Vector2 scOff)
+    {
+        foreach (XmlNode child in parent.ChildNodes)
+        {
+            if (child is not XmlElement xe) continue;
+
+            if (xe.Name == "path")
+            {
+                string pathData = xe.GetAttribute("d");
+                if (string.IsNullOrWhiteSpace(pathData)) continue;
+
+                float _raPath = 0f;
+                Matrix2x2 _rmPath = Matrix2x2.CreateRotation(0f);
+                Vector2 _ovPath = Vector2.zero;
+                Vector2 _scPath = Vector2.one;
+                if (xe.HasAttribute("transform"))
+                    dealWithTransform(xe.GetAttribute("transform"), ref _rmPath, ref _raPath, ref _ovPath, ref _scPath);
+
+                List<SvgPathOp> pathOps = SvgPathParser.ParsePathDataToOps(pathData);
+                BuildOffroadFromPathOps(pathOps, out List<Vector2> anchors, out List<bool> curveFlags, out List<Vector2> cps);
+                if (anchors == null || anchors.Count == 0) continue;
+
+                TransformOffroadPointList(anchors, _rmPath, _ovPath, _scPath, ancestorChain, rmOff, ovOff, scOff);
+                TransformOffroadPointList(cps, _rmPath, _ovPath, _scPath, ancestorChain, rmOff, ovOff, scOff);
+
+                GameObject go;
+                if (OffroadPref != null)
+                {
+                    go = Instantiate(OffroadPref);
+                }
+                else
+                {
+                    go = new GameObject("Offroad");
+                }
+                Offroad ofr = go.GetComponent<Offroad>();
+                if (ofr == null) ofr = go.AddComponent<Offroad>();
+
+                ofr.positionLine = anchors;
+                ofr.id = MetaMap.instance.getNewItemId("offroad");
+                ofr.layerIndex = MetaMap.instance.offroadHeightSampleLayer;
+                ofr.curve = curveFlags;
+                ofr.controlPoints = cps;
+
+                MetaMap.instance.offroadLayer.mapItems.Add(ofr);
+            }
+            /*
+            else if (xe.Name == "g")
+            {
+                float gra = 0f;
+                Matrix2x2 grm = Matrix2x2.CreateRotation(0f);
+                Vector2 gov = Vector2.zero;
+                Vector2 gsc = Vector2.one;
+                if (xe.HasAttribute("transform"))
+                    dealWithTransform(xe.GetAttribute("transform"), ref grm, ref gra, ref gov, ref gsc);
+
+                var nextChain = new List<(Matrix2x2 rm, Vector2 ov, Vector2 sc)>(ancestorChain.Count + 1);
+                nextChain.AddRange(ancestorChain);
+                nextChain.Add((grm, gov, gsc));
+                ImportOffroadRecursive(xe, nextChain, rmOff, ovOff, scOff);
+            }*/
         }
     }
 }

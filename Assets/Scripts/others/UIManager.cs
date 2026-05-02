@@ -10,6 +10,10 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
 
+    /// <summary>右侧条（多选 / 顶点等）锚点横坐标，与 ToolController 里「可打工具射线」的右边界一致。</summary>
+    public const float RightPanelAnchorMinX = 0.73f;
+    public const float RightPanelAnchorMaxX = 0.90f;
+
     GameObject ddBT;//building drop down
 
     GameObject ddWT;//wall dd
@@ -202,8 +206,8 @@ public class UIManager : MonoBehaviour
         multiSelectPanel.transform.SetParent(transform, false);
 
         RectTransform panelRect = multiSelectPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.82f, 0.02f);
-        panelRect.anchorMax = new Vector2(0.99f, 0.98f);
+        panelRect.anchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
+        panelRect.anchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
         panelRect.offsetMin = Vector2.zero;
         panelRect.offsetMax = Vector2.zero;
 
@@ -530,8 +534,8 @@ public class UIManager : MonoBehaviour
         vertexPanel.transform.SetParent(transform, false);
 
         RectTransform pRect = vertexPanel.AddComponent<RectTransform>();
-        pRect.anchorMin = new Vector2(0.82f, 0.02f);
-        pRect.anchorMax = new Vector2(0.99f, 0.98f);
+        pRect.anchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
+        pRect.anchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
         pRect.offsetMin = Vector2.zero;
         pRect.offsetMax = Vector2.zero;
 

@@ -1,9 +1,7 @@
-<map_config min_factions="3" max_factions="3" add_neutral_last="1">
+<map_config min_factions="2" max_factions="2" add_neutral_last="0">
   <include_layer name="bases.default" />
   <faction file="green.xml" />
   <faction file="grey.xml" />
-  <faction file="brown.xml" />
-  <faction file="neutral.xml" />
   <weapon file="all_weapons.xml" />
   <projectile file="all_throwables.xml" />
   <call file="all_calls.xml" />

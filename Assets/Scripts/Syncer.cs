@@ -77,8 +77,46 @@ public class Syncer : MonoBehaviour
 
     public void updateMap()
     {
+        PurgeInvalidWallAndOffroad();
         setHeightFromMeta();
         StartCoroutine(ScatterMapItems());
+    }
+
+    /// <summary>从地图数据中移除非法路径：锚点数小于 2 的 <see cref="Wall"/>、<see cref="Offroad"/>。</summary>
+    void PurgeInvalidWallAndOffroad()
+    {
+        if (m_mm == null)
+            return;
+
+        for (int i = m_mm.defaultLayer.mapItems.Count - 1; i >= 0; i--)
+        {
+            MapItem mi = m_mm.defaultLayer.mapItems[i];
+            if (mi is Wall w && IsPathTooShort(w.positionLine))
+            {
+                m_mm.defaultLayer.mapItems.RemoveAt(i);
+                if (w != null && w.gameObject != null)
+                    Destroy(w.gameObject);
+            }
+        }
+
+        if (m_mm.offroadLayer != null)
+        {
+            for (int i = m_mm.offroadLayer.mapItems.Count - 1; i >= 0; i--)
+            {
+                MapItem mi = m_mm.offroadLayer.mapItems[i];
+                if (mi is Offroad o && IsPathTooShort(o.positionLine))
+                {
+                    m_mm.offroadLayer.mapItems.RemoveAt(i);
+                    if (o != null && o.gameObject != null)
+                        Destroy(o.gameObject);
+                }
+            }
+        }
+    }
+
+    static bool IsPathTooShort(List<Vector2> positionLine)
+    {
+        return positionLine == null || positionLine.Count < 2;
     }
 
     public void setHeightFromMeta()
@@ -152,6 +190,26 @@ public class Syncer : MonoBehaviour
         {
             mapItem.scatterThis();
         }
+        if (m_mm.offroadLayer != null)
+        {
+            m_mm.offroadLayer.sortByIndex();
+            index = 0;
+            name = "";
+            foreach (MapItem mapItem in m_mm.offroadLayer.mapItems)
+            {
+                mapItem.scatterThis();
+                if (index != mapItem.layerIndex)
+                {
+                    index = mapItem.layerIndex;
+                    yield return null;
+                }
+                else if (name != mapItem.GetType().Name)
+                {
+                    name = mapItem.GetType().Name;
+                    yield return null;
+                }
+            }
+        }
     }
     public void destroyAllOutMapitems()
     {
@@ -159,7 +217,9 @@ public class Syncer : MonoBehaviour
         foreach (MapItem item in allItems)
         {
             // �ؼ������ gameObject �Ƿ��ڳ�����
-            if (!MetaMap.instance.defaultLayer.mapItems.Contains(item))
+            if (!MetaMap.instance.defaultLayer.mapItems.Contains(item)
+                && !MetaMap.instance.baseLayer.mapItems.Contains(item)
+                && (MetaMap.instance.offroadLayer == null || !MetaMap.instance.offroadLayer.mapItems.Contains(item)))
             {
                 Destroy(item.gameObject);
             }
@@ -185,6 +245,14 @@ public class Syncer : MonoBehaviour
         foreach (MapItem mi in MetaMap.instance.baseLayer.mapItems)
         {
             mi.gameObject.SetActive(stat);
+        }
+    }
+    public void changeOffroadVisState(bool stat)
+    {
+        if (MetaMap.instance.offroadLayer == null) return;
+        foreach (MapItem mi in MetaMap.instance.offroadLayer.mapItems)
+        {
+                mi.gameObject.SetActive(stat);
         }
     }
 

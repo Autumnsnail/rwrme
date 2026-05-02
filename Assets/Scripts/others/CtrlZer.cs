@@ -29,6 +29,7 @@ public class CtrlZer : MonoBehaviour
         public bool transformOnly;
         public List<MapItem> defaultItems;
         public List<MapItem> baseItems;
+        public List<MapItem> offroadItems;
         public List<ItemTransformData> transformData;
         public List<PathData> pathData;
         public float[,] heightmapData;
@@ -64,6 +65,11 @@ public class CtrlZer : MonoBehaviour
                         pd.RemoveLastVertex();
                         return;
                     }
+                    if (tool is OffraodDrawer od && od.drawing)
+                    {
+                        od.RemoveLastVertex();
+                        return;
+                    }
                 }
                 Undo();
             }
@@ -78,16 +84,21 @@ public class CtrlZer : MonoBehaviour
     {
         var defItems = new List<MapItem>(MetaMap.instance.defaultLayer.mapItems);
         var bsItems = new List<MapItem>(MetaMap.instance.baseLayer.mapItems);
+        var orItems = MetaMap.instance.offroadLayer != null
+            ? new List<MapItem>(MetaMap.instance.offroadLayer.mapItems)
+            : new List<MapItem>();
         var transforms = new List<ItemTransformData>();
         var paths = new List<PathData>();
 
         CaptureItemData(defItems, transforms, paths);
         CaptureItemData(bsItems, transforms, paths);
+        CaptureItemData(orItems, transforms, paths);
 
         return new Snapshot
         {
             defaultItems = defItems,
             baseItems = bsItems,
+            offroadItems = orItems,
             transformData = transforms,
             pathData = paths
         };
@@ -294,13 +305,27 @@ public class CtrlZer : MonoBehaviour
             HashSet<MapItem> previousItems = new HashSet<MapItem>(MetaMap.instance.defaultLayer.mapItems);
             foreach (var item in MetaMap.instance.baseLayer.mapItems)
                 previousItems.Add(item);
+            if (MetaMap.instance.offroadLayer != null)
+            {
+                foreach (var item in MetaMap.instance.offroadLayer.mapItems)
+                    previousItems.Add(item);
+            }
 
             MetaMap.instance.defaultLayer.mapItems = new List<MapItem>(snapshot.defaultItems);
             MetaMap.instance.baseLayer.mapItems = new List<MapItem>(snapshot.baseItems);
+            if (MetaMap.instance.offroadLayer != null)
+                MetaMap.instance.offroadLayer.mapItems = snapshot.offroadItems != null
+                    ? new List<MapItem>(snapshot.offroadItems)
+                    : new List<MapItem>();
 
             HashSet<MapItem> restoredItems = new HashSet<MapItem>(snapshot.defaultItems);
             foreach (var item in snapshot.baseItems)
                 restoredItems.Add(item);
+            if (snapshot.offroadItems != null)
+            {
+                foreach (var item in snapshot.offroadItems)
+                    restoredItems.Add(item);
+            }
 
             MapItem[] allItems = FindObjectsOfType<MapItem>(true);
             foreach (MapItem item in allItems)
@@ -383,10 +408,19 @@ public class CtrlZer : MonoBehaviour
         HashSet<MapItem> keepAlive = new HashSet<MapItem>(MetaMap.instance.defaultLayer.mapItems);
         foreach (var item in MetaMap.instance.baseLayer.mapItems)
             keepAlive.Add(item);
+        if (MetaMap.instance.offroadLayer != null)
+        {
+            foreach (var item in MetaMap.instance.offroadLayer.mapItems)
+                keepAlive.Add(item);
+        }
         foreach (var snap in undoStack)
         {
             foreach (var item in snap.defaultItems) keepAlive.Add(item);
             foreach (var item in snap.baseItems) keepAlive.Add(item);
+            if (snap.offroadItems != null)
+            {
+                foreach (var item in snap.offroadItems) keepAlive.Add(item);
+            }
         }
 
         HashSet<MapItem> alreadyDestroyed = new HashSet<MapItem>();
@@ -401,6 +435,14 @@ public class CtrlZer : MonoBehaviour
             {
                 if (item != null && !keepAlive.Contains(item) && alreadyDestroyed.Add(item))
                     Destroy(item.gameObject);
+            }
+            if (snap.offroadItems != null)
+            {
+                foreach (var item in snap.offroadItems)
+                {
+                    if (item != null && !keepAlive.Contains(item) && alreadyDestroyed.Add(item))
+                        Destroy(item.gameObject);
+                }
             }
         }
     }

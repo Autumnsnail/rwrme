@@ -88,6 +88,11 @@ public class Building : MeRect
                 }
 
             }
+            if (offset != Vector3.zero)
+            {
+                appOffset();
+                updateOffsetShow();
+            }
         }
     }
 }

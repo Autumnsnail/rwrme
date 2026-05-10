@@ -98,7 +98,6 @@ public class Platform : PathPair
         }
 
         GeneratePathGeometry(u3dpll, u3dplr, wallHeight);
-
     }
 
     public void setSurface(string input)

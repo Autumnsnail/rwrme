@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
@@ -291,6 +292,54 @@ public class MeRect :MapItem//this class won,t use directly
     public float rotation;//angle
     public Vector2 size;//width x and height y
 
+    public Vector3 offset;
+    public void appOffset()
+    {
+        GameObject go = this.gameObject;
+        if (go != null)
+        {
+            //offset :x 1 y 1 z -1
+
+            go.transform.localPosition = go.transform.localPosition + new Vector3(offset.x, offset.y, -offset.z);
+        }
+    }
+
+    public void updateOffsetShow()
+    {
+        GameObject go = this.gameObject;
+        if (go == null) return;
+
+        // 与 ToolController 一致：偏移 UI 挂在当前物体子节点 Canvas 上；不要用 GameObject.Find，否则会命中场景里别的 Canvas 且没有 x/y/z 子节点。
+        Transform canvasTf = go.transform.Find("Canvas");
+        if (canvasTf == null) return;
+
+        Canvas canvas = canvasTf.GetComponent<Canvas>();
+        if (canvas == null) return;
+
+        TMP_InputField xText = canvas.transform.Find("x")?.GetComponent<TMP_InputField>();
+        TMP_InputField yText = canvas.transform.Find("y")?.GetComponent<TMP_InputField>();
+        TMP_InputField zText = canvas.transform.Find("z")?.GetComponent<TMP_InputField>();
+        if (xText != null) xText.text = offset.x.ToString();
+        if (yText != null) yText.text = offset.y.ToString();
+        if (zText != null) zText.text = offset.z.ToString();
+    }
+
+    public void setOffsetx(string value)
+    {
+        offset.x = float.Parse(value);
+        scatterThis();
+    }
+
+        public void setOffsety(string value)
+    {
+        offset.y = float.Parse(value);
+        scatterThis();
+    }    public void setOffsetz(string value)
+    {
+        offset.z = float.Parse(value);
+        scatterThis();
+    }
+
     public MeRect(Vector2 pos,float r,Vector2 s,string key,int lI)
     {
         position = pos;
@@ -298,6 +347,7 @@ public class MeRect :MapItem//this class won,t use directly
         size = s;
         id = key;
         layerIndex = lI;
+        offset  = new Vector3(0,0,0);
     }
     public override void scale(float scaler)
     {

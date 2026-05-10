@@ -16,6 +16,8 @@ public class MeMesh : MeRect
     {
     }
 
+
+
     public override void scatterThis()
     {
         GameObject go = this.gameObject;
@@ -41,6 +43,11 @@ public class MeMesh : MeRect
 
                     go.transform.GetChild(0).gameObject.transform.localScale = new Vector3(1/go.transform.localScale.x,1/go.transform.localScale.y,1/go.transform.localScale.z);
                 }
+            }
+            if (offset != Vector3.zero)
+            {
+                appOffset();
+                updateOffsetShow();
             }
         }
 

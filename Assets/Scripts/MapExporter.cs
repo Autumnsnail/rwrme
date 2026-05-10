@@ -311,6 +311,10 @@ public class MapExporter : MonoBehaviour
                         baseDescStr = baseDescStr + "roof_type = flat;";
 
                     }
+                    if(bd.offset != Vector3.zero)
+                    {
+                        baseDescStr = baseDescStr + "offset = " + bd.offset.x.ToString() + " " + bd.offset.y.ToString() + " " + bd.offset.z.ToString() + ";";
+                    }
                     buiEDesc.InnerText = baseDescStr;
                     buiE.AppendChild(buiEDesc);
                     buildingLayer.AppendChild(buiE);
@@ -428,6 +432,10 @@ public class MapExporter : MonoBehaviour
                 XmlElement stpDesc = xmlDoc.CreateElement("desc");
                 stpDesc.SetAttribute("id", "desc_" + ms.id);
                 stpDesc.InnerText = "template = "+ms.template_ref+";";
+                if(ms.offset != Vector3.zero)
+                {
+                    stpDesc.InnerText = stpDesc.InnerText + "offset = " + ms.offset.x.ToString() + " " + ms.offset.y.ToString() + " " + ms.offset.z.ToString() + ";";
+                }
                 ekE.AppendChild(stpDesc);
 
 

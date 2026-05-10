@@ -346,6 +346,7 @@ public class MapImporter : MonoBehaviour
                                                     int BheightF = 0;
                                                     string bmaterial = "";
                                                     bool roof = false;
+                                                    Vector3 offset = Vector3.zero;
                                                     foreach (XmlNode de in r.ChildNodes)
                                                     {
                                                         //Debug.Log("MapImporter : " + de.InnerText);
@@ -381,10 +382,18 @@ public class MapImporter : MonoBehaviour
                                                         {
                                                             roof = true;
                                                         }
+                                                        if(properties.ContainsKey("offset"))
+                                                        {
+                                                            //convent properties["offset"]like "0 -0.6 0" to vector3
+                                                            string[] parts = properties["offset"].Split(' ');
+                                                            offset = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                                                            
+                                                        }
 
                                                     }
                                                     GameObject go = Instantiate(BuildingPref);
                                                     Building gc = go.GetComponent<Building>();
+                                                    gc.offset = offset;
                                                     //if (number == 1) Debug.Log("i got this ");
                                                     gc.reinit(BheightF, bmaterial, position, angle, new Vector2(cWidth, cHeight), MetaMap.instance.getNewItemId("building"), number);
                                                     gc.roof = roof;
@@ -551,6 +560,16 @@ public class MapImporter : MonoBehaviour
                                                         if (!MetaMap.instance.meshTemplates.Any(template => template.name == properties["template"])) continue;
                                                         GameObject go = Instantiate(MeshPref);
                                                         MeMesh ms = go.GetComponent<MeMesh>();
+
+
+                                                        if(properties.ContainsKey("offset"))
+                                                        {
+                                                            //convent properties["offset"]like "0 -0.6 0" to vector3
+                                                            string[] parts = properties["offset"].Split(' ');
+                                                            ms.offset = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                                                            
+                                                        }
+
                                                         ms.position = position;
                                                         ms.rotation = angle;
                                                         ms.id = MetaMap.instance.getNewItemId("#mesh");

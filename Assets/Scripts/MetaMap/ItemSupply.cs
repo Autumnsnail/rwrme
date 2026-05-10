@@ -9,6 +9,15 @@ public class ItemSupply : MeRect
     {
     }
 
+    public override string IdPrefix { get { return "item_supply"; } }
+    public override MapItem Duplicate()
+    {
+        ItemSupply c = Instantiate(MapImporter.instate.ItemSupplyPref).GetComponent<ItemSupply>();
+        CopyMeRectFieldsTo(c);
+        c.type = type;
+        return c;
+    }
+
     void Start()
     {
     }

@@ -281,8 +281,15 @@ public class MapItem:MonoBehaviour
     }
     public virtual void scale(float scaler)
     {
-        
+
     }
+
+    /// <summary>用于"以鼠标点为新锚点"翻译；MeRect 用 position，路径类用顶点均值。</summary>
+    public virtual Vector2 GetAnchor() { return Vector2.zero; }
+    /// <summary>getNewItemId 的前缀；与现有 import / 工具创建保持一致。</summary>
+    public virtual string IdPrefix { get { return "item"; } }
+    /// <summary>实例化对应 prefab 并深拷贝本对象数据字段；不分配 id / layerIndex / 入层。null 表示该子类不支持复制。</summary>
+    public virtual MapItem Duplicate() { return null; }
 
 }
 public class MeRect :MapItem//this class won,t use directly
@@ -311,15 +318,59 @@ public class MeRect :MapItem//this class won,t use directly
     {
         rotation = rotation + scaler * -2;
     }
+    public override Vector2 GetAnchor() { return position; }
+
+    protected void CopyMeRectFieldsTo(MeRect dst)
+    {
+        dst.position = position;
+        dst.rotation = rotation;
+        dst.size = size;
+        dst.layerIndex = layerIndex;
+        dst.material = material;
+    }
 }
 public class PathPair:MapItem
 {
     public List<Vector2> positinLineL;
     public List<Vector2> positinLineR;
+
+    public override Vector2 GetAnchor()
+    {
+        int total = (positinLineL != null ? positinLineL.Count : 0)
+                  + (positinLineR != null ? positinLineR.Count : 0);
+        if (total == 0) return Vector2.zero;
+        Vector2 sum = Vector2.zero;
+        if (positinLineL != null) foreach (var p in positinLineL) sum += p;
+        if (positinLineR != null) foreach (var p in positinLineR) sum += p;
+        return sum / total;
+    }
+
+    protected void CopyPathPairFieldsTo(PathPair dst)
+    {
+        dst.layerIndex = layerIndex;
+        dst.material = material;
+        dst.positinLineL = positinLineL != null ? new List<Vector2>(positinLineL) : new List<Vector2>();
+        dst.positinLineR = positinLineR != null ? new List<Vector2>(positinLineR) : new List<Vector2>();
+    }
 }
 public class MePath:MapItem
 {
     public List<Vector2> positionLine;
+
+    public override Vector2 GetAnchor()
+    {
+        if (positionLine == null || positionLine.Count == 0) return Vector2.zero;
+        Vector2 sum = Vector2.zero;
+        foreach (var p in positionLine) sum += p;
+        return sum / positionLine.Count;
+    }
+
+    protected void CopyMePathFieldsTo(MePath dst)
+    {
+        dst.layerIndex = layerIndex;
+        dst.material = material;
+        dst.positionLine = positionLine != null ? new List<Vector2>(positionLine) : new List<Vector2>();
+    }
 }
 
 public class mapItemType

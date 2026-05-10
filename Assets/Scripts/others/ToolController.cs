@@ -46,7 +46,7 @@ public class ToolController : MonoBehaviour
     private Vector3 lockOrigin;
 
     // 用于存储复制的建筑信息
-    private Building copiedBuilding = null;
+    private MapItem copiedItem = null;
 
     public GameObject heightChangerVisPart;
     public GameObject ToolVisPartInstance;
@@ -439,13 +439,13 @@ public class ToolController : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.C))
             {
-                CopySelectedBuilding();
+                CopySelectedItem();
             }
-            
+
             // 粘贴功能 (Ctrl+V)
             if (Input.GetKeyDown(KeyCode.V))
             {
-                PasteBuilding();
+                PasteItem();
             }
         }
 
@@ -911,95 +911,72 @@ public class ToolController : MonoBehaviour
         }
     }
 
-    // 复制当前选中的建筑
-    private void CopySelectedBuilding()
+    // 复制当前选中的对象（任意 MapItem 子类）
+    private void CopySelectedItem()
     {
         if (miSelected == null)
         {
             Debug.Log("没有选中的对象可以复制");
             return;
         }
-
-        Building selectedBuilding = miSelected as Building;
-        if (selectedBuilding == null)
-        {
-            Debug.Log("选中的对象不是建筑，无法复制");
-            return;
-        }
-
-        // 复制建筑信息（深拷贝所有属性）
-        copiedBuilding = selectedBuilding;
-        Debug.Log($"已复制建筑: {copiedBuilding.id}, 材质: {copiedBuilding.material}, 高度: {copiedBuilding.height}");
+        copiedItem = miSelected;
+        Debug.Log($"已复制 {copiedItem.GetType().Name}: id={copiedItem.id}");
     }
 
-    // 粘贴建筑到鼠标位置
-    private void PasteBuilding()
+    // 粘贴到鼠标位置（按 MapItem 多态克隆）
+    private void PasteItem()
     {
-        if (copiedBuilding == null)
+        if (copiedItem == null)
         {
-            Debug.Log("没有复制的建筑可以粘贴");
+            Debug.Log("没有复制的对象可以粘贴");
             return;
         }
 
-        // 获取鼠标位置（只在主画面区域粘贴）
-        if (Input.mousePosition.x / Screen.width >= 0.85)
+        if (Input.mousePosition.x / Screen.width >= 0.85f)
         {
             Debug.Log("不能在UI区域粘贴");
             return;
         }
 
-        // 使用射线检测获取鼠标在世界中的位置
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        int layerMask = 1 << 6; // Layer 6 - Pinable
-
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
-        {
-            Vector3 pastePosition3D = hit.point;
-            
-            // 创建新建筑
-            GameObject newBuildingGO = Instantiate(MapImporter.instate.BuildingPref);
-            Building newBuilding = newBuildingGO.GetComponent<Building>();
-
-            // 复制所有属性
-            Vector2 pastePosition2D = MathOfRwrme.U3dPosToSvgPos(new Vector2(pastePosition3D.x, pastePosition3D.z));
-            
-            newBuilding.height = copiedBuilding.height;
-            newBuilding.material = copiedBuilding.material;
-            newBuilding.position = pastePosition2D;
-            newBuilding.rotation = copiedBuilding.rotation;
-            newBuilding.size = copiedBuilding.size;
-            newBuilding.roof = copiedBuilding.roof;
-            
-            // 确定图层
-            newBuilding.layerIndex = copiedBuilding.layerIndex;
-            if (hit.collider.gameObject.GetComponent<MapItem>() != null)
-            {
-                MapItem hitItem = hit.collider.gameObject.GetComponent<MapItem>();
-                newBuilding.layerIndex = hitItem.layerIndex + 1;
-            }
-
-            // 生成新ID
-            newBuilding.id = MetaMap.instance.getNewItemId("building");
-
-            // 记录撤销点（必须在修改 mapItems 之前）
-            CtrlZer.instance.checkPoint();
-
-            // 添加到地图
-            MetaMap.instance.defaultLayer.mapItems.Add(newBuilding);
-            
-            // 刷新显示
-            newBuilding.scatterThis();
-            
-            // 选中新建筑
-            miSelected = newBuilding;
-
-            Debug.Log($"已粘贴建筑到位置: {pastePosition2D}, ID: {newBuilding.id}");
-        }
-        else
+        int layerMask = 1 << 6; // Layer 6 - PinAble
+        if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask))
         {
             Debug.Log("无法确定粘贴位置");
+            return;
         }
+
+        MapItem clone = copiedItem.Duplicate();
+        if (clone == null)
+        {
+            Debug.Log($"{copiedItem.GetType().Name} 不支持复制");
+            return;
+        }
+
+        // 用 grab(offset) 把克隆体挪到鼠标点
+        Vector2 pasteSvg = MathOfRwrme.U3dPosToSvgPos(new Vector2(hit.point.x, hit.point.z));
+        Vector2 offset = pasteSvg - copiedItem.GetAnchor();
+        clone.grab(offset);
+
+        // 图层：命中其它 MapItem 时叠在它上面，否则沿用源对象图层
+        clone.layerIndex = copiedItem.layerIndex;
+        MapItem hitItem = hit.collider.gameObject.GetComponent<MapItem>();
+        if (hitItem != null) clone.layerIndex = hitItem.layerIndex + 1;
+
+        clone.id = MetaMap.instance.getNewItemId(clone.IdPrefix);
+
+        CtrlZer.instance.checkPoint();
+
+        // Offroad 走 offroadLayer，其它走 defaultLayer
+        if (clone is Offroad && MetaMap.instance.offroadLayer != null)
+            MetaMap.instance.offroadLayer.mapItems.Add(clone);
+        else
+            MetaMap.instance.defaultLayer.mapItems.Add(clone);
+
+        clone.scatterThis();
+        miSelected = clone;
+
+        Debug.Log($"已粘贴 {clone.GetType().Name} id={clone.id}");
     }
 }
 public class Tool

@@ -8,6 +8,16 @@ public class Base : MeRect
     public Base(Vector2 pos, float r, Vector2 s, string key, int lI) : base(pos, r, s, key, lI)
     {
     }
+
+    public override string IdPrefix { get { return "base"; } }
+    public override MapItem Duplicate()
+    {
+        Base c = Instantiate(MapImporter.instate.BasePref).GetComponent<Base>();
+        CopyMeRectFieldsTo(c);
+        c.factionIndex = factionIndex;
+        c._name = _name;
+        return c;
+    }
     
     void Start()
     {

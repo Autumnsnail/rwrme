@@ -206,6 +206,16 @@ public class ToolController : MonoBehaviour
         // Update is called once per frame
     void Update()
     {
+        // F5：刷新整张地图。放在输入框 early-return 之前，避免编辑搜索框/坐标框时按 F5 失效。
+        if (Input.GetKeyDown(KeyCode.F5)
+            && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)
+            && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.RightControl))
+        {
+            bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            if (!overUi && Syncer.instence != null)
+                Syncer.instence.updateMap();
+        }
+
         if (EventSystem.current != null &&
             EventSystem.current.currentSelectedGameObject != null &&
             EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null)
@@ -458,16 +468,6 @@ public class ToolController : MonoBehaviour
             }
         }
 
-        // F5：刷新整张地图（地形灰度 + 散点）；不按 Shift，避免与 Shift+F5 切 MeshScatter 冲突
-        if (Input.GetKeyDown(KeyCode.F5)
-            && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)
-            && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.RightControl))
-        {
-            bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-            if (!overUi && Syncer.instence != null)
-                Syncer.instence.updateMap();
-        }
-
         HandleToolShortcuts();
 
         sdt.mi = miSelected;
@@ -703,7 +703,14 @@ public class ToolController : MonoBehaviour
     public void setMeshScatterTool(int index)
     {
         MeshScatter ms = tools[14] as MeshScatter;
-        ms.ChooseThis(MetaMap.instance.meshTemplates[index].name);
+        if (ms == null) return;
+        string name = UIManager.instance != null ? UIManager.instance.GetMeshDropdownOptionText(index) : null;
+        if (string.IsNullOrEmpty(name))
+        {
+            if (index < 0 || index >= MetaMap.instance.meshTemplates.Count) return;
+            name = MetaMap.instance.meshTemplates[index].name;
+        }
+        ms.ChooseThis(name);
     }
     public GameObject InsOnePref(GameObject partten)
     {

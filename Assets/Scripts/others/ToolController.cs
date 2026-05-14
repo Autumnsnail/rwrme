@@ -1672,8 +1672,21 @@ public class heightChanger : Tool
             if (bd != null)
             {
                 CtrlZer.instance.checkPoint();
-                bd.height = bd.height + offcc * 2;
+                if(bd.height<=2 && offcc==-1)
+                {
+                    if(bd.layerIndex<=1)return;
+                    bd.height = 1;
+                }else if(bd.height==1 && offcc == 1)
+                {
+                    bd.height = 2;
+                }
+                else
+                {
+                    bd.height = bd.height + offcc * 2;
+                }
                 bd.scatterThis();
+
+                
 
             }
 

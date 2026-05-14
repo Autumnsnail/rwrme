@@ -289,8 +289,13 @@ public class ToolController : MonoBehaviour
         }
             if (lastMiS != miSelected || lastMisCount != misSelected.Count)
         {
+            // 性能：MeRect 子类（Building/MeMesh）的每实例 offset UI 默认隐藏，仅给单选时的当前实例激活。
+            if (lastMiS is MeRect oldR && oldR != null && oldR != miSelected) oldR.SetOffsetUiActive(false);
+
             if (MultiSelectMode)
             {
+                // 多选时不显示任何单实例 offset UI
+                if (miSelected is MeRect curR && curR != null) curR.SetOffsetUiActive(false);
                 UIManager.instance.changeShowingCanvas(null);
                 UIManager.instance.RefreshMultiSelectPanel(misSelected);
             }
@@ -299,6 +304,7 @@ public class ToolController : MonoBehaviour
                 UIManager.instance.RefreshMultiSelectPanel(null);
                 if (miSelected != null)
                 {
+                    if (miSelected is MeRect newR) newR.SetOffsetUiActive(true);
                     Transform can = miSelected.transform.Find("Canvas");
                     if (can != null)
                         UIManager.instance.changeShowingCanvas(can.gameObject.GetComponent<Canvas>());

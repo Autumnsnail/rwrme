@@ -33,6 +33,14 @@ public class Wall : MePath
             positionLine[i] += offset;
     }
 
+    public override string IdPrefix { get { return "wall"; } }
+    public override MapItem Duplicate()
+    {
+        Wall c = Instantiate(MapImporter.instate.WallPref).GetComponent<Wall>();
+        CopyMePathFieldsTo(c);
+        return c;
+    }
+
     public override void rotate(float scaler)
     {
         if (positionLine.Count == 0) return;

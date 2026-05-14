@@ -46,6 +46,35 @@ public class Offroad : MePath
         return "Offroad\nid = " + id + "\nlayerIndex = " + layerIndex + "\noffroadHeightSampleLayer = " + h + "\nanchors = " + (positionLine != null ? positionLine.Count : 0);
     }
 
+    public override void grab(Vector2 offset)
+    {
+        if (positionLine != null)
+            for (int i = 0; i < positionLine.Count; i++) positionLine[i] += offset;
+        if (controlPoints != null)
+            for (int i = 0; i < controlPoints.Count; i++) controlPoints[i] += offset;
+    }
+
+    public override string IdPrefix { get { return "offroad"; } }
+    public override MapItem Duplicate()
+    {
+        Offroad c;
+        if (MapImporter.instate.OffroadPref != null)
+        {
+            GameObject go = Instantiate(MapImporter.instate.OffroadPref);
+            c = go.GetComponent<Offroad>();
+            if (c == null) c = go.AddComponent<Offroad>();
+        }
+        else
+        {
+            GameObject go = new GameObject("Offroad");
+            c = go.AddComponent<Offroad>();
+        }
+        CopyMePathFieldsTo(c);
+        c.curve = curve != null ? new List<bool>(curve) : new List<bool>();
+        c.controlPoints = controlPoints != null ? new List<Vector2>(controlPoints) : new List<Vector2>();
+        return c;
+    }
+
     public void OnEnable()
     {
         scatterThis();

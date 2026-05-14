@@ -7,6 +7,14 @@ public class Rock : MeRect
     {
     }
 
+    public override string IdPrefix { get { return "#rock"; } }
+    public override MapItem Duplicate()
+    {
+        Rock c = Instantiate(MapImporter.instate.RockPref).GetComponent<Rock>();
+        CopyMeRectFieldsTo(c);
+        return c;
+    }
+
     public override string getInfoText()
     {
         string info = "";

@@ -21,6 +21,7 @@ public class UIManager : MonoBehaviour
     GameObject ddPS;//platformSerface
     GameObject ddWTP;//platformSerface
     GameObject ddMt;// mesh templates
+    GameObject ddDecalTemplates;// decal templates
 
 
     Canvas showingCanvas;
@@ -42,6 +43,7 @@ public class UIManager : MonoBehaviour
         ddWT = transform.Find("WallEditor/WallTypes").gameObject;
         ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
         ddMt = transform.Find("MeshEditor/MeshTemplates").gameObject;
+        ddDecalTemplates = transform.Find("DecalEditor/DecalTypes").gameObject;
         CreateMultiSelectPanel();
         /*
         mms.Add(pMM);//0
@@ -185,6 +187,16 @@ public class UIManager : MonoBehaviour
         dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
     }
 
+    public void updateDecalTemplatesDropdown()
+    {
+        TMP_Dropdown dd = ddDecalTemplates.GetComponent<TMP_Dropdown>();
+        int saved = dd.value;
+        dd.ClearOptions();
+        List<DecalTemplate> btp = MetaMap.instance.DecalTemplates;
+        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
+        dd.AddOptions(optionTexts);
+        dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
+    }
     
     public void setGeneralSetting(string s)
     {

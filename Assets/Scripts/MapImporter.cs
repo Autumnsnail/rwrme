@@ -52,6 +52,7 @@ public class MapImporter : MonoBehaviour
     public GameObject SpawnPointPref;
     public GameObject RockPref;
     public GameObject MeshPref;
+    public GameObject DecalPref;
     public GameObject LadderPref;
     public GameObject VehiclePref;
     public GameObject ItemSupplyPref;
@@ -505,6 +506,30 @@ public class MapImporter : MonoBehaviour
                                                             MetaMap.instance.defaultLayer.mapItems.Add(vc);
 
                                                         }
+                                                    }
+                                                }
+                                                if (bRect.GetAttribute("id").StartsWith("decal"))
+                                                {
+                                                    XmlElement rdsc = bRect.FirstChild as XmlElement;
+                                                    if (rdsc == null) continue;
+                                                    var properties = rdsc.InnerText.Split(';')
+                                                        .Where(p => p.Contains('='))
+                                                        .Select(p => p.Split('=', 2))
+                                                        .GroupBy(kv => kv[0].Trim())
+                                                        .ToDictionary(
+                                                            g => g.Key,
+                                                            g => g.Last()[1].Trim()
+                                                        );
+                                                    if(properties.ContainsKey("template"))
+                                                    {
+                                                        Decal decal = Instantiate(DecalPref).GetComponent<Decal>();
+                                                        decal.template_ref = properties["template"];
+                                                        decal.id = MetaMap.instance.getNewItemId("decal");
+                                                        decal.position = position;
+                                                        decal.layerIndex = number;
+                                                        decal.rotation = angle;
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(decal);
+                                                        decal.scatterThis();
                                                     }
                                                 }
                                                 if (bRect.GetAttribute("inkscape:label").StartsWith("#spawnrect"))
@@ -1011,6 +1036,26 @@ public class MapImporter : MonoBehaviour
                     }
                     if (ind+1 >MetaMap.instance.terrainLayerCount) MetaMap.instance.terrainLayerCount = ind+1;
                     MetaMap.instance.terrainAlphaFileName[ind] = properties["alpha"];
+                }
+            }
+            if(rect.GetAttribute("id").StartsWith("decal_template"))
+            {
+                foreach (XmlNode node2 in rect.ChildNodes)
+                {
+                    var properties = node2.InnerText.Split(';')
+                        .Where(p => p.Contains('='))
+                        .Select(p => p.Split('=', 2))
+                        .GroupBy(kv => kv[0].Trim())
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Last()[1].Trim()
+                        );
+                    if (!properties.ContainsKey("name")) continue;
+                    string name = properties["name"];
+                    float width = float.Parse( rect.GetAttribute("width"));
+                    float height = float.Parse( rect.GetAttribute("height"));
+                    DecalTemplate decalTemplate = new DecalTemplate(name, width, height);
+                    MetaMap.instance.DecalTemplates.Add(decalTemplate);
                 }
             }
         }

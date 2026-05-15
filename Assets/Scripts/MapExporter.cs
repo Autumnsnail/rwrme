@@ -443,6 +443,40 @@ public class MapExporter : MonoBehaviour
             }
             if (has) layer.AppendChild(meshLayer);
 
+            //add templated decals here
+            XmlElement decalLayer = xmlDoc.CreateElement("g");
+            decalLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            decalLayer.SetAttribute("id", "layer" + i.ToString() + "decals");
+            decalLayer.SetAttribute("label", inkscapeNs, "decals");
+            decalLayer.SetAttribute("style", "display:inline");
+            has = false;
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Decal decal = mi as Decal;
+                if (decal == null) continue;
+                has = true;
+                XmlElement ekE = xmlDoc.CreateElement("rect");
+                ekE.SetAttribute("label", inkscapeNs, "#decal");
+                ekE.SetAttribute("x", 0.ToString());
+
+                ekE.SetAttribute("y", 0.ToString());
+                ekE.SetAttribute("height", decal.size.y.ToString());
+                ekE.SetAttribute("width", decal.size.x.ToString());
+                ekE.SetAttribute("transform", MathOfRwrme.angleToTransform(decal.rotation, decal.position));
+                ekE.SetAttribute("id", decal.id);
+                ekE.SetAttribute("style", "fill:#ff00ff;fill-opacity:1;stroke:none;display:inline;enable-background:new");
+                
+                XmlElement stpDesc = xmlDoc.CreateElement("desc");
+                stpDesc.SetAttribute("id", "desc_" + decal.id);
+                stpDesc.InnerText = "template = "+decal.template_ref+";";
+                ekE.AppendChild(stpDesc);
+
+                decalLayer.AppendChild(ekE);
+            }
+            if (has) layer.AppendChild(decalLayer);
+
             //add ladders here
             XmlElement LadderLayer = xmlDoc.CreateElement("g");
             LadderLayer.SetAttribute("groupmode", inkscapeNs, "layer");

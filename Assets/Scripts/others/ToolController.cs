@@ -2295,7 +2295,22 @@ public class ItemScatter : Tool
             ToolController.inste.miSelected = ld;
 
         }
+        if (itemType == typeof(MeTree))
+        {
+            MeTree ld = ToolController.inste.InsOnePref(MapImporter.instate.TreePref).GetComponent<MeTree>();
+            ld.id = MetaMap.instance.getNewItemId("tree");
+            ld.layerIndex = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                ld.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+            ld.position = MathOfRwrme.U3dPosToSvgPos(position);
+            ld.size = new Vector2(4.9588485f, 4.4664636f);
+            MetaMap.instance.defaultLayer.mapItems.Add(ld);
+            ld.scatterThis();
+            ToolController.inste.miSelected = ld;
 
+        }
     }
 
     public void setType(System.Type type)

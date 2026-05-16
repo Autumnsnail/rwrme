@@ -300,13 +300,39 @@ public class MeRect :MapItem//this class won,t use directly
     public Vector2 size;//width x and height y
 
     public Vector3 offset;
+
+    // 性能：每个 MeRect 实例在 prefab 里都挂了一个 Canvas + 3 个 TMP_InputField，常驻渲染会拖垮帧率。
+    // 默认隐藏，仅在该实例被选中（miSelected == this）时由 ToolController.Update 切回可见。
+    [System.NonSerialized] GameObject _offsetUiRoot;
+    [System.NonSerialized] bool _offsetUiCached;
+
+    void Awake()
+    {
+        CacheOffsetUi();
+        if (_offsetUiRoot != null) _offsetUiRoot.SetActive(false);
+    }
+
+    void CacheOffsetUi()
+    {
+        if (_offsetUiCached) return;
+        _offsetUiCached = true;
+        Transform t = transform.Find("Canvas");
+        _offsetUiRoot = (t != null) ? t.gameObject : null;
+    }
+
+    public void SetOffsetUiActive(bool on)
+    {
+        CacheOffsetUi();
+        if (_offsetUiRoot != null) _offsetUiRoot.SetActive(on);
+        if (on) updateOffsetShow();
+    }
+
     public void appOffset()
     {
         GameObject go = this.gameObject;
         if (go != null)
         {
             //offset :x 1 y 1 z -1
-
             go.transform.localPosition = go.transform.localPosition + new Vector3(offset.x, offset.y, -offset.z);
         }
     }
@@ -326,25 +352,37 @@ public class MeRect :MapItem//this class won,t use directly
         TMP_InputField xText = canvas.transform.Find("x")?.GetComponent<TMP_InputField>();
         TMP_InputField yText = canvas.transform.Find("y")?.GetComponent<TMP_InputField>();
         TMP_InputField zText = canvas.transform.Find("z")?.GetComponent<TMP_InputField>();
-        if (xText != null) xText.text = offset.x.ToString();
-        if (yText != null) yText.text = offset.y.ToString();
-        if (zText != null) zText.text = offset.z.ToString();
+        // SetTextWithoutNotify 切断 setter → onValueChanged → setOffset* → scatterThis 的回环
+        if (xText != null) xText.SetTextWithoutNotify(offset.x.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (yText != null) yText.SetTextWithoutNotify(offset.y.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (zText != null) zText.SetTextWithoutNotify(offset.z.ToString(System.Globalization.CultureInfo.InvariantCulture));
     }
 
     public void setOffsetx(string value)
     {
-        offset.x = float.Parse(value);
-        scatterThis();
+        if (float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float f))
+        {
+            offset.x = f;
+            scatterThis();
+        }
     }
 
-        public void setOffsety(string value)
+    public void setOffsety(string value)
     {
-        offset.y = float.Parse(value);
-        scatterThis();
-    }    public void setOffsetz(string value)
+        if (float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float f))
+        {
+            offset.y = f;
+            scatterThis();
+        }
+    }
+
+    public void setOffsetz(string value)
     {
-        offset.z = float.Parse(value);
-        scatterThis();
+        if (float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float f))
+        {
+            offset.z = f;
+            scatterThis();
+        }
     }
 
     public MeRect(Vector2 pos,float r,Vector2 s,string key,int lI)

@@ -23,6 +23,23 @@ public class MapImporter : MonoBehaviour
 
     public static MapImporter instate;
 
+    // 防御性解析 "x y z"：用空白分隔（含 tab/换行），跳过空串，区域不变（Invariant）；不抛异常。
+    static readonly char[] s_vec3Separators = new[] { ' ', '\t', '\n', '\r' };
+    static bool TryParseVector3(string s, out Vector3 v)
+    {
+        v = Vector3.zero;
+        if (string.IsNullOrWhiteSpace(s)) return false;
+        string[] parts = s.Split(s_vec3Separators, System.StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 3) return false;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var st = System.Globalization.NumberStyles.Float;
+        if (!float.TryParse(parts[0], st, inv, out float x)) return false;
+        if (!float.TryParse(parts[1], st, inv, out float y)) return false;
+        if (!float.TryParse(parts[2], st, inv, out float z)) return false;
+        v = new Vector3(x, y, z);
+        return true;
+    }
+
     [HideInInspector] public float pageWorldX = 1024f;
     [HideInInspector] public float pageWorldZ = 1024f;
     [HideInInspector] public float svgCanvasSize = 2048f;
@@ -350,13 +367,16 @@ public class MapImporter : MonoBehaviour
                                                     foreach (XmlNode de in r.ChildNodes)
                                                     {
                                                         //Debug.Log("MapImporter : " + de.InnerText);
+                                                        // 仅保留 #offset 这类已知"带 # 数据条目"；其它 # 开头一律视为注释
                                                         var properties = de.InnerText.Split(';')
                                                             .Select(p => p.Trim())
-                                                            .Where(p => p.Length > 0 && !p.StartsWith("#"))
+                                                            .Where(p => p.Length > 0 && (!p.StartsWith("#") || p.StartsWith("#offset")))
                                                             .Where(p => p.Contains('='))
+                                                            .Select(p => p.StartsWith("#offset") ? p.Substring(1) : p)
                                                             .Select(p => p.Split('=', 2))
                                                             .Where(kv => kv.Length == 2 && kv[0].Trim().Length > 0)
-                                                            .ToDictionary(kv => kv[0].Trim(), kv => kv[1].Trim());
+                                                            .GroupBy(kv => kv[0].Trim())
+                                                            .ToDictionary(g => g.Key, g => g.Last()[1].Trim());
                                                         if (properties.ContainsKey("height"))
                                                         {
                                                             BheightF = Mathf.RoundToInt(float.Parse(properties["height"]));
@@ -384,10 +404,7 @@ public class MapImporter : MonoBehaviour
                                                         }
                                                         if(properties.ContainsKey("offset"))
                                                         {
-                                                            //convent properties["offset"]like "0 -0.6 0" to vector3
-                                                            string[] parts = properties["offset"].Split(' ');
-                                                            offset = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
-                                                            
+                                                            TryParseVector3(properties["offset"], out offset);
                                                         }
 
                                                     }
@@ -543,9 +560,14 @@ public class MapImporter : MonoBehaviour
                                                     XmlElement thdesc = descnode as XmlElement;
                                                     if (thdesc == null) continue;
                                                    // Debug.Log("MapImporter : " + thdesc.InnerText);
+                                                    // 仅保留 #offset 这类已知"带 # 数据条目"；其它 # 开头一律视为注释
                                                     var properties = thdesc.InnerText.Split(';')
+                                                        .Select(p => p.Trim())
+                                                        .Where(p => p.Length > 0 && (!p.StartsWith("#") || p.StartsWith("#offset")))
                                                         .Where(p => p.Contains('='))
+                                                        .Select(p => p.StartsWith("#offset") ? p.Substring(1) : p)
                                                         .Select(p => p.Split('=', 2))
+                                                        .Where(kv => kv.Length == 2 && kv[0].Trim().Length > 0)
                                                         .GroupBy(kv => kv[0].Trim())
                                                         .ToDictionary(
                                                             g => g.Key,
@@ -564,10 +586,8 @@ public class MapImporter : MonoBehaviour
 
                                                         if(properties.ContainsKey("offset"))
                                                         {
-                                                            //convent properties["offset"]like "0 -0.6 0" to vector3
-                                                            string[] parts = properties["offset"].Split(' ');
-                                                            ms.offset = new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
-                                                            
+                                                            if (TryParseVector3(properties["offset"], out Vector3 mo))
+                                                                ms.offset = mo;
                                                         }
 
                                                         ms.position = position;

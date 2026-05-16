@@ -52,11 +52,13 @@ public class MapImporter : MonoBehaviour
     public GameObject SpawnPointPref;
     public GameObject RockPref;
     public GameObject MeshPref;
+    public GameObject DecalPref;
     public GameObject LadderPref;
     public GameObject VehiclePref;
     public GameObject ItemSupplyPref;
     public GameObject CratePref;
     public GameObject OffroadPref;
+    public GameObject TreePref;
 
     public Material cbdTl;
 
@@ -415,6 +417,7 @@ public class MapImporter : MonoBehaviour
                                                     gc.reinit(BheightF, bmaterial, position, angle, new Vector2(cWidth, cHeight), MetaMap.instance.getNewItemId("building"), number);
                                                     gc.roof = roof;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(gc);
+                                                    continue;
                                                 }
                                                 if (bRect.GetAttribute("id").StartsWith("item_supply"))
                                                 {
@@ -451,6 +454,7 @@ public class MapImporter : MonoBehaviour
                                                         }
 
                                                     }
+                                                    continue;
                                                 }
                                                 if (bRect.GetAttribute("id").StartsWith("crate"))
                                                 {
@@ -466,6 +470,7 @@ public class MapImporter : MonoBehaviour
                                                         cT.layerIndex = number;
                                                             MetaMap.instance.defaultLayer.mapItems.Add(cT);
                                                     
+                                                    continue;
                                                 }
                                                 if (bRect.GetAttribute("id").StartsWith("spawn"))
                                                 {
@@ -506,6 +511,32 @@ public class MapImporter : MonoBehaviour
 
                                                         }
                                                     }
+                                                    continue;
+                                                }
+                                                if (bRect.GetAttribute("id").StartsWith("decal"))
+                                                {
+                                                    XmlElement rdsc = bRect.FirstChild as XmlElement;
+                                                    if (rdsc == null) continue;
+                                                    var properties = rdsc.InnerText.Split(';')
+                                                        .Where(p => p.Contains('='))
+                                                        .Select(p => p.Split('=', 2))
+                                                        .GroupBy(kv => kv[0].Trim())
+                                                        .ToDictionary(
+                                                            g => g.Key,
+                                                            g => g.Last()[1].Trim()
+                                                        );
+                                                    if(properties.ContainsKey("template"))
+                                                    {
+                                                        Decal decal = Instantiate(DecalPref).GetComponent<Decal>();
+                                                        decal.template_ref = properties["template"];
+                                                        decal.id = MetaMap.instance.getNewItemId("decal");
+                                                        decal.position = position;
+                                                        decal.layerIndex = number;
+                                                        decal.rotation = angle;
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(decal);
+                                                        decal.scatterThis();
+                                                    }
+                                                    continue;
                                                 }
                                                 if (bRect.GetAttribute("inkscape:label").StartsWith("#spawnrect"))
                                                 {
@@ -523,15 +554,19 @@ public class MapImporter : MonoBehaviour
 
                                                         MetaMap.instance.defaultLayer.mapItems.Add(sp);
                                                     }
+                                                    continue;
                                                 }
-                                                if (bRect.GetAttribute("inkscape:label").StartsWith("#rock"))
+                                                if (bRect.GetAttribute("inkscape:label").StartsWith("rock"))
                                                 {
                                                     GameObject go = Instantiate(RockPref);
                                                     Rock rc = go.GetComponent<Rock>();
+                                                    rc.rotation = angle;
                                                     rc.position = position;
                                                     rc.id = MetaMap.instance.getNewItemId("#rock");
                                                     rc.layerIndex = number;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(rc);
+                                                    rc.scatterThis();
+                                                    continue;
                                                 }
                                                 if (bRect.GetAttribute("inkscape:label").StartsWith("#ladder"))
                                                 {
@@ -543,6 +578,7 @@ public class MapImporter : MonoBehaviour
                                                     ldr.id = MetaMap.instance.getNewItemId("#ladder");
                                                     ldr.layerIndex = number;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(ldr);
+                                                    continue;
                                                 }
                                                 if (bRect.GetAttribute("inkscape:label").StartsWith("#mesh"))
                                                 {
@@ -599,7 +635,31 @@ public class MapImporter : MonoBehaviour
                                                         ms.templated = true;
                                                         MetaMap.instance.defaultLayer.mapItems.Add(ms);
                                                     }
+                                                    continue;
                                                 }
+                                                //if the rect dosent have a child node name desc,it may have other child node,may not, then it is a tree
+                                                if (bRect.ChildNodes.Count > 0)
+                                                {
+                                                    foreach (XmlNode child in bRect.ChildNodes)
+                                                    {
+                                                        if (child.Name == "desc")
+                                                        {
+                                                            continue;
+                                                        }
+                                                    }
+                                                }
+                                                //finally we got tree:
+                                                GameObject tro = Instantiate(TreePref);
+                                                MeTree tree = tro.GetComponent<MeTree>();
+                                                tree.position = position;
+                                                tree.rotation = angle;
+                                                tree.id = MetaMap.instance.getNewItemId("tree");
+                                                tree.layerIndex = number;
+                                                MetaMap.instance.defaultLayer.mapItems.Add(tree);
+                                                tree.scatterThis();
+                                                continue;
+
+
                                             }
                                         }
                                         if (r.Name == "g")
@@ -985,7 +1045,7 @@ public class MapImporter : MonoBehaviour
                     float dep = 1.0f;
                     float hei = 1.0f;
                     if (properties.ContainsKey("depth")) dep = float.Parse( properties["depth"] );
-                    if (properties.ContainsKey("height")) dep = float.Parse(properties["height"]);
+                    if (properties.ContainsKey("height")) hei = float.Parse(properties["height"]);
                     WallType wt = new WallType(name, c1, dep,hei);
                     MetaMap.instance.wallTypes.Add(wt);
                 }
@@ -1011,6 +1071,26 @@ public class MapImporter : MonoBehaviour
                     }
                     if (ind+1 >MetaMap.instance.terrainLayerCount) MetaMap.instance.terrainLayerCount = ind+1;
                     MetaMap.instance.terrainAlphaFileName[ind] = properties["alpha"];
+                }
+            }
+            if(rect.GetAttribute("id").StartsWith("decal_template"))
+            {
+                foreach (XmlNode node2 in rect.ChildNodes)
+                {
+                    var properties = node2.InnerText.Split(';')
+                        .Where(p => p.Contains('='))
+                        .Select(p => p.Split('=', 2))
+                        .GroupBy(kv => kv[0].Trim())
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Last()[1].Trim()
+                        );
+                    if (!properties.ContainsKey("name")) continue;
+                    string name = properties["name"];
+                    float width = float.Parse( rect.GetAttribute("width"));
+                    float height = float.Parse( rect.GetAttribute("height"));
+                    DecalTemplate decalTemplate = new DecalTemplate(name, width, height);
+                    MetaMap.instance.DecalTemplates.Add(decalTemplate);
                 }
             }
         }

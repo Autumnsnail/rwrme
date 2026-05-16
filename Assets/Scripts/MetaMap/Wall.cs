@@ -87,9 +87,9 @@ public class Wall : MePath
             if (wt != null)
             {
                 dep = wt.depth;
-                if(wt.depth == -1f)
+                if(wt.depth < 0.5f)
                 {
-                    dep = 0.1f;
+                    dep = 0.5f;
                 }
                 hei = wt.height;
                 mtl = wt.material;

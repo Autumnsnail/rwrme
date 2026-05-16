@@ -89,6 +89,7 @@ public class ToolController : MonoBehaviour
         tools.Add(new HeightBush("HBS")); //tool 16 = terrainPainter
         tools.Add(new HeightSmudge("HS")); //tool 17 = terrainSmudge
         tools.Add(new OffraodDrawer("offraodDrawer")); //tool 18 = offroad path drawer
+        tools.Add(new DecalScatter("DecalScatter")); //tool 19 = decal scatter
 
         currentTool = tools[0];
 
@@ -717,6 +718,12 @@ public class ToolController : MonoBehaviour
             name = MetaMap.instance.meshTemplates[index].name;
         }
         ms.ChooseThis(name);
+    }
+
+    public void setDecalScatterTool(int index)
+    {
+        DecalScatter ms = tools[19] as DecalScatter;
+        ms.ChooseThis(MetaMap.instance.DecalTemplates[index].name);
     }
     public GameObject InsOnePref(GameObject partten)
     {
@@ -2272,7 +2279,22 @@ public class ItemScatter : Tool
             ToolController.inste.miSelected = ld;
 
         }
+        if (itemType == typeof(MeTree))
+        {
+            MeTree ld = ToolController.inste.InsOnePref(MapImporter.instate.TreePref).GetComponent<MeTree>();
+            ld.id = MetaMap.instance.getNewItemId("tree");
+            ld.layerIndex = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                ld.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+            ld.position = MathOfRwrme.U3dPosToSvgPos(position);
+            ld.size = new Vector2(4.9588485f, 4.4664636f);
+            MetaMap.instance.defaultLayer.mapItems.Add(ld);
+            ld.scatterThis();
+            ToolController.inste.miSelected = ld;
 
+        }
     }
 
     public void setType(System.Type type)
@@ -2316,6 +2338,39 @@ public class MeshScatter : Tool
     }
 
 }
+
+
+public class DecalScatter : Tool
+{
+    string templateName = null;
+    public DecalScatter(string name) : base(name)
+    {
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        CtrlZer.instance.checkPoint();
+        Decal decal = ToolController.inste.InsOnePref(MapImporter.instate.DecalPref).GetComponent<Decal>();
+        decal.id = MetaMap.instance.getNewItemId("decal");
+        decal.layerIndex = 1;
+        if (hitO.GetComponent<MapItem>() != null)
+        {
+        decal.layerIndex = hitO.GetComponent<MapItem>().layerIndex + 1;
+        }
+        decal.position = MathOfRwrme.U3dPosToSvgPos(position);
+        decal.template_ref = templateName;
+        MetaMap.instance.defaultLayer.mapItems.Add(decal);
+        decal.scatterThis();
+        ToolController.inste.miSelected = decal;
+    }
+
+    public void ChooseThis(string name)
+    {
+        templateName = name;
+        ToolController.inste.setToolWithIndex(19);
+    }
+}
+
 public class Eraser : Tool
 {
     private ToolController controller;

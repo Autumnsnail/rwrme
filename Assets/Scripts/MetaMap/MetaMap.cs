@@ -25,6 +25,8 @@ public class MetaMap : MonoBehaviour
     public List<WallType> wallTypes;
     public List<MeshTemplate> meshTemplates;
 
+    public List<DecalTemplate> DecalTemplates;
+
     public List<string> allowedExtensions = new List<string> { "default"};//import later
 
     public int terrainLayerCount = 4;
@@ -46,6 +48,7 @@ public class MetaMap : MonoBehaviour
 
         CombinedAlpha = new Texture2D(2, 2);
         meshTemplates = new List<MeshTemplate>();
+        DecalTemplates = new List<DecalTemplate>();
         //setBts();
         //setWts();
 
@@ -60,6 +63,7 @@ public class MetaMap : MonoBehaviour
         return startWith + n.ToString() + "rwrme";
     }
 
+    // manual add is abborded now
     private void setBts()
     {
         //for tests until we get way import this
@@ -495,6 +499,22 @@ public class WallType:mapItemType
     }
 }
 
+public class DecalTemplate
+{
+    public string name =  "empty";
+
+    public Color color=Color.white;
+
+    public Vector2 size ;
+
+    public DecalTemplate(string m_name, float sizeX ,float sizeY)
+    {
+        name = m_name;
+        color = MathOfRwrme.StringToColor(name);
+        size.x = sizeX;
+        size.y = sizeY;
+    }
+}
 public class MeshTemplate
 {
     public string name="empty";

@@ -57,6 +57,17 @@ public class MeMesh : MeRect
     {
         //disable
     }
+
+    public override string IdPrefix { get { return "#mesh"; } }
+    public override MapItem Duplicate()
+    {
+        MeMesh c = Instantiate(MapImporter.instate.MeshPref).GetComponent<MeMesh>();
+        CopyMeRectFieldsTo(c);
+        c.templated = templated;
+        c.template_ref = template_ref;
+        return c;
+    }
+
     public override string getInfoText()
     {
         string ou="Mesh\n";

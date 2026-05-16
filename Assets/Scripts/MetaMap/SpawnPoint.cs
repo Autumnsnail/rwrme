@@ -7,6 +7,14 @@ public class SpawnPoint : MeRect
     {
     }
 
+    public override string IdPrefix { get { return "#spawnrect"; } }
+    public override MapItem Duplicate()
+    {
+        SpawnPoint c = Instantiate(MapImporter.instate.SpawnPointPref).GetComponent<SpawnPoint>();
+        CopyMeRectFieldsTo(c);
+        return c;
+    }
+
     public override string getInfoText()
     {
         string info = "";

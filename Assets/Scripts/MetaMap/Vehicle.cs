@@ -11,6 +11,16 @@ public class Vehicle : MeRect
     public bool taged=false;
     public string key = string.Empty;//if(taged) this is tag instead of key
 
+    public override string IdPrefix { get { return "spawn_vehicle"; } }
+    public override MapItem Duplicate()
+    {
+        Vehicle c = Instantiate(MapImporter.instate.VehiclePref).GetComponent<Vehicle>();
+        CopyMeRectFieldsTo(c);
+        c.taged = taged;
+        c.key = key;
+        return c;
+    }
+
     public GameObject toggle;
     public GameObject nameText; 
     

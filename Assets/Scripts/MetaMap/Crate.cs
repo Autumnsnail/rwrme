@@ -8,6 +8,14 @@ public class Crate : MeRect
     {
     }
 
+    public override string IdPrefix { get { return "crate"; } }
+    public override MapItem Duplicate()
+    {
+        Crate c = Instantiate(MapImporter.instate.CratePref).GetComponent<Crate>();
+        CopyMeRectFieldsTo(c);
+        return c;
+    }
+
     void Start()
     {
     }

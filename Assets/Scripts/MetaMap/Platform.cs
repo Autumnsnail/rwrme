@@ -47,6 +47,21 @@ public class Platform : PathPair
         for (int i = 0; i < positinLineL.Count; i++) positinLineL[i] += offset;
     }
 
+    public override string IdPrefix { get { return "platform"; } }
+    public override MapItem Duplicate()
+    {
+        Platform c = Instantiate(MapImporter.instate.PlatformPref).GetComponent<Platform>();
+        CopyPathPairFieldsTo(c);
+        c.base_wall_template = base_wall_template;
+        c.wall_template = wall_template;
+        c.top_material = top_material;
+        c.wall_height = wall_height;
+        c.isBridge = isBridge;
+        c.isDeck = isDeck;
+        c.height = height;
+        return c;
+    }
+
     public override void rotate(float scaler)
     {
         Vector2 center = Vector2.zero;

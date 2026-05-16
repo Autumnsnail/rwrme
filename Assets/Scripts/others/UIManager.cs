@@ -22,6 +22,8 @@ public class UIManager : MonoBehaviour
     GameObject ddWTP;//platformSerface
     GameObject ddMt;// mesh templates
     GameObject ddDecalTemplates;// decal templates
+    TMP_InputField meshSearchField;
+    List<MeshTemplate> meshTemplatesCache;
 
 
     Canvas showingCanvas;
@@ -179,12 +181,116 @@ public class UIManager : MonoBehaviour
     public void updateMTD()
     {
         TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
-        int saved = dd.value;
+        string preserved = (dd.options.Count > 0 && dd.value >= 0 && dd.value < dd.options.Count)
+            ? dd.options[dd.value].text : null;
+
+        meshTemplatesCache = MetaMap.instance.meshTemplates;
+        EnsureMeshSearchField();
+        ApplyMeshFilter(meshSearchField != null ? meshSearchField.text : string.Empty, preserved);
+    }
+
+    void EnsureMeshSearchField()
+    {
+        if (meshSearchField != null || ddMt == null) return;
+
+        Transform parent = ddMt.transform.parent;
+        RectTransform ddRect = ddMt.GetComponent<RectTransform>();
+        if (parent == null || ddRect == null) return;
+
+        GameObject searchGO = new GameObject("MeshSearch", typeof(RectTransform));
+        searchGO.transform.SetParent(parent, false);
+
+        RectTransform sRect = searchGO.GetComponent<RectTransform>();
+        sRect.anchorMin = ddRect.anchorMin;
+        sRect.anchorMax = ddRect.anchorMax;
+        sRect.pivot = ddRect.pivot;
+        sRect.sizeDelta = new Vector2(ddRect.sizeDelta.x, 26);
+        sRect.anchoredPosition = ddRect.anchoredPosition
+            + new Vector2(0, ddRect.sizeDelta.y * 0.5f + sRect.sizeDelta.y * 0.5f + 4);
+
+        Image bg = searchGO.AddComponent<Image>();
+        bg.color = new Color(0.95f, 0.95f, 0.95f, 1f);
+
+        meshSearchField = searchGO.AddComponent<TMP_InputField>();
+
+        GameObject textArea = new GameObject("TextArea", typeof(RectTransform), typeof(RectMask2D));
+        textArea.transform.SetParent(searchGO.transform, false);
+        RectTransform taR = textArea.GetComponent<RectTransform>();
+        taR.anchorMin = Vector2.zero; taR.anchorMax = Vector2.one;
+        taR.offsetMin = new Vector2(6, 2); taR.offsetMax = new Vector2(-6, -2);
+
+        GameObject placeholder = new GameObject("Placeholder", typeof(RectTransform));
+        placeholder.transform.SetParent(textArea.transform, false);
+        RectTransform phRect = placeholder.GetComponent<RectTransform>();
+        phRect.anchorMin = Vector2.zero; phRect.anchorMax = Vector2.one;
+        phRect.offsetMin = Vector2.zero; phRect.offsetMax = Vector2.zero;
+        TextMeshProUGUI ph = placeholder.AddComponent<TextMeshProUGUI>();
+        ph.text = "搜索 mesh...";
+        ph.fontSize = 13;
+        ph.color = new Color(0.5f, 0.5f, 0.5f);
+        ph.alignment = TextAlignmentOptions.MidlineLeft;
+        if (ph.font == null) ph.font = TMP_Settings.defaultFontAsset;
+
+        GameObject textGO = new GameObject("Text", typeof(RectTransform));
+        textGO.transform.SetParent(textArea.transform, false);
+        RectTransform tRect = textGO.GetComponent<RectTransform>();
+        tRect.anchorMin = Vector2.zero; tRect.anchorMax = Vector2.one;
+        tRect.offsetMin = Vector2.zero; tRect.offsetMax = Vector2.zero;
+        TextMeshProUGUI tmp = textGO.AddComponent<TextMeshProUGUI>();
+        tmp.fontSize = 13;
+        tmp.color = Color.black;
+        tmp.alignment = TextAlignmentOptions.MidlineLeft;
+        if (tmp.font == null) tmp.font = TMP_Settings.defaultFontAsset;
+
+        meshSearchField.textComponent = tmp;
+        meshSearchField.placeholder = ph;
+        meshSearchField.textViewport = taR;
+
+        meshSearchField.onValueChanged.AddListener(s => ApplyMeshFilter(s, null));
+    }
+
+    void ApplyMeshFilter(string filter, string preferredText)
+    {
+        if (ddMt == null) return;
+        TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
+        if (dd == null || meshTemplatesCache == null) return;
+
+        string current = preferredText;
+        if (current == null && dd.options.Count > 0 && dd.value >= 0 && dd.value < dd.options.Count)
+            current = dd.options[dd.value].text;
+
+        List<string> opts;
+        if (string.IsNullOrEmpty(filter))
+        {
+            opts = meshTemplatesCache.Select(t => t.name).ToList();
+        }
+        else
+        {
+            string f = filter.ToLowerInvariant();
+            opts = meshTemplatesCache
+                .Select(t => t.name)
+                .Where(n => !string.IsNullOrEmpty(n) && n.ToLowerInvariant().Contains(f))
+                .ToList();
+        }
+
         dd.ClearOptions();
-        List<MeshTemplate> btp = MetaMap.instance.meshTemplates;
-        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
-        dd.AddOptions(optionTexts);
-        dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
+        dd.AddOptions(opts);
+
+        if (opts.Count > 0)
+        {
+            int idx = string.IsNullOrEmpty(current) ? 0 : opts.IndexOf(current);
+            if (idx < 0) idx = 0;
+            dd.SetValueWithoutNotify(idx);
+            dd.RefreshShownValue();
+        }
+    }
+
+    public string GetMeshDropdownOptionText(int index)
+    {
+        if (ddMt == null) return null;
+        TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
+        if (dd == null || index < 0 || index >= dd.options.Count) return null;
+        return dd.options[index].text;
     }
 
     public void updateDecalTemplatesDropdown()

@@ -7,6 +7,14 @@ public class Ladder : MeRect
     {
     }
 
+    public override string IdPrefix { get { return "#ladder"; } }
+    public override MapItem Duplicate()
+    {
+        Ladder c = Instantiate(MapImporter.instate.LadderPref).GetComponent<Ladder>();
+        CopyMeRectFieldsTo(c);
+        return c;
+    }
+
     public override string getInfoText()
     {
         string info = "";

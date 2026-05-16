@@ -27,6 +27,16 @@ public class Building : MeRect
         height = h;
         material = m;
     }
+
+    public override string IdPrefix { get { return "building"; } }
+    public override MapItem Duplicate()
+    {
+        Building c = Instantiate(MapImporter.instate.BuildingPref).GetComponent<Building>();
+        CopyMeRectFieldsTo(c);
+        c.height = height;
+        c.roof = roof;
+        return c;
+    }
     public void scaleAxis(float scaler, int axis)
     {
         if (axis == 0)

@@ -5434,44 +5434,44 @@ show_base_names_in_map_view = 0;</desc>
   </g>
   <g inkscape:groupmode="layer" id="layer1defaultlayer" inkscape:label="layer1" style="display:inline">
     <g inkscape:groupmode="layer" id="layer1platforms" inkscape:label="platforms" style="display:inline">
-      <g id="gp2928">
+      <g id="gp2936">
         <path sodipodi:nodetypes="cccccccccccccccccccccccccccccccc" inkscape:label="platform1rwrme_platform" inkscape:connector-curvature="0" id="platform1rwrme_s" d="m 882.1327,1079.09 -4.265625,-5.033691 2.558838,-7.590698 2.55896,-7.590698 -0.810791,-8.822998 -0.8106689,-8.822998 0.6104736,-6.23938 0.6103516,-6.239258 0.6103516,-6.239319 0.6103516,-6.239319 -1.279785,-6.014526 -0.4887695,-4.468506 4.996094,-7.089355 -0.8092041,-4.792175 4.603638,-8.910095 -1.418701,-5.143555 4.440552,-8.827698 -1.232788,-6.564819 2.827026,-10.27716 -0.1030273,-9.460449 2.256592,-12.65582 8.962036,-8.852722 11.22083,-5.347534 9.303467,-8.213989 11.83887,-4.291687 11.48511,0.1305542 12.80432,-3.373169 8.904785,-1.597961 6.557617,1.841858 4.053833,4.124023 2.577271,1.29187 2.54248,1.274292" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2928">type = start;</desc>
+          <desc id="desc2936">type = start;</desc>
         </path>
         <path sodipodi:nodetypes="cccccccccccccccccccccccccccccccc" label="" inkscape:connector-curvature="0" id="platform1rwrme" d="m 883.2014,1079.012 -0.8624268,-8.157104 2.34082,-6.624512 2.34082,-6.624512 0.4482422,-11.8717 4.157349,-8.515137 -0.7454834,-4.702393 3.280396,-4.946533 0.7835693,-6.517151 4.173828,-4.354004 2.168701,-6.158569 3.957031,-5.804993 -0.5725098,-6.129761 3.121338,-6.54071 -3.241333,-8.47998 4.048218,-6.079407 3.152832,-3.111145 1.264282,-10.66168 -2.466309,-3.335327 3.212891,-9.838135 7.778687,-6.055237 4.230835,-8.215149 7.394043,-2.539124 6.682861,-5.439514 7.954834,-0.5332642 7.864746,-6.767822 7.941284,1.291687 10.97314,-5.37616 5.963013,0.4532471 8.193237,3.169189 0.4672852,-4.721191 -1.43457,-6.451599" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2928">type = end;top_material = terrain;wall_template = DummyWall1;base_wall_template = CliffWall2;</desc>
+          <desc id="desc2936">type = end;top_material = terrain;wall_template = DummyWall1;base_wall_template = CliffWall2;</desc>
         </path>
       </g>
-      <g id="gp2929">
+      <g id="gp2937">
         <path sodipodi:nodetypes="cc" inkscape:label="platform2rwrme_platform" inkscape:connector-curvature="0" id="platform2rwrme_s" d="m 1056.067,571.9141 87.6178,3.866821" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2929">type = deck_start;</desc>
+          <desc id="desc2937">type = deck_start;</desc>
         </path>
         <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform2rwrme" d="m 1055.929,578.5156 86.82727,3.604492" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2929">type = deck_end;height = 0.35;top_material = wood;base_wall_template = SidePanelWall1;</desc>
+          <desc id="desc2937">type = deck_end;height = 0.35;top_material = wood;base_wall_template = SidePanelWall1;</desc>
         </path>
       </g>
-      <g id="gp2930">
+      <g id="gp2938">
         <path sodipodi:nodetypes="ccccccccccc" inkscape:label="platform3rwrme_platform" inkscape:connector-curvature="0" id="platform3rwrme_s" d="m 1171.982,783.8294 -2.985107,-3.775757 -18.26978,-2.395447 2.378418,-6.989563 -2.069824,-1.942078 -2.252808,-0.3369141 -4.727783,3.900452 -27.32886,8.512329 5.817871,26.96625 3.549561,6.061584 3.365234,4.228943" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2930">type = deck_start;</desc>
+          <desc id="desc2938">type = deck_start;</desc>
         </path>
         <path sodipodi:nodetypes="ccccccccccc" label="" inkscape:connector-curvature="0" id="platform3rwrme" d="m 1182.002,777.2315 -4.379028,-5.657104 -16.15356,-1.836487 6.300415,-9.976013 -13.17639,-16.79425 -17.37952,13.45599 0.6279297,7.372131 -32.32861,9.979858 7.278809,33.89148 -5.023193,9.169922 9.121826,11.51978" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2930">type = deck_end;height = 4;top_material = pavement;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.5;</desc>
+          <desc id="desc2938">type = deck_end;height = 4;top_material = pavement;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.5;</desc>
         </path>
       </g>
-      <g id="gp2931">
+      <g id="gp2939">
         <path sodipodi:nodetypes="ccccccccccccc" inkscape:label="platform4rwrme_platform" inkscape:connector-curvature="0" id="platform4rwrme_s" d="m 1135.094,825.1492 3.426758,4.418945 5.047729,4.884949 10.22095,-2.988159 10.22083,-2.987976 9.562012,-3.256775 9.56189,-3.256531 3.358887,-2.295715 1.75769,-3.641479 -1.39624,-2.471191 -7.353882,0.6540527 2.002808,-18.31689 -2.960938,-3.795105" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2931">type = deck_start;</desc>
+          <desc id="desc2939">type = deck_start;</desc>
         </path>
         <path sodipodi:nodetypes="ccccccccccccc" label="" inkscape:connector-curvature="0" id="platform4rwrme" d="m 1122.734,835.0537 9.029907,11.59229 9.591309,-2.694275 9.459106,7.654541 17.84778,-5.04657 17.07935,-4.982361 4.452026,-8.122742 6.733398,-1.084106 17.19165,-13.69507 -13.19287,-16.78113 -11.18494,3.75647 2.044067,-16.12866 -4.457886,-5.595032" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2931">type = deck_end;height = 3.2;top_material = pavement;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.5;</desc>
+          <desc id="desc2939">type = deck_end;height = 3.2;top_material = pavement;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.5;</desc>
         </path>
       </g>
-      <g id="gp2932">
+      <g id="gp2940">
         <path sodipodi:nodetypes="ccc" inkscape:label="platform5rwrme_platform" inkscape:connector-curvature="0" id="platform5rwrme_s" d="m 721.5173,1283.892 24.75427,27.44336 21.92334,24.54834" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2932">type = start;</desc>
+          <desc id="desc2940">type = start;</desc>
         </path>
         <path sodipodi:nodetypes="ccc" label="" inkscape:connector-curvature="0" id="platform5rwrme" d="m 662.0183,1334.416 23.24951,26.08948 23.39307,26.823" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc2932">type = end;top_material = pavement;wall_template = StoneWall1;base_wall_template = StoneWall1;</desc>
+          <desc id="desc2940">type = end;top_material = pavement;wall_template = StoneWall1;base_wall_template = StoneWall1;</desc>
         </path>
       </g>
     </g>
@@ -5581,250 +5581,250 @@ show_base_names_in_map_view = 0;</desc>
     </g>
     <g inkscape:groupmode="layer" id="layer1walls" inkscape:label="walls" style="display:inline">
       <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall40rwrme" d="m 662.4741,1110.615 -6.70282,-0.09594727 0.01947021,-9.397339" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1503">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall41rwrme" d="m 655.7908,1101.122 0.01000977,-4.256104" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1504">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall42rwrme" d="m 655.8004,1096.866 0.08972168,-17.34924 2.202637,-0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1505">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall43rwrme" d="m 658.0927,1079.511 2.291565,0.01904297" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1506">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall44rwrme" d="m 660.4192,1079.529 4.155823,-0.02001953" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1507">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall45rwrme" d="m 672.2184,1079.581 -1.981262,0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1508">template = RuinWall1;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall41rwrme" d="m 655.7908,1101.122 0.01000977,-4.256104" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1508">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall46rwrme" d="m 688.1693,1079.707 -2.257385,0" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1509">template = RuinWall1;</desc>
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall42rwrme" d="m 655.8004,1096.866 0.08972168,-17.34924 2.202637,-0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1509">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall47rwrme" d="m 698.0568,1079.764 -5.709961,-0.02404785" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall43rwrme" d="m 658.0927,1079.511 2.291565,0.01904297" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1510">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall48rwrme" d="m 706.3561,1079.809 -5.778931,-0.02502441" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall44rwrme" d="m 660.4192,1079.529 4.155823,-0.02001953" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1511">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall49rwrme" d="m 712.3472,1079.835 -3.71228,-0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1512">template = RuinWall2;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall45rwrme" d="m 672.2184,1079.581 -1.981262,0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1512">template = RuinWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall50rwrme" d="m 718.8801,1085.401 0.02020264,-5.580444 -2.969177,0.04394531" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1513">template = RuinWall2;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall46rwrme" d="m 688.1693,1079.707 -2.257385,0" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1513">template = RuinWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall51rwrme" d="m 700.5772,1079.784 -2.520325,-0.02001953" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall47rwrme" d="m 698.0568,1079.764 -5.709961,-0.02404785" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1514">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall52rwrme" d="m 708.6349,1079.827 -2.27887,-0.01794434" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall48rwrme" d="m 706.3561,1079.809 -5.778931,-0.02502441" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1515">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall53rwrme" d="m 718.8427,1087.096 0.03741455,-1.694458" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall49rwrme" d="m 712.3472,1079.835 -3.71228,-0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1516">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall54rwrme" d="m 718.8052,1088.79 0.03741455,-1.694702" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall50rwrme" d="m 718.8801,1085.401 0.02020264,-5.580444 -2.969177,0.04394531" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1517">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall55rwrme" d="m 718.7339,1094.757 0.07128906,-5.966797" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall51rwrme" d="m 700.5772,1079.784 -2.520325,-0.02001953" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1518">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall56rwrme" d="m 718.6613,1100.895 0.0725708,-6.137939" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall52rwrme" d="m 708.6349,1079.827 -2.27887,-0.01794434" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1519">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall57rwrme" d="m 718.619,1103.2 0.04229736,-2.304688" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall53rwrme" d="m 718.8427,1087.096 0.03741455,-1.694458" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1520">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall58rwrme" d="m 718.5294,1111.462 0.08947754,-8.261841" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall54rwrme" d="m 718.8052,1088.79 0.03741455,-1.694702" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1521">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall59rwrme" d="m 718.5328,1114.064 -0.002990723,-2.602051" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall55rwrme" d="m 718.7339,1094.757 0.07128906,-5.966797" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1522">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall60rwrme" d="m 718.5007,1121.133 0.01477051,-4.896606" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall56rwrme" d="m 718.6613,1100.895 0.0725708,-6.137939" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1523">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall61rwrme" d="m 718.5156,1116.236 0.01727295,-2.172729" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall57rwrme" d="m 718.619,1103.2 0.04229736,-2.304688" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1524">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall62rwrme" d="m 718.4489,1130.697 0.01751709,-5.246704" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall58rwrme" d="m 718.5294,1111.462 0.08947754,-8.261841" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1525">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall63rwrme" d="m 712.0183,1134.748 6.398132,0.04504395 0.03240967,-4.095825" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall59rwrme" d="m 718.5328,1114.064 -0.002990723,-2.602051" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1526">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall64rwrme" d="m 700.0204,1134.653 -5.731995,-0.02600098 0.01818848,-2.295166" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall60rwrme" d="m 718.5007,1121.133 0.01477051,-4.896606" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1527">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall65rwrme" d="m 700.0204,1134.653 6.542725,0.05200195" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall61rwrme" d="m 718.5156,1116.236 0.01727295,-2.172729" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1528">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall66rwrme" d="m 694.3258,1129.959 0.02087402,-5.663574" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall62rwrme" d="m 718.4489,1130.697 0.01751709,-5.246704" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1529">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall67rwrme" d="m 694.3067,1132.332 0.01922607,-2.372925" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall63rwrme" d="m 712.0183,1134.748 6.398132,0.04504395 0.03240967,-4.095825" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1530">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall68rwrme" d="m 694.3468,1124.295 0.01922607,-2.372681" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall64rwrme" d="m 700.0204,1134.653 -5.731995,-0.02600098 0.01818848,-2.295166" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1531">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall69rwrme" d="m 694.366,1121.922 0.02099609,-5.66333" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall65rwrme" d="m 700.0204,1134.653 6.542725,0.05200195" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1532">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall70rwrme" d="m 694.387,1116.259 0.03460693,-4.32605" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall66rwrme" d="m 694.3258,1129.959 0.02087402,-5.663574" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1533">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall71rwrme" d="m 694.4217,1111.933 -0.0007324219,-1.160278 -1.235901,0.02905273" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall67rwrme" d="m 694.3067,1132.332 0.01922607,-2.372925" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1534">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall72rwrme" d="m 693.1848,1110.801 -4.081726,-0.04296875" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall68rwrme" d="m 694.3468,1124.295 0.01922607,-2.372681" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1535">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall73rwrme" d="m 689.1033,1110.758 -3.140076,0.01293945" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall69rwrme" d="m 694.366,1121.922 0.02099609,-5.66333" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1536">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall74rwrme" d="m 664.088,1110.59 -1.613831,0.02502441" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall70rwrme" d="m 694.387,1116.259 0.03460693,-4.32605" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1537">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall75rwrme" d="m 672.6071,1110.62 -2.649658,0.01696777" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall71rwrme" d="m 694.4217,1111.933 -0.0007324219,-1.160278 -1.235901,0.02905273" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1538">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall76rwrme" d="m 706.5632,1134.705 5.455017,0.04296875" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall72rwrme" d="m 693.1848,1110.801 -4.081726,-0.04296875" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1539">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall77rwrme" d="m 740.3101,1074.19 0.06658936,-11.04846" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall73rwrme" d="m 689.1033,1110.758 -3.140076,0.01293945" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1540">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall78rwrme" d="m 740.2601,1083.143 0.01538086,-4.581543" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall74rwrme" d="m 664.088,1110.59 -1.613831,0.02502441" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1541">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall79rwrme" d="m 740.204,1087.186 0.05603027,-4.04248" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall75rwrme" d="m 672.6071,1110.62 -2.649658,0.01696777" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1542">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall80rwrme" d="m 740.2099,1089.098 -0.005981445,-1.911987" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall76rwrme" d="m 706.5632,1134.705 5.455017,0.04296875" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1543">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall81rwrme" d="m 759.6415,1075.619 0.00402832,-3.125244" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1544">template = RuinWall1;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall77rwrme" d="m 740.3101,1074.19 0.06658936,-11.04846" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1544">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall82rwrme" d="m 759.5812,1085.866 -0.07421875,-5.606201" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall78rwrme" d="m 740.2601,1083.143 0.01538086,-4.581543" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1545">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall83rwrme" d="m 759.5396,1088.113 0.04180908,-2.246948" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall79rwrme" d="m 740.204,1087.186 0.05603027,-4.04248" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1546">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall84rwrme" d="m 759.524,1092.719 0.01550293,-4.605103" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall80rwrme" d="m 740.2099,1089.098 -0.005981445,-1.911987" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1547">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall85rwrme" d="m 759.4689,1096.632 0.05511475,-3.913452" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1548">template = RuinWall2;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall81rwrme" d="m 759.6415,1075.619 0.00402832,-3.125244" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1548">template = RuinWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall86rwrme" d="m 759.473,1098.775 -0.00402832,-2.142944" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall82rwrme" d="m 759.5812,1085.866 -0.07421875,-5.606201" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1549">template = RuinWall2;</desc>
       </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall83rwrme" d="m 759.5396,1088.113 0.04180908,-2.246948" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1550">template = RuinWall2;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall84rwrme" d="m 759.524,1092.719 0.01550293,-4.605103" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1551">template = RuinWall2;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall85rwrme" d="m 759.4689,1096.632 0.05511475,-3.913452" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1552">template = RuinWall2;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall86rwrme" d="m 759.473,1098.775 -0.00402832,-2.142944" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1553">template = RuinWall2;</desc>
+      </path>
       <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall87rwrme" d="m 767.3204,1098.345 -2.488464,0" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1550">template = RuinWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall88rwrme" d="m 774.2282,1098.379 -1.521851,0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1551">template = RuinWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall89rwrme" d="m 779.3109,1098.824 -0.008972168,-1.521851" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1552">template = RuinWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall90rwrme" d="m 779.3441,1091.985 -0.0009765625,-2.488281" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1553">template = RuinWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall91rwrme" d="m 779.4418,1077.037 0.007019043,-3.558716" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1554">template = RuinWall1;</desc>
       </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall88rwrme" d="m 774.2282,1098.379 -1.521851,0.01000977" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1555">template = RuinWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall89rwrme" d="m 779.3109,1098.824 -0.008972168,-1.521851" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1556">template = RuinWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall90rwrme" d="m 779.3441,1091.985 -0.0009765625,-2.488281" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1557">template = RuinWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall91rwrme" d="m 779.4418,1077.037 0.007019043,-3.558716" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1558">template = RuinWall1;</desc>
+      </path>
       <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall92rwrme" d="m 779.4824,1069.267 0.02258301,-5.508301" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1555">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall93rwrme" d="m 779.5051,1063.759 0.04260254,-2.346802" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1556">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall94rwrme" d="m 779.5476,1061.412 0.01672363,-4.756958" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1557">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall95rwrme" d="m 779.5644,1056.655 0.05621338,-4.057251" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1558">template = RuinWall2;</desc>
-      </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall96rwrme" d="m 779.6205,1052.598 -0.005981445,-1.282837 -1.640015,-0.0001220703" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1559">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall97rwrme" d="m 777.9747,1051.315 -4.057251,-0.05603027" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall93rwrme" d="m 779.5051,1063.759 0.04260254,-2.346802" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1560">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall98rwrme" d="m 773.9174,1051.259 -4.757019,-0.01696777" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall94rwrme" d="m 779.5476,1061.412 0.01672363,-4.756958" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1561">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall99rwrme" d="m 769.1604,1051.242 -2.346741,-0.04296875" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall95rwrme" d="m 779.5644,1056.655 0.05621338,-4.057251" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1562">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall100rwrme" d="m 766.8136,1051.2 -5.033142,-0.01904297" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall96rwrme" d="m 779.6205,1052.598 -0.005981445,-1.282837 -1.640015,-0.0001220703" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1563">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall101rwrme" d="m 752.8458,1051.131 4.066467,0.01098633" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1564">template = RuinWall1;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall97rwrme" d="m 777.9747,1051.315 -4.057251,-0.05603027" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1564">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall102rwrme" d="m 738.9371,1051.042 2.337402,0" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall98rwrme" d="m 773.9174,1051.259 -4.757019,-0.01696777" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1565">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall103rwrme" d="m 732.01,1051.008 1.275024,-0.01098633" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall99rwrme" d="m 769.1604,1051.242 -2.346741,-0.04296875" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1566">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall104rwrme" d="m 706.2344,1053.083 0.00402832,-3.186035" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall100rwrme" d="m 766.8136,1051.2 -5.033142,-0.01904297" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1567">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall105rwrme" d="m 706.2386,1049.896 0.00201416,-2.941895" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1568">template = RuinWall2;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall101rwrme" d="m 752.8458,1051.131 4.066467,0.01098633" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1568">template = RuinWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall106rwrme" d="m 706.241,1046.955 0.02416992,-5.690063" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall102rwrme" d="m 738.9371,1051.042 2.337402,0" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1569">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall107rwrme" d="m 706.2652,1041.265 0.02972412,-6.408569" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall103rwrme" d="m 732.01,1051.008 1.275024,-0.01098633" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1570">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall108rwrme" d="m 706.295,1034.856 0.00402832,-3.186157" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall104rwrme" d="m 706.2344,1053.083 0.00402832,-3.186035" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1571">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall109rwrme" d="m 706.2993,1031.67 0.06762695,-5.492554" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall105rwrme" d="m 706.2386,1049.896 0.00201416,-2.941895" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1572">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall110rwrme" d="m 706.3668,1026.177 0.02172852,-5.383179" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall106rwrme" d="m 706.241,1046.955 0.02416992,-5.690063" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1573">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall111rwrme" d="m 674.5082,1020.429 -16.71033,-0.1325073 -0.2408447,18.50745" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall107rwrme" d="m 706.2652,1041.265 0.02972412,-6.408569" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1574">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall112rwrme" d="m 689.0825,1020.658 -8.359619,-0.1801758" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall108rwrme" d="m 706.295,1034.856 0.00402832,-3.186157" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1575">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall113rwrme" d="m 680.7228,1020.478 -6.214661,-0.04901123" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall109rwrme" d="m 706.2993,1031.67 0.06762695,-5.492554" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1576">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall114rwrme" d="m 657.5571,1038.804 -0.04412842,5.558594" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall110rwrme" d="m 706.3668,1026.177 0.02172852,-5.383179" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1577">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall115rwrme" d="m 657.5129,1044.363 -0.03887939,7.555664" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall111rwrme" d="m 674.5082,1020.429 -16.71033,-0.1325073 -0.2408447,18.50745" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1578">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall116rwrme" d="m 688.8729,1031.02 -0.007019043,-1.721069" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1579">template = RuinWall1;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall112rwrme" d="m 689.0825,1020.658 -8.359619,-0.1801758" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1579">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall117rwrme" d="m 688.8329,1038.71 -0.00201416,-2.404785" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1580">template = RuinWall1;</desc>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall113rwrme" d="m 680.7228,1020.478 -6.214661,-0.04901123" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1580">template = RuinWall2;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall118rwrme" d="m 685.0327,1043.54 1.906494,7.441772 7.400391,-1.743042 -1.909302,-7.665405" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall114rwrme" d="m 657.5571,1038.804 -0.04412842,5.558594" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc1581">template = RuinWall2;</desc>
       </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall115rwrme" d="m 657.5129,1044.363 -0.03887939,7.555664" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1582">template = RuinWall2;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall116rwrme" d="m 688.8729,1031.02 -0.007019043,-1.721069" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1583">template = RuinWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall117rwrme" d="m 688.8329,1038.71 -0.00201416,-2.404785" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1584">template = RuinWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall118rwrme" d="m 685.0327,1043.54 1.906494,7.441772 7.400391,-1.743042 -1.909302,-7.665405" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc1585">template = RuinWall2;</desc>
+      </path>
       <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall119rwrme" d="m 1301.488,894.1608 -0.2752686,-5.855591 10.14087,-0.7140503 0.2998047,6.052734" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1582">template = InvisibleWall1;</desc>
+        <desc id="desc1586">template = InvisibleWall1;</desc>
       </path>
       <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall120rwrme" d="m 638.4675,1070.691 -3.973938,-4.309448 7.311218,-7.063354 4.118713,4.445435" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1583">template = InvisibleWall1;</desc>
+        <desc id="desc1587">template = InvisibleWall1;</desc>
       </path>
       <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall121rwrme" d="m 935.1403,1329.947 0.6008911,-5.831055 10.13409,0.8062744 -0.6065063,6.029541" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc1584">template = InvisibleWall1;</desc>
+        <desc id="desc1588">template = InvisibleWall1;</desc>
       </path>
     </g>
     <g inkscape:groupmode="layer" id="layer1rocks" inkscape:label="rocks" style="display:inline">
@@ -8076,6 +8076,9 @@ show_base_names_in_map_view = 0;</desc>
       <rect inkscape:label="#mesh" x="0" y="0" height="9.534986" width="1.843278" transform="matrix(-0.6576873,-0.7532911,0.7532911,-0.6576873,1087.299,1220.473)" id="#mesh796rwrme" style="fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new">
         <desc id="desc_#mesh796rwrme">template = barrier;</desc>
       </rect>
+      <rect inkscape:label="#mesh" x="0" y="0" height="5.895978" width="11.92301" transform="matrix(1,0,0,1,997.8621,1236.36)" id="#mesh1484rwrme" style="fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new">
+        <desc id="desc_#mesh1484rwrme">template = container_blue;</desc>
+      </rect>
     </g>
     <g inkscape:groupmode="layer" id="layer1decals" inkscape:label="decals" style="display:inline">
       <rect inkscape:label="#decal" x="0" y="0" height="8.171338" width="7.851708" transform="matrix(0.6476225,0.7619613,-0.7619613,0.6476225,846.4247,1172.59)" id="decal797rwrme" style="fill:#ff00ff;fill-opacity:1;stroke:none;display:inline;enable-background:new">
@@ -8309,350 +8312,350 @@ show_base_names_in_map_view = 0;</desc>
     </g>
     <g inkscape:groupmode="layer" id="layer1vehicles" inkscape:label="vehicles" style="display:none">
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle911rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.9669379,0.255012,-0.255012,0.9669379,1002.49,1032.958)">
-        <desc id="desc_vehicle1433">type = vehicle;key = deco_pickup_green.vehicle;</desc>
+        <desc id="desc_vehicle1436">type = vehicle;key = deco_pickup_green.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle912rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.7368471,0.6760594,-0.6760594,-0.7368471,984.2104,1024.76)">
-        <desc id="desc_vehicle1434">type = vehicle;key = deco_pickup_khaki.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle913rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.7685354,0.6398072,-0.6398072,-0.7685354,999.4845,853.2582)">
-        <desc id="desc_vehicle1435">type = vehicle;key = deco_car2_brown.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle914rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6961665,-0.7178804,0.7178804,-0.6961665,1086.914,1156.737)">
-        <desc id="desc_vehicle1436">type = vehicle;key = deco_car2_grey.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle915rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6799661,-0.7332436,0.7332436,-0.6799661,1078.199,1146.717)">
         <desc id="desc_vehicle1437">type = vehicle;key = deco_pickup_khaki.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle916rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.3806875,0.9247037,-0.9247037,-0.3806875,1059.019,1187.909)">
-        <desc id="desc_vehicle1438">type = vehicle;key = deco_car2_red.vehicle;</desc>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle913rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.7685354,0.6398072,-0.6398072,-0.7685354,999.4845,853.2582)">
+        <desc id="desc_vehicle1438">type = vehicle;key = deco_car2_brown.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle917rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.03534613,0.9993751,-0.9993751,0.03534613,850.2595,864.9341)">
-        <desc id="desc_vehicle1439">type = vehicle;key = deco_car2_blue.vehicle;</desc>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle914rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6961665,-0.7178804,0.7178804,-0.6961665,1086.914,1156.737)">
+        <desc id="desc_vehicle1439">type = vehicle;key = deco_car2_grey.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle918rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.7162372,-0.6978569,0.6978569,0.7162372,719.6595,1069.294)">
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle915rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6799661,-0.7332436,0.7332436,-0.6799661,1078.199,1146.717)">
         <desc id="desc_vehicle1440">type = vehicle;key = deco_pickup_khaki.vehicle;</desc>
       </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle916rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.3806875,0.9247037,-0.9247037,-0.3806875,1059.019,1187.909)">
+        <desc id="desc_vehicle1441">type = vehicle;key = deco_car2_red.vehicle;</desc>
+      </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle917rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.03534613,0.9993751,-0.9993751,0.03534613,850.2595,864.9341)">
+        <desc id="desc_vehicle1442">type = vehicle;key = deco_car2_blue.vehicle;</desc>
+      </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle918rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.7162372,-0.6978569,0.6978569,0.7162372,719.6595,1069.294)">
+        <desc id="desc_vehicle1443">type = vehicle;key = deco_pickup_khaki.vehicle;</desc>
+      </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle919rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.7632074,-0.6461536,0.6461536,-0.7632074,718.2267,1375.349)">
-        <desc id="desc_vehicle1441">type = vehicle;key = deco_pickup_blue.vehicle;</desc>
+        <desc id="desc_vehicle1444">type = vehicle;key = deco_pickup_blue.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle920rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.7376289,0.6752064,-0.6752064,-0.7376289,828.5754,1208.937)">
-        <desc id="desc_vehicle1442">type = vehicle;key = deco_van_brown.vehicle;</desc>
+        <desc id="desc_vehicle1445">type = vehicle;key = deco_van_brown.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle921rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.7616673,-0.6479683,0.6479683,0.7616673,805.7222,1328.52)">
-        <desc id="desc_vehicle1443">type = vehicle;key = deco_pickup_yellow.vehicle;</desc>
+        <desc id="desc_vehicle1446">type = vehicle;key = deco_pickup_yellow.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle922rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.7376289,0.6752064,-0.6752064,-0.7376289,707.9111,1313.24)">
-        <desc id="desc_vehicle1444">type = vehicle;key = deco_car1_blue.vehicle;</desc>
+        <desc id="desc_vehicle1447">type = vehicle;key = deco_car1_blue.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle923rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.9995395,0.03034492,-0.03034492,0.9995395,906.8889,1019.441)">
-        <desc id="desc_vehicle1445">type = vehicle;key = deco_car2_blue.vehicle;</desc>
+        <desc id="desc_vehicle1448">type = vehicle;key = deco_car2_blue.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle924rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.982294,0.1873462,-0.1873462,0.982294,977.6727,961.853)">
-        <desc id="desc_vehicle1446">type = vehicle;key = deco_pickup_red.vehicle;</desc>
+        <desc id="desc_vehicle1449">type = vehicle;key = deco_pickup_red.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle925rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,1168.178,818.4258)">
-        <desc id="desc_vehicle1447">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle926rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.9909794,-0.1340147,0.1340147,-0.9909794,679.6558,1071.22)">
-        <desc id="desc_vehicle1448">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle927rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.127246,-0.9918712,0.9918712,-0.127246,823.868,1314.166)">
-        <desc id="desc_vehicle1449">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle928rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.9919111,-0.1269349,0.1269349,-0.9919111,742.2879,1352.27)">
         <desc id="desc_vehicle1450">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle929rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.9677644,-0.2518574,0.2518574,-0.9677644,1204.975,1255.394)">
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle926rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.9909794,-0.1340147,0.1340147,-0.9909794,679.6558,1071.22)">
         <desc id="desc_vehicle1451">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle930rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,771.4623,884.0898)">
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle927rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.127246,-0.9918712,0.9918712,-0.127246,823.868,1314.166)">
         <desc id="desc_vehicle1452">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle931rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,751.722,1070.148)">
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle928rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.9919111,-0.1269349,0.1269349,-0.9919111,742.2879,1352.27)">
         <desc id="desc_vehicle1453">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle932rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,1153.602,845.7156)">
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle929rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.9677644,-0.2518574,0.2518574,-0.9677644,1204.975,1255.394)">
         <desc id="desc_vehicle1454">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
       </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle933rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,1066.699,582.5268)">
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle930rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,771.4623,884.0898)">
         <desc id="desc_vehicle1455">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
       </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle931rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,751.722,1070.148)">
+        <desc id="desc_vehicle1456">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
+      </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle932rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,1153.602,845.7156)">
+        <desc id="desc_vehicle1457">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
+      </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle933rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.6667312,-0.7452983,0.7452983,-0.6667312,1066.699,582.5268)">
+        <desc id="desc_vehicle1458">type = vehicle;key = mortar_ammunition_crates.vehicle;</desc>
+      </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle934rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.2312051,-0.972905,0.972905,0.2312051,841.8831,855.658)">
-        <desc id="desc_vehicle1456">type = vehicle;tag = jeep;</desc>
+        <desc id="desc_vehicle1459">type = vehicle;tag = jeep;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle935rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.2851279,-0.9584895,0.9584895,-0.2851279,1121.645,477.5185)">
-        <desc id="desc_vehicle1457">type = vehicle;key = rubber_boat.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle936rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.4952834,0.8687315,-0.8687315,-0.4952834,1102.45,469.2666)">
-        <desc id="desc_vehicle1458">type = vehicle;key = rubber_boat.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle937rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.2385104,-0.97114,0.97114,-0.2385104,1123.285,463.7633)">
-        <desc id="desc_vehicle1459">type = vehicle;key = rubber_boat.vehicle;</desc>
-      </rect>
-      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle938rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.5209099,0.8536116,-0.8536116,-0.5209099,1104.039,455.0591)">
         <desc id="desc_vehicle1460">type = vehicle;key = rubber_boat.vehicle;</desc>
       </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle936rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.4952834,0.8687315,-0.8687315,-0.4952834,1102.45,469.2666)">
+        <desc id="desc_vehicle1461">type = vehicle;key = rubber_boat.vehicle;</desc>
+      </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle937rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.2385104,-0.97114,0.97114,-0.2385104,1123.285,463.7633)">
+        <desc id="desc_vehicle1462">type = vehicle;key = rubber_boat.vehicle;</desc>
+      </rect>
+      <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle938rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(-0.5209099,0.8536116,-0.8536116,-0.5209099,1104.039,455.0591)">
+        <desc id="desc_vehicle1463">type = vehicle;key = rubber_boat.vehicle;</desc>
+      </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle939rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.7431287,-0.6691486,0.6691486,0.7431287,777.2191,1291.59)">
-        <desc id="desc_vehicle1461">type = vehicle;key = heli_extraction.vehicle;</desc>
+        <desc id="desc_vehicle1464">type = vehicle;key = heli_extraction.vehicle;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle940rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.7127936,0.7013738,-0.7013738,0.7127936,1097.344,1158.459)">
-        <desc id="desc_vehicle1462">type = vehicle;tag = jeep;</desc>
+        <desc id="desc_vehicle1465">type = vehicle;tag = jeep;</desc>
       </rect>
       <rect style="fill:#0000ff;fill-opacity:1;stroke:none;display:inline;enable-background:new" id="spawn_vehicle941rwrme" width="5.7888808" height="6.6684999" x="0" y="0" label="" transform="matrix(0.1605428,0.9870289,-0.9870289,0.1605428,1184.013,858.3976)">
-        <desc id="desc_vehicle1463">type = vehicle;tag = jeep;</desc>
+        <desc id="desc_vehicle1466">type = vehicle;tag = jeep;</desc>
       </rect>
     </g>
   </g>
   <g inkscape:groupmode="layer" id="layer2defaultlayer" inkscape:label="layer2" style="display:inline">
     <g inkscape:groupmode="layer" id="layer2platforms" inkscape:label="platforms" style="display:inline">
-      <g id="gp3839">
-        <path sodipodi:nodetypes="cc" inkscape:label="platform943rwrme_platform" inkscape:connector-curvature="0" id="platform943rwrme_s" d="m 1055.405,595.1218 -24.27393,-1.964233" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3839">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform943rwrme" d="m 1056.918,543.568 -23.34021,-1.469604" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3839">type = deck_end;height = 0.25;top_material = wood;base_wall_template = SidePanelWall1;</desc>
-        </path>
-      </g>
-      <g id="gp3840">
-        <path sodipodi:nodetypes="cc" inkscape:label="platform944rwrme_platform" inkscape:connector-curvature="0" id="platform944rwrme_s" d="m 1162.95,602.0911 -23.28284,-1.91687" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3840">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform944rwrme" d="m 1166.835,554.7446 -21.32922,-1.714355" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3840">type = deck_end;height = 0.25;top_material = wood;base_wall_template = SidePanelWall1;</desc>
-        </path>
-      </g>
-      <g id="gp3841">
-        <path sodipodi:nodetypes="cc" inkscape:label="platform945rwrme_platform" inkscape:connector-curvature="0" id="platform945rwrme_s" d="m 1123.305,553.2581 -42.36914,-4.089111" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3841">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform945rwrme" d="m 1126.8,512.9464 -43.74817,-3.338043" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3841">type = deck_end;height = 0.35;top_material = wood;base_wall_template = SidePanelWall1;</desc>
-        </path>
-      </g>
-      <g id="gp3842">
-        <path sodipodi:nodetypes="cc" inkscape:label="platform946rwrme_platform" inkscape:connector-curvature="0" id="platform946rwrme_s" d="m 1098.451,573.6512 1.844727,-22.6748" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3842">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform946rwrme" d="m 1103.603,573.9081 2.019409,-22.50708" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3842">type = deck_end;height = 0.35;top_material = wood;base_wall_template = SidePanelWall1;</desc>
-        </path>
-      </g>
-      <g id="gp3843">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform947rwrme_platform" inkscape:connector-curvature="0" id="platform947rwrme_s" d="m 901.5129,1229.101 0.314209,5.105591 -3.777832,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3843">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform947rwrme" d="m 898.109,1225.9 -4.970581,-0.07043457 -2.937988,2.99231 0.1988525,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3843">type = deck_end;height = 4;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
-        </path>
-      </g>
-      <g id="gp3844">
-        <path sodipodi:nodetypes="cc" inkscape:label="platform948rwrme_platform" inkscape:connector-curvature="0" id="platform948rwrme_s" d="m 593.4202,1067.179 -11.2373,10.18884" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3844">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform948rwrme" d="m 582.7047,1055.097 -11.31189,9.985596" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3844">type = deck_end;height = 6;top_material = terrain;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
-        </path>
-      </g>
-      <g id="gp3845">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform949rwrme_platform" inkscape:connector-curvature="0" id="platform949rwrme_s" d="m 1024.507,842.6879 0.314209,5.105591 -3.77771,3.386902 -4.718384,-0.3835449" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3845">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform949rwrme" d="m 1021.103,839.4868 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3845">type = deck_end;height = 6;top_material = terrain;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
-        </path>
-      </g>
-      <g id="gp3846">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform950rwrme_platform" inkscape:connector-curvature="0" id="platform950rwrme_s" d="m 1274.75,1064.937 0.3140869,5.105591 -3.77771,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3846">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform950rwrme" d="m 1271.346,1061.736 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3846">type = deck_end;height = 8;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
-        </path>
-      </g>
-      <g id="gp3847">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform951rwrme_platform" inkscape:connector-curvature="0" id="platform951rwrme_s" d="m 995.1705,1040.22 0.314209,5.105591 -3.77771,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3847">type = deck_start;</desc>
-        </path>
-        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform951rwrme" d="m 991.7666,1037.019 -4.970581,-0.07055664 -2.937988,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3847">type = deck_end;height = 5;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
-        </path>
-      </g>
       <g id="gp3848">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform952rwrme_platform" inkscape:connector-curvature="0" id="platform952rwrme_s" d="m 1145.819,1433.891 0.3140869,5.105591 -3.77771,3.386963 -4.718262,-0.3835449" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+        <path sodipodi:nodetypes="cc" inkscape:label="platform943rwrme_platform" inkscape:connector-curvature="0" id="platform943rwrme_s" d="m 1055.405,595.1218 -24.27393,-1.964233" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
           <desc id="desc3848">type = deck_start;</desc>
         </path>
-        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform952rwrme" d="m 1142.415,1430.69 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3848">type = deck_end;height = 4;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform943rwrme" d="m 1056.918,543.568 -23.34021,-1.469604" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3848">type = deck_end;height = 0.25;top_material = wood;base_wall_template = SidePanelWall1;</desc>
         </path>
       </g>
       <g id="gp3849">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform953rwrme_platform" inkscape:connector-curvature="0" id="platform953rwrme_s" d="m 775.9368,1149.982 0.4711914,7.658447 -5.666626,5.080322 -7.077393,-0.5753174" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+        <path sodipodi:nodetypes="cc" inkscape:label="platform944rwrme_platform" inkscape:connector-curvature="0" id="platform944rwrme_s" d="m 1162.95,602.0911 -23.28284,-1.91687" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
           <desc id="desc3849">type = deck_start;</desc>
         </path>
-        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform953rwrme" d="m 770.8307,1145.181 -7.455811,-0.1057129 -4.40686,4.488525 0.2982178,7.499023" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3849">type = deck_end;height = 4;top_material = terrain;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform944rwrme" d="m 1166.835,554.7446 -21.32922,-1.714355" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3849">type = deck_end;height = 0.25;top_material = wood;base_wall_template = SidePanelWall1;</desc>
         </path>
       </g>
       <g id="gp3850">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform954rwrme_platform" inkscape:connector-curvature="0" id="platform954rwrme_s" d="m 950.2256,1355.045 0.3140869,5.105591 -3.77771,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+        <path sodipodi:nodetypes="cc" inkscape:label="platform945rwrme_platform" inkscape:connector-curvature="0" id="platform945rwrme_s" d="m 1123.305,553.2581 -42.36914,-4.089111" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
           <desc id="desc3850">type = deck_start;</desc>
         </path>
-        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform954rwrme" d="m 946.8214,1351.844 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3850">type = deck_end;height = 8;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform945rwrme" d="m 1126.8,512.9464 -43.74817,-3.338043" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3850">type = deck_end;height = 0.35;top_material = wood;base_wall_template = SidePanelWall1;</desc>
         </path>
       </g>
       <g id="gp3851">
-        <path sodipodi:nodetypes="cccc" inkscape:label="platform955rwrme_platform" inkscape:connector-curvature="0" id="platform955rwrme_s" d="m 982.2068,1158.013 -0.3361816,-5.998169 5.105347,-4.583496 6.012085,0.628418" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+        <path sodipodi:nodetypes="cc" inkscape:label="platform946rwrme_platform" inkscape:connector-curvature="0" id="platform946rwrme_s" d="m 1098.451,573.6512 1.844727,-22.6748" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
           <desc id="desc3851">type = deck_start;</desc>
         </path>
+        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform946rwrme" d="m 1103.603,573.9081 2.019409,-22.50708" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3851">type = deck_end;height = 0.35;top_material = wood;base_wall_template = SidePanelWall1;</desc>
+        </path>
+      </g>
+      <g id="gp3852">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform947rwrme_platform" inkscape:connector-curvature="0" id="platform947rwrme_s" d="m 901.5129,1229.101 0.314209,5.105591 -3.777832,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3852">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform947rwrme" d="m 898.109,1225.9 -4.970581,-0.07043457 -2.937988,2.99231 0.1988525,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3852">type = deck_end;height = 4;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3853">
+        <path sodipodi:nodetypes="cc" inkscape:label="platform948rwrme_platform" inkscape:connector-curvature="0" id="platform948rwrme_s" d="m 593.4202,1067.179 -11.2373,10.18884" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3853">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cc" label="" inkscape:connector-curvature="0" id="platform948rwrme" d="m 582.7047,1055.097 -11.31189,9.985596" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3853">type = deck_end;height = 6;top_material = terrain;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3854">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform949rwrme_platform" inkscape:connector-curvature="0" id="platform949rwrme_s" d="m 1024.507,842.6879 0.314209,5.105591 -3.77771,3.386902 -4.718384,-0.3835449" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3854">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform949rwrme" d="m 1021.103,839.4868 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3854">type = deck_end;height = 6;top_material = terrain;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3855">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform950rwrme_platform" inkscape:connector-curvature="0" id="platform950rwrme_s" d="m 1274.75,1064.937 0.3140869,5.105591 -3.77771,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3855">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform950rwrme" d="m 1271.346,1061.736 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3855">type = deck_end;height = 8;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3856">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform951rwrme_platform" inkscape:connector-curvature="0" id="platform951rwrme_s" d="m 995.1705,1040.22 0.314209,5.105591 -3.77771,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3856">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform951rwrme" d="m 991.7666,1037.019 -4.970581,-0.07055664 -2.937988,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3856">type = deck_end;height = 5;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3857">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform952rwrme_platform" inkscape:connector-curvature="0" id="platform952rwrme_s" d="m 1145.819,1433.891 0.3140869,5.105591 -3.77771,3.386963 -4.718262,-0.3835449" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3857">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform952rwrme" d="m 1142.415,1430.69 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3857">type = deck_end;height = 4;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3858">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform953rwrme_platform" inkscape:connector-curvature="0" id="platform953rwrme_s" d="m 775.9368,1149.982 0.4711914,7.658447 -5.666626,5.080322 -7.077393,-0.5753174" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3858">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform953rwrme" d="m 770.8307,1145.181 -7.455811,-0.1057129 -4.40686,4.488525 0.2982178,7.499023" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3858">type = deck_end;height = 4;top_material = terrain;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3859">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform954rwrme_platform" inkscape:connector-curvature="0" id="platform954rwrme_s" d="m 950.2256,1355.045 0.3140869,5.105591 -3.77771,3.386841 -4.718262,-0.3834229" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3859">type = deck_start;</desc>
+        </path>
+        <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform954rwrme" d="m 946.8214,1351.844 -4.970581,-0.07043457 -2.937866,2.99231 0.1987305,4.99939" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3859">type = deck_end;height = 8;top_material = pavement;wall_template = BrickWall1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+        </path>
+      </g>
+      <g id="gp3860">
+        <path sodipodi:nodetypes="cccc" inkscape:label="platform955rwrme_platform" inkscape:connector-curvature="0" id="platform955rwrme_s" d="m 982.2068,1158.013 -0.3361816,-5.998169 5.105347,-4.583496 6.012085,0.628418" style="fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
+          <desc id="desc3860">type = deck_start;</desc>
+        </path>
         <path sodipodi:nodetypes="cccc" label="" inkscape:connector-curvature="0" id="platform955rwrme" d="m 985.9562,1162.036 6.39563,1.044189 4.745483,-4.231567 -0.1824951,-6.489014" style="fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new">
-          <desc id="desc3851">type = deck_end;height = 3;top_material = pavement;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
+          <desc id="desc3860">type = deck_end;height = 3;top_material = pavement;wall_template = StoneWallCastle1;base_wall_template = StoneWall1;wall_height = 0.8;</desc>
         </path>
       </g>
     </g>
     <g inkscape:groupmode="layer" id="layer2buildings" inkscape:label="buildings" style="display:inline" insensitive="true">
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building955rwrme" width="15.40248" height="4.629772" x="0" y="0" inkscape:label="#rect6406924" transform="matrix(-0.6668284,-0.7452113,0.7452113,-0.6668284,1079.362,1326.502)">
-        <desc id="desc924">height=1;material=BuildingRoofStory1;roof_type = flat;</desc>
-      </rect>
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building956rwrme" width="16.03207" height="5.273456" x="0" y="0" inkscape:label="#rect6406925" transform="matrix(-0.6557986,-0.7549359,0.7549359,-0.6557986,1206.348,1214.95)">
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building955rwrme" width="15.40248" height="4.629772" x="0" y="0" inkscape:label="#rect6406925" transform="matrix(-0.6668284,-0.7452113,0.7452113,-0.6668284,1079.362,1326.502)">
         <desc id="desc925">height=1;material=BuildingRoofStory1;roof_type = flat;</desc>
       </rect>
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building957rwrme" width="24.892" height="6.780734" x="0" y="0" inkscape:label="#rect6406926" transform="matrix(-0.7467447,0.6651108,-0.6651108,-0.7467447,1167.447,1279.49)">
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building956rwrme" width="16.03207" height="5.273456" x="0" y="0" inkscape:label="#rect6406926" transform="matrix(-0.6557986,-0.7549359,0.7549359,-0.6557986,1206.348,1214.95)">
         <desc id="desc926">height=1;material=BuildingRoofStory1;roof_type = flat;</desc>
       </rect>
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building958rwrme" width="6.01185" height="9.528646" x="0" y="0" inkscape:label="#rect6406927" transform="matrix(0.9893852,0.1453164,-0.1453164,0.9893852,794.0339,1244.7)">
-        <desc id="desc927">height=1;material=BuildingHouse;roof_type = flat;</desc>
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building957rwrme" width="24.892" height="6.780734" x="0" y="0" inkscape:label="#rect6406927" transform="matrix(-0.7467447,0.6651108,-0.6651108,-0.7467447,1167.447,1279.49)">
+        <desc id="desc927">height=1;material=BuildingRoofStory1;roof_type = flat;</desc>
       </rect>
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building959rwrme" width="7.40875" height="7.411109" x="0" y="0" inkscape:label="#rect6406928" transform="matrix(-0.7467447,0.6651108,-0.6651108,-0.7467447,803.8813,1228.85)">
-        <desc id="desc928">height=1;material=BuildingRoofStory1;roof_type = flat;</desc>
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building958rwrme" width="6.01185" height="9.528646" x="0" y="0" inkscape:label="#rect6406928" transform="matrix(0.9893852,0.1453164,-0.1453164,0.9893852,794.0339,1244.7)">
+        <desc id="desc928">height=1;material=BuildingHouse;roof_type = flat;</desc>
       </rect>
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building960rwrme" width="6.01185" height="9.528646" x="0" y="0" inkscape:label="#rect6406929" transform="matrix(-0.0942501,-0.9955485,0.9955485,-0.0942501,955.1608,970.6104)">
-        <desc id="desc929">height=1;material=BuildingFactory1;roof_type = flat;</desc>
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building959rwrme" width="7.40875" height="7.411109" x="0" y="0" inkscape:label="#rect6406929" transform="matrix(-0.7467447,0.6651108,-0.6651108,-0.7467447,803.8813,1228.85)">
+        <desc id="desc929">height=1;material=BuildingRoofStory1;roof_type = flat;</desc>
       </rect>
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building961rwrme" width="5.620403" height="5.87259" x="0" y="0" inkscape:label="#rect6406930" transform="matrix(-0.9969388,0.07818642,-0.07818642,-0.9969388,1022.675,980.1439)">
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building960rwrme" width="6.01185" height="9.528646" x="0" y="0" inkscape:label="#rect6406930" transform="matrix(-0.0942501,-0.9955485,0.9955485,-0.0942501,955.1608,970.6104)">
         <desc id="desc930">height=1;material=BuildingFactory1;roof_type = flat;</desc>
       </rect>
-      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building962rwrme" width="6.01185" height="9.528646" x="0" y="0" inkscape:label="#rect6406931" transform="matrix(0.9948631,-0.1012297,0.1012297,0.9948631,1030.443,984.4005)">
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building961rwrme" width="5.620403" height="5.87259" x="0" y="0" inkscape:label="#rect6406931" transform="matrix(-0.9969388,0.07818642,-0.07818642,-0.9969388,1022.675,980.1439)">
         <desc id="desc931">height=1;material=BuildingFactory1;roof_type = flat;</desc>
+      </rect>
+      <rect style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:1.0000006;stroke-opacity:1;display:inline;enable-background:new" id="building962rwrme" width="6.01185" height="9.528646" x="0" y="0" inkscape:label="#rect6406932" transform="matrix(0.9948631,-0.1012297,0.1012297,0.9948631,1030.443,984.4005)">
+        <desc id="desc932">height=1;material=BuildingFactory1;roof_type = flat;</desc>
       </rect>
     </g>
     <g inkscape:groupmode="layer" id="layer2walls" inkscape:label="walls" style="display:inline">
       <path sodipodi:nodetypes="cccccccccccccccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall964rwrme" d="m 1229.839,1258.188 9.103516,-8.137451 9.103516,-8.137451 9.103638,-8.137573 9.103394,-8.137451 -7.380615,-8.364624 -7.380615,-8.364502 -7.380737,-8.364746 -7.380615,-8.364624 -7.380493,-8.364624 -7.380737,-8.364624 -7.380615,-8.364868 -7.380615,-8.36438 -10.24036,8.994263 -10.24023,8.994141 -10.24036,8.994263 -10.24048,8.994263 -10.24036,8.994263 -10.24023,8.994385 -10.24036,8.994141 -10.24036,8.994507 -6.435791,-9.35791" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2396">template = SecurityFence1;</desc>
+        <desc id="desc2401">template = SecurityFence1;</desc>
       </path>
       <path sodipodi:nodetypes="cccccccccccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall965rwrme" d="m 1097.086,1241.877 9.306763,5.626709 -10.32471,9.192139 -10.32434,9.19165 -10.32471,9.19165 -10.32458,9.191895 -10.32471,9.191772 -10.32446,9.19165 -10.32458,9.191895 -10.32471,9.19165 7.335205,8.253052 7.335327,8.253052 7.335205,8.25293 7.334961,8.253052 7.335449,8.253052 7.334961,8.25293 7.335327,8.25293 7.335327,8.253052" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2397">template = SecurityFence1;</desc>
+        <desc id="desc2402">template = SecurityFence1;</desc>
       </path>
       <path sodipodi:nodetypes="cccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall966rwrme" d="m 1106.111,1381.983 -13.35034,-3.12146 15.22339,-13.4563 15.22351,-13.4563 15.22351,-13.45618 15.22339,-13.4563 15.22351,-13.45654 15.22339,-13.4563 15.22375,-13.4563 15.22351,-13.4563" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2398">template = SecurityFence1;</desc>
+        <desc id="desc2403">template = SecurityFence1;</desc>
       </path>
       <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall967rwrme" d="m 1301.714,920.1071 -11.3125,-0.333374 -5.244385,-6.750549 -0.9073486,-5.665833" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2399">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cccccccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall968rwrme" d="m 767.4078,1341.326 12.66565,13.78162 13.36859,14.57544 17.05396,-15.17566 17.05396,-15.17566 17.05389,-15.17542 17.05389,-15.17542 17.05383,-15.17566 17.05396,-15.17554 17.05389,-15.17554 17.05408,-15.17554 -16.63477,-19.10791 -16.63477,-19.10779 -11.72644,12.27515" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2400">template = SecurityFence1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall969rwrme" d="m 792.348,882.6074 4.037292,13.95209 -1.47699,15.07733 -3.417175,12.03705" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2401">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall970rwrme" d="m 743.5511,1282.906 7.751648,-14.47815 12.44934,-10.87244 -0.6300049,-13.08069" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2402">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall971rwrme" d="m 1126.618,1428.558 -16.23071,-18.24719 -16.19287,-16.03406" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2403">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall972rwrme" d="m 1136.402,1420.939 -15.4425,-16.97571 -12.64001,-14.32385" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2404">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall973rwrme" d="m 1051.907,1146.523 22.58655,-19.92737 32.86609,36.03918 -23.1167,21.40125" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2405">template = GardenWall1;</desc>
+      <path sodipodi:nodetypes="cccccccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall968rwrme" d="m 767.4078,1341.326 12.66565,13.78162 13.36859,14.57544 17.05396,-15.17566 17.05396,-15.17566 17.05389,-15.17542 17.05389,-15.17542 17.05383,-15.17566 17.05396,-15.17554 17.05389,-15.17554 17.05408,-15.17554 -16.63477,-19.10791 -16.63477,-19.10779 -11.72644,12.27515" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2405">template = SecurityFence1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall974rwrme" d="m 1015.403,1041.947 -13.10199,15.07227 -25.17572,2.033447 -7.687012,-10.61487 -36.97644,2.163818 -3.948364,-23.20789" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall969rwrme" d="m 792.348,882.6074 4.037292,13.95209 -1.47699,15.07733 -3.417175,12.03705" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2406">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall975rwrme" d="m 892.0872,854.1267 -0.6928101,-8.656006 -0.6928101,-8.655945" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2407">template = FarmFence2;</desc>
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall970rwrme" d="m 743.5511,1282.906 7.751648,-14.47815 12.44934,-10.87244 -0.6300049,-13.08069" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2407">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccccccccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall976rwrme" d="m 922.8412,796.8845 -13.21979,10.37488 -13.32794,9.969666 -11.06073,8.137451 -13.22614,14.15979 -14.57849,1.281067 -11.776,0.6982422 -15.01642,1.56366 0.9821167,9.855042 0.9819946,9.855103 0.9821167,9.855042 0.9821777,9.85498 11.09485,-1.049011 11.09479,-1.049011 11.09485,-1.049011 11.09479,-1.049011" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2408">template = FarmFence2;</desc>
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall971rwrme" d="m 1126.618,1428.558 -16.23071,-18.24719 -16.19287,-16.03406" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2408">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall977rwrme" d="m 1102.244,1223.032 12.95544,14.59729" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2409">template = SandbagWall2;</desc>
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall972rwrme" d="m 1136.402,1420.939 -15.4425,-16.97571 -12.64001,-14.32385" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2409">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall978rwrme" d="m 1084.742,1227.149 2.945801,-2.647827 5.466675,6.228149 -2.872925,2.571533" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2410">template = SandbagWall1;</desc>
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall973rwrme" d="m 1051.907,1146.523 22.58655,-19.92737 32.86609,36.03918 -23.1167,21.40125" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2410">template = GardenWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall979rwrme" d="m 1237.155,1258.538 -5.959595,5.300903 -8.784302,7.812256 -5.933105,5.277588" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall974rwrme" d="m 1015.403,1041.947 -13.10199,15.07227 -25.17572,2.033447 -7.687012,-10.61487 -36.97644,2.163818 -3.948364,-23.20789" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2411">template = SandbagWall1;</desc>
       </path>
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall975rwrme" d="m 892.0872,854.1267 -0.6928101,-8.656006 -0.6928101,-8.655945" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2412">template = FarmFence2;</desc>
+      </path>
+      <path sodipodi:nodetypes="cccccccccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall976rwrme" d="m 922.8412,796.8845 -13.21979,10.37488 -13.32794,9.969666 -11.06073,8.137451 -13.22614,14.15979 -14.57849,1.281067 -11.776,0.6982422 -15.01642,1.56366 0.9821167,9.855042 0.9819946,9.855103 0.9821167,9.855042 0.9821777,9.85498 11.09485,-1.049011 11.09479,-1.049011 11.09485,-1.049011 11.09479,-1.049011" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2413">template = FarmFence2;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall977rwrme" d="m 1102.244,1223.032 12.95544,14.59729" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2414">template = SandbagWall2;</desc>
+      </path>
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall978rwrme" d="m 1084.742,1227.149 2.945801,-2.647827 5.466675,6.228149 -2.872925,2.571533" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2415">template = SandbagWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall979rwrme" d="m 1237.155,1258.538 -5.959595,5.300903 -8.784302,7.812256 -5.933105,5.277588" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2416">template = SandbagWall1;</desc>
+      </path>
       <path sodipodi:nodetypes="cccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall980rwrme" d="m 660.0228,1297.459 17.89777,-16.01892 17.89777,-16.01892 17.89777,-16.01904 17.89777,-16.01892 15.83545,17.64209" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2412">template = SecurityFence1;</desc>
+        <desc id="desc2417">template = SecurityFence1;</desc>
       </path>
       <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall981rwrme" d="m 726.8776,1275.902 7.251221,-12.96167" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2413">template = SecurityFence1;</desc>
+        <desc id="desc2418">template = SecurityFence1;</desc>
       </path>
       <path sodipodi:nodetypes="cccccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall982rwrme" d="m 747.4493,1251.025 12.92828,-11.44824 12.92828,-11.44824 12.92828,-11.44824 12.92828,-11.44824 12.92828,-11.44824 12.92828,-11.44824 12.92828,-11.44824 12.92828,-11.44824 10.25739,11.33691 10.25745,11.33691 -11.30707,14.60217" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2414">template = SecurityFence1;</desc>
+        <desc id="desc2419">template = SecurityFence1;</desc>
       </path>
       <path sodipodi:nodetypes="cccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall983rwrme" d="m 650.9668,1326.422 19.56482,-17.23535 19.56488,-17.23535 19.56482,-17.23535 19.56488,-17.23523 4.659912,5.349976" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2415">template = SecurityFence1;</desc>
+        <desc id="desc2420">template = SecurityFence1;</desc>
       </path>
       <path sodipodi:nodetypes="cccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall984rwrme" d="m 789.5672,878.7239 -14.98578,-18.58069 -22.24945,-3.175659 -20.23041,9.721985 -15.56256,17.16302 -7.730835,20.29321 7.721497,18.11163 15.5882,9.875671" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2416">template = FarmFence2;</desc>
+        <desc id="desc2421">template = FarmFence2;</desc>
       </path>
       <path sodipodi:nodetypes="ccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall985rwrme" d="m 1107.829,551.5887 7.363525,0.5475464 7.363525,0.5476074 0.8688965,-9.837585 0.8691406,-9.837708 0.8691406,-9.837585 0.8690186,-9.837646 -6.219971,-0.4119873 -6.219971,-0.4119873" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2417">template = FarmFence1;</desc>
+        <desc id="desc2422">template = FarmFence1;</desc>
       </path>
       <path sodipodi:nodetypes="ccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall986rwrme" d="m 1098.862,511.5336 -7.621582,-0.5048828 -7.62146,-0.5048523 -0.4006348,9.429138 -0.4006348,9.429199 -0.4007568,9.42926 -0.4006348,9.429199 7.426147,0.7580566 7.426025,0.7581177" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2418">template = FarmFence1;</desc>
+        <desc id="desc2423">template = FarmFence1;</desc>
       </path>
       <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall987rwrme" d="m 1227.948,1259.699 -7.174805,-7.893433 -10.7439,9.714844" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2419">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall988rwrme" d="m 1114.987,1212.991 -2.935181,2.659668 -5.402588,-6.117798 2.863647,-2.581665" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2420">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="ccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall989rwrme" d="m 1024.486,921.72 25.81689,0.09960938 15.68567,20.8526 -0.03198242,21.0213 14.89648,7.001404 -0.3271484,21.46234 -14.62122,6.072815 -0.4046631,58.20441 -21.61426,2.07666" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2421">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="ccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall990rwrme" d="m 935.0913,995.0239 -16.22418,-12.99231 0.2094116,-26.83197 21.78741,-17.02887 44.38544,-4.479187" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2422">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall991rwrme" d="m 731.8738,1305.41 -9.483032,-10.82874 -9.861511,8.349731 9.447754,11.25806" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2423">template = SandbagWall1;</desc>
-      </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall992rwrme" d="m 957.8471,1012.699 -5.191895,-6.683105 -0.8983765,-5.60907" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2424">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall993rwrme" d="m 1032.383,1012.896 1.84668,11.05103 -5.550049,6.388672 -5.328491,1.968506" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall988rwrme" d="m 1114.987,1212.991 -2.935181,2.659668 -5.402588,-6.117798 2.863647,-2.581665" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2425">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall994rwrme" d="m 991.582,950.2932 5.190125,-5.788391 10.75244,1.00592 3.986084,7.590271" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccccccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall989rwrme" d="m 1024.486,921.72 25.81689,0.09960938 15.68567,20.8526 -0.03198242,21.0213 14.89648,7.001404 -0.3271484,21.46234 -14.62122,6.072815 -0.4046631,58.20441 -21.61426,2.07666" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2426">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall995rwrme" d="m 1054.951,1026.808 3.206299,4.558594 -0.19104,9.082153 -5.739502,0.274292" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="ccccc" inkscape:label="" inkscape:connector-curvature="0" id="wall990rwrme" d="m 935.0913,995.0239 -16.22418,-12.99231 0.2094116,-26.83197 21.78741,-17.02887 44.38544,-4.479187" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2427">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall996rwrme" d="m 1034.578,935.3982 4.52356,-2.505493 4.923584,2.019592 1.392456,4.726379" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall991rwrme" d="m 731.8738,1305.41 -9.483032,-10.82874 -9.861511,8.349731 9.447754,11.25806" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2428">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall997rwrme" d="m 965.2327,1027.875 -13.42242,0.6081543" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
-        <desc id="desc2429">template = CorrugatedFence;</desc>
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall992rwrme" d="m 957.8471,1012.699 -5.191895,-6.683105 -0.8983765,-5.60907" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2429">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall998rwrme" d="m 777.0975,937.2784 -14.15277,3.265015 -14.97339,-2.302612 -11.8313,-4.072998" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall993rwrme" d="m 1032.383,1012.896 1.84668,11.05103 -5.550049,6.388672 -5.328491,1.968506" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2430">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall999rwrme" d="m 812.2358,1240.417 8.34967,-7.668823 -9.884705,-11.53125" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall994rwrme" d="m 991.582,950.2932 5.190125,-5.788391 10.75244,1.00592 3.986084,7.590271" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2431">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall1000rwrme" d="m 1016.302,995.2907 -4.785095,1.059387 -8.406372,-4.547241 -0.6243896,-4.59375" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall995rwrme" d="m 1054.951,1026.808 3.206299,4.558594 -0.19104,9.082153 -5.739502,0.274292" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2432">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall1001rwrme" d="m 1116.293,1331.144 -7.893677,7.174805 9.714844,10.74402" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall996rwrme" d="m 1034.578,935.3982 4.52356,-2.505493 4.923584,2.019592 1.392456,4.726379" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2433">template = SandbagWall1;</desc>
       </path>
-      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall1002rwrme" d="m 965.5685,1041.006 -13.42242,0.6081543" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall997rwrme" d="m 965.2327,1027.875 -13.42242,0.6081543" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
         <desc id="desc2434">template = CorrugatedFence;</desc>
+      </path>
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall998rwrme" d="m 777.0975,937.2784 -14.15277,3.265015 -14.97339,-2.302612 -11.8313,-4.072998" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2435">template = SandbagWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall999rwrme" d="m 812.2358,1240.417 8.34967,-7.668823 -9.884705,-11.53125" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2436">template = SandbagWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cccc" inkscape:label="" inkscape:connector-curvature="0" id="wall1000rwrme" d="m 1016.302,995.2907 -4.785095,1.059387 -8.406372,-4.547241 -0.6243896,-4.59375" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2437">template = SandbagWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="ccc" inkscape:label="" inkscape:connector-curvature="0" id="wall1001rwrme" d="m 1116.293,1331.144 -7.893677,7.174805 9.714844,10.74402" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2438">template = SandbagWall1;</desc>
+      </path>
+      <path sodipodi:nodetypes="cc" inkscape:label="" inkscape:connector-curvature="0" id="wall1002rwrme" d="m 965.5685,1041.006 -13.42242,0.6081543" style="fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new">
+        <desc id="desc2439">template = CorrugatedFence;</desc>
       </path>
     </g>
     <g inkscape:groupmode="layer" id="layer2rocks" inkscape:label="rocks" style="display:inline">
@@ -9246,6 +9249,9 @@ show_base_names_in_map_view = 0;</desc>
       <rect inkscape:label="#mesh" x="0" y="0" height="8.065436" width="7.623495" transform="matrix(-0.7487665,0.6628338,-0.6628338,-0.7487665,1038.978,540.6431)" id="#mesh1393rwrme" style="fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new">
         <desc id="desc_#mesh1393rwrme">template = palmtree_1;</desc>
       </rect>
+      <rect inkscape:label="#mesh" x="0" y="0" height="5.895978" width="11.92301" transform="matrix(1,0,0,1,1000.371,1238.432)" id="#mesh1485rwrme" style="fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new">
+        <desc id="desc_#mesh1485rwrme">template = container_blue;</desc>
+      </rect>
     </g>
     <g inkscape:groupmode="layer" id="layer2ladders" inkscape:label="ladders" style="display:inline">
       <rect inkscape:label="#ladder" x="0" y="0" height="2.25" width="6" transform="matrix(-0.9998873,0.01501495,-0.01501495,-0.9998873,992.1411,1035.554)" id="#ladder1394rwrme" style="opacity:0.79775277;fill:#2cffe7;fill-opacity:1;fill-rule:nonzero;stroke:none;display:inline;enable-background:new" />
@@ -9332,11 +9338,21 @@ show_base_names_in_map_view = 0;</desc>
     <g inkscape:groupmode="layer" id="layer3platforms" inkscape:label="platforms" style="display:inline" />
     <g inkscape:groupmode="layer" id="layer3buildings" inkscape:label="buildings" style="display:inline" insensitive="true" />
     <g inkscape:groupmode="layer" id="layer3walls" inkscape:label="walls" style="display:inline" />
+    <g inkscape:groupmode="layer" id="layer3meshs" inkscape:label="meshs" style="display:inline">
+      <rect inkscape:label="#mesh" x="0" y="0" height="5.895978" width="11.92301" transform="matrix(1,0,0,1,1002.334,1240.068)" id="#mesh1486rwrme" style="fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new">
+        <desc id="desc_#mesh1486rwrme">template = container_blue;</desc>
+      </rect>
+    </g>
   </g>
   <g inkscape:groupmode="layer" id="layer4defaultlayer" inkscape:label="layer4" style="display:inline">
     <g inkscape:groupmode="layer" id="layer4platforms" inkscape:label="platforms" style="display:inline" />
     <g inkscape:groupmode="layer" id="layer4buildings" inkscape:label="buildings" style="display:inline" insensitive="true" />
     <g inkscape:groupmode="layer" id="layer4walls" inkscape:label="walls" style="display:inline" />
+    <g inkscape:groupmode="layer" id="layer4meshs" inkscape:label="meshs" style="display:inline">
+      <rect inkscape:label="#mesh" x="0" y="0" height="5.895978" width="11.92301" transform="matrix(1,0,0,1,1004.733,1241.922)" id="#mesh1487rwrme" style="fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline;enable-background:new">
+        <desc id="desc_#mesh1487rwrme">template = container_blue;</desc>
+      </rect>
+    </g>
   </g>
   <g inkscape:groupmode="layer" id="layerBases" inkscape:label="bases.default" sodipodi:insensitive="true">
     <rect style="opacity:0.26966289;fill:#ffff00;fill-opacity:1;stroke:none;display:inline" id="base1464rwrme" width="57.91528" height="57.22997" x="0" y="0" inkscape:label="#rect0_base" transform="matrix(0.01492882,0.9998885,-0.9998885,0.01492882,1262.345,955.1867)">

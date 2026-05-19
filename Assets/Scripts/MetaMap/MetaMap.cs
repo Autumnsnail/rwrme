@@ -471,15 +471,33 @@ public class mapItemType
 }
 public class BuildingType:mapItemType
 {
+    public const string EdgeDarkenShaderName = "RWRME/Color Edge Darken";
+
     public Material materialTop;
     public Material materialSide;
 
+    static Material CreateEdgeDarkenMaterial(Color c)
+    {
+        Shader shader = Shader.Find(EdgeDarkenShaderName);
+        if (shader == null)
+        {
+            Debug.LogWarning($"BuildingType: 未找到 {EdgeDarkenShaderName}，回退 Standard");
+            shader = Shader.Find("Standard");
+        }
+        var mat = new Material(shader);
+        mat.color = c;
+        if (shader.name == EdgeDarkenShaderName)
+        {
+            mat.SetFloat("_EdgeWidth", 0.04f);
+            mat.SetFloat("_EdgeDarken", 0.45f);
+        }
+        return mat;
+    }
+
     public BuildingType(string n,Color c,Color c1)
     {
-        materialTop = new Material(Shader.Find("Standard"));
-        materialTop.color = c;
-        materialSide = new Material(Shader.Find("Standard"));
-        materialSide.color = c1;
+        materialTop = CreateEdgeDarkenMaterial(c);
+        materialSide = CreateEdgeDarkenMaterial(c1);
         name = n;
     }
 }

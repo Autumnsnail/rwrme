@@ -360,6 +360,8 @@ public class MapExporter : MonoBehaviour
                     XmlElement wlEDesc = xmlDoc.CreateElement("desc");
                     wlEDesc.SetAttribute("id", "desc" + (mic+j).ToString());
                     wlEDesc.InnerText = "template = "+ wl.material+";";
+                    if (wl.reHighed) wlEDesc.InnerText += "height = " + wl.reHighedHeight.ToString() + ";";
+                    if (wl.merged) wlEDesc.InnerText += "merge = true;";
                     wlE.AppendChild(wlEDesc);
                     WallLayer.AppendChild(wlE);
 

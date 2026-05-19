@@ -14,6 +14,28 @@ public class UIManager : MonoBehaviour
     public const float RightPanelAnchorMinX = 0.73f;
     public const float RightPanelAnchorMaxX = 0.90f;
 
+    /// <summary>
+    /// 指针是否压在「可拖拽浮动面板」（多选 / 顶点）当前矩形内。
+    /// 只看这两个面板的实际屏幕矩形，不用全局 EventSystem 射线——否则会被铺满视口的
+    /// raycastTarget UI 永远命中，导致 selector / 拖框失效。
+    /// </summary>
+    public static bool PointerOverDraggablePanel()
+    {
+        if (instance == null) return false;
+        return instance.RectActiveAndContains(instance.multiSelectPanel)
+            || instance.RectActiveAndContains(instance.vertexPanel);
+    }
+
+    private bool RectActiveAndContains(GameObject panel)
+    {
+        if (panel == null || !panel.activeInHierarchy) return false;
+        RectTransform rt = panel.transform as RectTransform;
+        if (rt == null) return false;
+        Canvas cv = rt.GetComponentInParent<Canvas>();
+        Camera cam = (cv != null && cv.renderMode != RenderMode.ScreenSpaceOverlay) ? cv.worldCamera : null;
+        return RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, cam);
+    }
+
     GameObject ddBT;//building drop down
 
     GameObject ddWT;//wall dd
@@ -35,6 +57,16 @@ public class UIManager : MonoBehaviour
     private TextMeshProUGUI multiSelectHeader;
     private GameObject multiSelectDetailPanel;
     private TextMeshProUGUI multiSelectDetailText;
+
+    // 多选窗口：拖拽 / 缩放 / 折叠 / 复位 状态
+    private RectTransform multiSelectRect;
+    private GameObject multiSelectScrollGO;
+    private GameObject multiSelectResizeGO;
+    private bool multiSelectCollapsed;
+    private Vector2 msPreCollapseOffMin, msPreCollapseOffMax;
+    private static readonly Vector2 MsDefaultAnchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
+    private static readonly Vector2 MsDefaultAnchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
+    private const float MsHeaderHeight = 30f;
     private MapItem detailViewingItem;
     void Start()
     {
@@ -324,10 +356,11 @@ public class UIManager : MonoBehaviour
         multiSelectPanel.transform.SetParent(transform, false);
 
         RectTransform panelRect = multiSelectPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
-        panelRect.anchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
+        panelRect.anchorMin = MsDefaultAnchorMin;
+        panelRect.anchorMax = MsDefaultAnchorMax;
         panelRect.offsetMin = Vector2.zero;
         panelRect.offsetMax = Vector2.zero;
+        multiSelectRect = panelRect;
 
         Image panelBg = multiSelectPanel.AddComponent<Image>();
         panelBg.color = new Color(0.12f, 0.12f, 0.14f, 0.95f);
@@ -339,19 +372,40 @@ public class UIManager : MonoBehaviour
         panelVLG.childForceExpandWidth = true;
         panelVLG.childForceExpandHeight = false;
 
-        // --- Header ---
+        // --- Header（同时作为拖拽抓手）---
         GameObject headerGO = new GameObject("Header");
         headerGO.transform.SetParent(multiSelectPanel.transform, false);
-        multiSelectHeader = headerGO.AddComponent<TextMeshProUGUI>();
-        multiSelectHeader.text = "多选";
+        Image headerBg = headerGO.AddComponent<Image>();   // 拖拽热区：实体背景条，可靠接收指针事件
+        headerBg.color = new Color(0.18f, 0.20f, 0.24f, 1f);
+        headerBg.raycastTarget = true;
+        LayoutElement headerLE = headerGO.AddComponent<LayoutElement>();
+        headerLE.preferredHeight = 30;
+        DraggableUIPanel headerDrag = headerGO.AddComponent<DraggableUIPanel>();
+        headerDrag.target = panelRect;
+
+        // 标题文字作为子节点，不挡拖拽（raycastTarget=false）
+        GameObject headerTextGO = new GameObject("HeaderText");
+        headerTextGO.transform.SetParent(headerGO.transform, false);
+        RectTransform htRect = headerTextGO.AddComponent<RectTransform>();
+        htRect.anchorMin = Vector2.zero;
+        htRect.anchorMax = Vector2.one;
+        htRect.offsetMin = Vector2.zero;
+        htRect.offsetMax = Vector2.zero;
+        multiSelectHeader = headerTextGO.AddComponent<TextMeshProUGUI>();
+        multiSelectHeader.text = "= 多选";
         multiSelectHeader.fontSize = 18;
         multiSelectHeader.fontStyle = FontStyles.Bold;
         multiSelectHeader.color = new Color(0f, 0.9f, 0.9f);
         multiSelectHeader.alignment = TextAlignmentOptions.Center;
+        multiSelectHeader.raycastTarget = false;
         if (multiSelectHeader.font == null)
             multiSelectHeader.font = TMP_Settings.defaultFontAsset;
-        LayoutElement headerLE = headerGO.AddComponent<LayoutElement>();
-        headerLE.preferredHeight = 30;
+
+        // 最小化按钮（左 "-"）/ 关闭按钮（右 "X"，等效 ESC 退出菜单），盖在标题栏上、各自吃掉点击不触发拖拽
+        MakeHeaderButton(headerGO.transform, "MinimizeBtn", "-",
+            new Vector2(0, 0.5f), new Vector2(2, 0), ToggleMultiSelectCollapse);
+        MakeHeaderButton(headerGO.transform, "CloseBtn", "X",
+            new Vector2(1, 0.5f), new Vector2(-2, 0), CloseMultiSelectMenu);
 
         // --- Scroll View (list area) ---
         BuildScrollView(multiSelectPanel.transform);
@@ -359,13 +413,131 @@ public class UIManager : MonoBehaviour
         // --- Detail Panel ---
         BuildDetailPanel(multiSelectPanel.transform);
 
+        // --- Resize 手柄（右下角，排除布局组）---
+        BuildResizeHandle(multiSelectPanel.transform, panelRect);
+
         multiSelectPanel.SetActive(false);
+    }
+
+    private void MakeHeaderButton(Transform headerParent, string name, string glyph,
+        Vector2 anchor, Vector2 anchoredPos, UnityEngine.Events.UnityAction onClick)
+    {
+        GameObject go = new GameObject(name);
+        go.transform.SetParent(headerParent, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = anchor;
+        rt.anchorMax = anchor;
+        rt.pivot = anchor;
+        rt.sizeDelta = new Vector2(26, 24);
+        rt.anchoredPosition = anchoredPos;
+
+        Image bg = go.AddComponent<Image>();
+        bg.color = new Color(0.30f, 0.32f, 0.38f, 1f);
+        bg.raycastTarget = true;
+
+        Button btn = go.AddComponent<Button>();
+        ColorBlock cb = btn.colors;
+        cb.highlightedColor = new Color(0.42f, 0.44f, 0.52f, 1f);
+        cb.pressedColor = new Color(0.20f, 0.22f, 0.26f, 1f);
+        btn.colors = cb;
+        btn.onClick.AddListener(onClick);
+
+        GameObject t = new GameObject("T");
+        t.transform.SetParent(go.transform, false);
+        RectTransform tr = t.AddComponent<RectTransform>();
+        tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one;
+        tr.offsetMin = Vector2.zero; tr.offsetMax = Vector2.zero;
+        TextMeshProUGUI tmp = t.AddComponent<TextMeshProUGUI>();
+        tmp.text = glyph;
+        tmp.fontSize = 16;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.raycastTarget = false;
+        if (tmp.font == null) tmp.font = TMP_Settings.defaultFontAsset;
+    }
+
+    private void BuildResizeHandle(Transform parent, RectTransform panelRect)
+    {
+        GameObject go = new GameObject("ResizeHandle");
+        go.transform.SetParent(parent, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1, 0);
+        rt.anchorMax = new Vector2(1, 0);
+        rt.pivot = new Vector2(1, 0);
+        rt.sizeDelta = new Vector2(20, 20);
+        rt.anchoredPosition = Vector2.zero;
+
+        // 不参与 VerticalLayoutGroup，保持锚定在右下角
+        go.AddComponent<LayoutElement>().ignoreLayout = true;
+
+        Image img = go.AddComponent<Image>();
+        img.color = new Color(0.45f, 0.47f, 0.55f, 0.9f);
+        img.raycastTarget = true;
+
+        ResizeHandle rh = go.AddComponent<ResizeHandle>();
+        rh.target = panelRect;
+
+        go.transform.SetAsLastSibling(); // 画在内容之上，便于抓取
+        multiSelectResizeGO = go;
+    }
+
+    public void ToggleMultiSelectCollapse()
+    {
+        if (multiSelectRect == null) return;
+        multiSelectCollapsed = !multiSelectCollapsed;
+
+        if (multiSelectCollapsed)
+        {
+            msPreCollapseOffMin = multiSelectRect.offsetMin;
+            msPreCollapseOffMax = multiSelectRect.offsetMax;
+
+            if (multiSelectScrollGO != null) multiSelectScrollGO.SetActive(false);
+            if (multiSelectDetailPanel != null) multiSelectDetailPanel.SetActive(false);
+            if (multiSelectResizeGO != null) multiSelectResizeGO.SetActive(false);
+
+            // 只留标题栏高度：保持上边界(offsetMax.y)不动，抬高下边界
+            RectTransform p = multiSelectRect.parent as RectTransform;
+            if (p != null)
+            {
+                float spanH = (multiSelectRect.anchorMax.y - multiSelectRect.anchorMin.y) * p.rect.height;
+                float targetH = MsHeaderHeight + 16f; // VLG 上下 padding 各 8
+                Vector2 omin = multiSelectRect.offsetMin;
+                omin.y = spanH + multiSelectRect.offsetMax.y - targetH;
+                multiSelectRect.offsetMin = omin;
+            }
+            if (multiSelectHeader != null && !multiSelectHeader.text.StartsWith(">"))
+                multiSelectHeader.text = "> " + multiSelectHeader.text.TrimStart('=', '>', ' ');
+        }
+        else
+        {
+            multiSelectRect.offsetMin = msPreCollapseOffMin;
+            multiSelectRect.offsetMax = msPreCollapseOffMax;
+            if (multiSelectScrollGO != null) multiSelectScrollGO.SetActive(true);
+            if (multiSelectDetailPanel != null) multiSelectDetailPanel.SetActive(true);
+            if (multiSelectResizeGO != null) multiSelectResizeGO.SetActive(true);
+            if (multiSelectHeader != null)
+                multiSelectHeader.text = "= " + multiSelectHeader.text.TrimStart('>', '=', ' ');
+        }
+    }
+
+    /// <summary>关闭多选菜单：等效于按 ESC 退出菜单（清空选择并隐藏相关面板）。</summary>
+    public void CloseMultiSelectMenu()
+    {
+        if (ToolController.inste != null)
+        {
+            ToolController.inste.miSelected = null;
+            ToolController.inste.misSelected.Clear();
+        }
+        changeShowingCanvas(null);
+        RefreshMultiSelectPanel(null);
+        RefreshVertexPanel(null);
     }
 
     private void BuildScrollView(Transform parent)
     {
         GameObject scrollGO = new GameObject("ScrollView");
         scrollGO.transform.SetParent(parent, false);
+        multiSelectScrollGO = scrollGO;
 
         LayoutElement scrollLE = scrollGO.AddComponent<LayoutElement>();
         scrollLE.flexibleHeight = 1;
@@ -458,7 +630,7 @@ public class UIManager : MonoBehaviour
         disVisableAll();
         multiSelectPanel.SetActive(true);
 
-        multiSelectHeader.text = items.Count + " items selected";
+        multiSelectHeader.text = (multiSelectCollapsed ? "> " : "= ") + items.Count + " items selected";
 
         ClearEntries();
         for (int i = 0; i < items.Count; i++)

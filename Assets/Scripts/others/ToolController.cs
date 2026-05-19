@@ -163,6 +163,7 @@ public class ToolController : MonoBehaviour
     private static bool IsPointerInMainToolScreenArea()
     {
         if (Screen.width <= 0 || Screen.height <= 0) return false;
+        if (UIManager.PointerOverDraggablePanel()) return false;   // 面板被拖到任意位置也能正确判定为 UI
         float nx = Input.mousePosition.x / Screen.width;
         float ny = Input.mousePosition.y / Screen.height;
         return nx < UIManager.RightPanelAnchorMinX && (nx > 0.21f || ny > 0.23f);
@@ -224,7 +225,7 @@ public class ToolController : MonoBehaviour
             if (Input.GetMouseButtonDown(0))
             {
                 float nx = Input.mousePosition.x / Screen.width;
-                if (nx < UIManager.RightPanelAnchorMinX)
+                if (nx < UIManager.RightPanelAnchorMinX && !UIManager.PointerOverDraggablePanel())
                     EventSystem.current.SetSelectedGameObject(null);
             }
             return;
@@ -945,7 +946,7 @@ public class ToolController : MonoBehaviour
             return;
         }
 
-        if (Input.mousePosition.x / Screen.width >= 0.85f)
+        if (UIManager.PointerOverDraggablePanel() || Input.mousePosition.x / Screen.width >= 0.85f)
         {
             Debug.Log("不能在UI区域粘贴");
             return;

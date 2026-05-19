@@ -46,7 +46,7 @@ public class ToolController : MonoBehaviour
     private Vector3 lockOrigin;
 
     // 用于存储复制的建筑信息
-    private MapItem copiedItem = null;
+    private readonly List<MapItem> copiedItems = new List<MapItem>();
 
     public GameObject heightChangerVisPart;
     public GameObject ToolVisPartInstance;
@@ -925,22 +925,32 @@ public class ToolController : MonoBehaviour
         }
     }
 
-    // 复制当前选中的对象（任意 MapItem 子类）
+    // 复制选中对象：多选时整批，单选时单个（统一存进 copiedItems）
     private void CopySelectedItem()
     {
-        if (miSelected == null)
+        copiedItems.Clear();
+        if (MultiSelectMode)
+        {
+            foreach (MapItem mi in misSelected)
+                if (mi != null) copiedItems.Add(mi);
+        }
+        else if (miSelected != null)
+        {
+            copiedItems.Add(miSelected);
+        }
+
+        if (copiedItems.Count == 0)
         {
             Debug.Log("没有选中的对象可以复制");
             return;
         }
-        copiedItem = miSelected;
-        Debug.Log($"已复制 {copiedItem.GetType().Name}: id={copiedItem.id}");
+        Debug.Log($"已复制 {copiedItems.Count} 个对象");
     }
 
-    // 粘贴到鼠标位置（按 MapItem 多态克隆）
+    // 粘贴到鼠标位置：整组按相对位置克隆，组质心对齐鼠标；一次 checkPoint 让 Ctrl+Z/Y 整批撤回
     private void PasteItem()
     {
-        if (copiedItem == null)
+        if (copiedItems.Count == 0)
         {
             Debug.Log("没有复制的对象可以粘贴");
             return;
@@ -960,37 +970,106 @@ public class ToolController : MonoBehaviour
             return;
         }
 
-        MapItem clone = copiedItem.Duplicate();
-        if (clone == null)
+        // 组锚点 = 各源对象锚点均值；整组平移 offset，使质心落到鼠标点、保留相对布局
+        Vector2 pasteSvg = MathOfRwrme.U3dPosToSvgPos(new Vector2(hit.point.x, hit.point.z));
+        Vector2 groupAnchor = Vector2.zero;
+        int validSrc = 0;
+        foreach (MapItem src in copiedItems)
         {
-            Debug.Log($"{copiedItem.GetType().Name} 不支持复制");
+            if (src == null) continue;
+            groupAnchor += src.GetAnchor();
+            validSrc++;
+        }
+        if (validSrc == 0)
+        {
+            Debug.Log("复制的对象已失效");
+            return;
+        }
+        groupAnchor /= validSrc;
+        Vector2 offset = pasteSvg - groupAnchor;
+
+        MapItem hitItem = hit.collider.gameObject.GetComponent<MapItem>();
+        bool single = (validSrc == 1);
+
+        // 先克隆配置好，但暂不入层；全空则不写 checkPoint，避免产生空撤销步
+        var pending = new List<MapItem>();
+        foreach (MapItem src in copiedItems)
+        {
+            if (src == null) continue;
+            MapItem clone = src.Duplicate();
+            if (clone == null)
+            {
+                Debug.Log($"{src.GetType().Name} 不支持复制，已跳过");
+                continue;
+            }
+            clone.grab(offset);
+
+            // 单个粘贴沿用旧行为（命中 MapItem 则叠其上）；批量保留各自相对图层
+            if (single && hitItem != null) clone.layerIndex = hitItem.layerIndex + 1;
+            else clone.layerIndex = src.layerIndex;
+
+            pending.Add(clone);
+        }
+
+        if (pending.Count == 0)
+        {
+            Debug.Log("没有可粘贴的对象");
             return;
         }
 
-        // 用 grab(offset) 把克隆体挪到鼠标点
-        Vector2 pasteSvg = MathOfRwrme.U3dPosToSvgPos(new Vector2(hit.point.x, hit.point.z));
-        Vector2 offset = pasteSvg - copiedItem.GetAnchor();
-        clone.grab(offset);
+        CtrlZer.instance.checkPoint();   // 整批一个撤销点
 
-        // 图层：命中其它 MapItem 时叠在它上面，否则沿用源对象图层
-        clone.layerIndex = copiedItem.layerIndex;
-        MapItem hitItem = hit.collider.gameObject.GetComponent<MapItem>();
-        if (hitItem != null) clone.layerIndex = hitItem.layerIndex + 1;
+        // 先全部入层并分配 id，但不立即 scatter
+        foreach (MapItem clone in pending)
+        {
+            clone.id = MetaMap.instance.getNewItemId(clone.IdPrefix);
+            if (clone is Offroad && MetaMap.instance.offroadLayer != null)
+                MetaMap.instance.offroadLayer.mapItems.Add(clone);
+            else
+                MetaMap.instance.defaultLayer.mapItems.Add(clone);
+        }
 
-        clone.id = MetaMap.instance.getNewItemId(clone.IdPrefix);
+        // 与 Rank 方法对齐：堆叠由 VpMetaToucher 按 (layerIndex, Rank) 判定
+        // —— 同 layerIndex 内也靠 Rank 决定谁踩谁（mesh 0.2 踩 building 0.1）。
+        // 故按 (layerIndex 升序, Rank 升序) scatter，低 Rank 先就位；
+        // 每当 (layerIndex,Rank) 跨界就 SyncTransforms，让刚摆好的碰撞体即时生效，供更高 Rank 的下射命中。
+        var ordered = new List<MapItem>(pending);
+        ordered.Sort((a, b) =>
+        {
+            int c = a.layerIndex.CompareTo(b.layerIndex);
+            if (c != 0) return c;
+            return a.Rank.CompareTo(b.Rank);
+        });
+        bool first = true;
+        int lastLayer = 0;
+        float lastRank = 0f;
+        foreach (MapItem clone in ordered)
+        {
+            if (!first && (clone.layerIndex != lastLayer || !Mathf.Approximately(clone.Rank, lastRank)))
+                Physics.SyncTransforms();
+            clone.scatterThis();
+            lastLayer = clone.layerIndex;
+            lastRank = clone.Rank;
+            first = false;
+        }
+        Physics.SyncTransforms();
 
-        CtrlZer.instance.checkPoint();
-
-        // Offroad 走 offroadLayer，其它走 defaultLayer
-        if (clone is Offroad && MetaMap.instance.offroadLayer != null)
-            MetaMap.instance.offroadLayer.mapItems.Add(clone);
+        // 粘贴后选中新对象，方便继续移动/删除
+        if (pending.Count == 1)
+        {
+            miSelected = pending[0];
+            misSelected.Clear();
+        }
         else
-            MetaMap.instance.defaultLayer.mapItems.Add(clone);
+        {
+            miSelected = null;
+            misSelected.Clear();
+            misSelected.AddRange(pending);
+            if (UIManager.instance != null)
+                UIManager.instance.RefreshMultiSelectPanel(misSelected);
+        }
 
-        clone.scatterThis();
-        miSelected = clone;
-
-        Debug.Log($"已粘贴 {clone.GetType().Name} id={clone.id}");
+        Debug.Log($"已粘贴 {pending.Count} 个对象");
     }
 }
 public class Tool

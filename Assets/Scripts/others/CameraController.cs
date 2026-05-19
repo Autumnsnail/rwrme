@@ -2,23 +2,23 @@ using UnityEngine;
 
 public class DualModeCameraController : MonoBehaviour
 {
-    [Header("ģʽ����")]
+    [Header("ģʽ����")]
     public CameraMode currentMode = CameraMode.FreeFlight;
 
-    [Header("����ģʽ����")]
+    [Header("����ģʽ����")]
     public float flightMoveSpeed = 5f;
     public float flightFastMoveSpeed = 15f;
     public float flightMouseSensitivity = 2f;
     public bool invertY = false;
 
-    [Tooltip("����ģʽ�¹��ֵ����ƶ��ٶȣ��� Mouse ScrollWheel ��˺���Ϊ Exp ָ��")]
+    [Tooltip("����ģʽ�¹��ֵ����ƶ��ٶȣ��� Mouse ScrollWheel ��˺���Ϊ Exp ָ��")]
     public float flightScrollWheelIntensity = 3f;
     public float minFlightMoveSpeed = 0.25f;
     public float maxFlightMoveSpeed = 150f;
     public float minFlightFastMoveSpeed = 0.5f;
     public float maxFlightFastMoveSpeed = 450f;
 
-    [Header("���ӽ�ģʽ����")]
+    [Header("���ӽ�ģʽ����")]
     public float topDownMoveSpeed = 10f;
     public float topDownDragSpeed = 2f;
     public float topDownHeight = 10f;
@@ -27,8 +27,11 @@ public class DualModeCameraController : MonoBehaviour
     public float maxOrthoSize = 20f;
     public float zoomSpeed = 2f;
 
-    [Header("ͨ������")]
+    [Header("ͨ������")]
     public KeyCode toggleModeKey = KeyCode.Tab;
+
+    [Tooltip("缩放↔飞行高度联动系数：切到飞行的高度 = orthographicSize / tan(fov/2) * 本系数；切回俯视反向换算。默认 1 为可视范围精确相等，调大→同样缩放下飞得更高")]
+    public float zoomHeightFactor = 1f;
 
     private Vector3 flightRotation = Vector3.zero;
     private Vector3 topDownPosition;
@@ -101,7 +104,10 @@ public class DualModeCameraController : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(toggleModeKey))
+        // 在文本输入框打字时，键盘交给输入框，不驱动相机
+        bool typing = UIManager.IsTypingInInputField();
+
+        if (Input.GetKeyDown(toggleModeKey) && !typing)
         {
             ToggleCameraMode();
         }
@@ -122,11 +128,25 @@ public class DualModeCameraController : MonoBehaviour
         }
     }
 
+    /// <summary>透视相机竖向半视角的 tan，用于"可视范围相等"换算缩放与高度。</summary>
+    float TanHalfFov()
+    {
+        float fov = cam != null ? cam.fieldOfView : 60f;
+        float t = Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
+        return Mathf.Max(t, 1e-3f);
+    }
+
     void ToggleCameraMode()
     {
+        float factor = Mathf.Max(zoomHeightFactor, 1e-3f);
+
         if (currentMode == CameraMode.FreeFlight)
         {
             currentMode = CameraMode.TopDown;
+
+            // 飞行高度 → 正交缩放（反向换算，夹到合法区间）
+            float os = (transform.position.y / factor) * TanHalfFov();
+            orthographicSize = Mathf.Clamp(os, minOrthoSize, maxOrthoSize);
 
             topDownPosition = transform.position;
             topDownPosition.y = topDownHeight;
@@ -144,6 +164,11 @@ public class DualModeCameraController : MonoBehaviour
             flightRotation.x = transform.eulerAngles.x;
 
             SetupFlightCamera();
+
+            // 正交缩放 → 飞行高度（可视范围相等），原地正上方升降
+            Vector3 p = transform.position;
+            p.y = orthographicSize / TanHalfFov() * factor;
+            transform.position = p;
 
             LockCursor();
 
@@ -163,6 +188,8 @@ public class DualModeCameraController : MonoBehaviour
 
             transform.rotation = Quaternion.Euler(flightRotation.x, flightRotation.y, 0f);
         }
+
+        if (UIManager.IsTypingInInputField()) return;   // 打字时不响应 WASD/QE 移动
 
         Vector3 moveDirection = Vector3.zero;
 
@@ -186,6 +213,9 @@ public class DualModeCameraController : MonoBehaviour
 
     void ApplyFlightScrollSpeedAdjust()
     {
+        // 同理：指针在面板上时不借滚轮调飞行速度
+        if (UIManager.PointerOverDraggablePanel()) return;
+
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scroll) < 1e-5f) return;
 
@@ -244,6 +274,8 @@ public class DualModeCameraController : MonoBehaviour
 
     void HandleKeyboardMovement()
     {
+        if (UIManager.IsTypingInInputField()) return;   // 打字时不响应 WASD 平移
+
         Vector3 moveDirection = Vector3.zero;
 
         if (Input.GetKey(KeyCode.W)) moveDirection += Vector3.forward;
@@ -261,6 +293,9 @@ public class DualModeCameraController : MonoBehaviour
 
     void HandleZoom()
     {
+        // 指针在可拖拽面板（多选/顶点）上时，滚轮交给该面板的列表滚动，不缩放地图
+        if (UIManager.PointerOverDraggablePanel()) return;
+
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0 && cam != null)
         {

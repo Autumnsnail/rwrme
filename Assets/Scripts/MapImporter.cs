@@ -625,6 +625,12 @@ public class MapImporter : MonoBehaviour
                                                             if (TryParseVector3(properties["offset"], out Vector3 mo))
                                                                 ms.offset = mo;
                                                         }
+                                                        if (properties.ContainsKey("collision_model_size")
+                                                            && TryParseVector3(properties["collision_model_size"], out Vector3 cs))
+                                                        {
+                                                            ms.reCollision = true;
+                                                            ms.collisionSize = cs;
+                                                        }
 
                                                         ms.position = position;
                                                         ms.rotation = angle;
@@ -821,6 +827,16 @@ public class MapImporter : MonoBehaviour
                                                         }
 
                                                         if (properties.ContainsKey("template")) gs.material = properties["template"];
+                                                        if (properties.ContainsKey("height"))
+                                                        {
+                                                            gs.reHighed = true;
+                                                            gs.reHighedHeight = float.Parse(properties["height"]);
+                                                        } 
+                                                        if (properties.ContainsKey("merge"))
+                                                        {
+                                                            gs.merged = true;
+                                                        }
+
                                                         MetaMap.instance.defaultLayer.mapItems.Add(gs);
                                                         gs.id = MetaMap.instance.getNewItemId("wall");
                                                         gs.layerIndex = number;
@@ -916,29 +932,59 @@ public class MapImporter : MonoBehaviour
             return -1;
         }
     }
+    /// <summary>
+    /// <c>Assets/templates</c> 下按文件名排序取第一个 *.xml 或 *.svg（Inkscape 模板与纯 xml 均可）。
+    /// </summary>
+    public static string FindFirstTemplateInTemplatesDir()
+    {
+        string templatesDir = Path.Combine(Application.dataPath, "templates");
+        if (!Directory.Exists(templatesDir)) return null;
+
+        return Directory.GetFiles(templatesDir, "*.xml")
+            .Concat(Directory.GetFiles(templatesDir, "*.svg"))
+            .OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+    }
+
+    /// <summary>模板 / objects.svg 根下 inkscape:label="materials" 的图层。</summary>
+    public static XmlElement FindMaterialsLayer(XmlElement root)
+    {
+        if (root == null) return null;
+        foreach (XmlNode node in root.ChildNodes)
+        {
+            if (node is XmlElement g && g.Name == "g"
+                && g.GetAttribute("inkscape:label") == "materials")
+                return g;
+        }
+        return null;
+    }
+
     public void importTemplates()
     {
         Debug.Log("start to Import GeneralSettings");
         XmlDocument xmlDoc = new XmlDocument();
         string templatesDir = Path.Combine(Application.dataPath, "templates");
-        string templatePath = Directory.GetFiles(templatesDir, "*.xml")
-            .OrderBy(p => Path.GetFileName(p))
-            .FirstOrDefault(); // GetFiles 返回全路径
+        string templatePath = FindFirstTemplateInTemplatesDir();
 
         if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
         {
-            Debug.LogError("MapImporter: 找不到模板 xml（*.xml），目录: " + templatesDir);
+            Debug.LogError("MapImporter: 找不到模板文件（*.xml / *.svg），目录: " + templatesDir);
             return;
         }
         xmlDoc.Load(templatePath);
-        XmlElement root = xmlDoc.DocumentElement;
-        XmlElement eg = root.FirstChild as XmlElement;
-        if (eg == null) { Debug.Log("wrong xml"); }
+        XmlElement eg = FindMaterialsLayer(xmlDoc.DocumentElement);
+        if (eg == null)
+        {
+            Debug.LogError("MapImporter: 模板中未找到 inkscape:label=\"materials\" 的图层: " + templatePath);
+            return;
+        }
         foreach (XmlNode node in eg.ChildNodes)
         {
             if (node.Name != "rect") continue;
             XmlElement rect = node as XmlElement;
             if(rect == null) continue;
+            if (rect.GetAttribute("inkscape:label").StartsWith("#general", StringComparison.Ordinal))
+                continue;
             if(rect.GetAttribute("inkscape:label").StartsWith("#mesh_template"))
             {
 //                Debug.Log(rect.GetAttribute("id"));

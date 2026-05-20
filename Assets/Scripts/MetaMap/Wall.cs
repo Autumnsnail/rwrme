@@ -1,12 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using TMPro;
 using UnityEngine;
-
+using UnityEngine.UI;
 public class Wall : MePath
 {
     public GameObject SubWallPref;
 
+    public bool reHighed = false;
+    public float reHighedHeight = 0.0f;
+
+    public bool merged = false;
 
     void Start()
     {
@@ -58,12 +64,44 @@ public class Wall : MePath
         }
     }
 
+    public void SetReHighed(bool rehight)
+    {
+        reHighed = rehight;
+        scatterThis();
+    }
+
+    public void SetReHighedHeight(string height)
+    {
+        if (float.TryParse(height, NumberStyles.Float, CultureInfo.InvariantCulture, out float h))
+            reHighedHeight = h;
+        scatterThis();
+    }
+
+    void UpdateHeightUi()
+    {
+        Transform canvas = transform.Find("Canvas");
+        if (canvas == null) return;
+
+        Toggle toggle = canvas.Find("Toggle")?.GetComponent<Toggle>();
+        if (toggle != null)
+            toggle.SetIsOnWithoutNotify(reHighed);
+
+        TMP_InputField heightInput = canvas.Find("height")?.GetComponent<TMP_InputField>();
+        if (heightInput == null) return;
+
+        heightInput.gameObject.SetActive(reHighed);
+        if (reHighed)
+            heightInput.SetTextWithoutNotify(reHighedHeight.ToString(CultureInfo.InvariantCulture));
+    }
+
     public override void scatterThis()
     {
-        GameObject go = this.gameObject;
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
-            Destroy(transform.GetChild(i).gameObject);
+            Transform child = transform.GetChild(i);
+            if (child.name == "Canvas")
+                continue;
+            Destroy(child.gameObject);
         }
         for (int i = 0;i<positionLine.Count-1;i++)
         {
@@ -94,7 +132,10 @@ public class Wall : MePath
                 hei = wt.height;
                 mtl = wt.material;
             }
-
+            if(reHighed)
+            {
+                hei = reHighedHeight;
+            }
 
             GameObject wall = Instantiate(SubWallPref, this.transform);
             wall.transform.localPosition = start;
@@ -117,6 +158,7 @@ public class Wall : MePath
             //wall.transform.localRotation = Quaternion.LookRotation(Vector3.Cross(direction, Vector3.up) , Vector3.forward);
             wall.transform.GetChild(0).gameObject.GetComponent<Renderer>().material = mtl;
         }
+        UpdateHeightUi();
     }
 
 }

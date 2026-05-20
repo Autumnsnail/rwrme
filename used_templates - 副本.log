@@ -1,0 +1,166 @@
+# 本图导出时引用的 template 名称（按类型分组，组内按字母序）
+# 2026-05-20 22:16:47
+# path: D:\PLAY\projects\rwrme\used_templates.log
+# total: 144
+
+[mesh (#mesh template_ref)]
+# count: 82
+armory
+awning_green
+awning_red
+barbwire
+barbwire2
+barell_blue
+barell_green
+barell_red
+barrier
+barrier_open
+big_oil_tank
+big_tent
+bush1
+bush2
+bush3
+bush3_1
+bush4
+camonet
+cargo_ship
+chairset_chair
+chairset_table
+concrete_barrier
+construction_part_1
+container_blue
+container_green
+container_greenD
+container_greenT
+container_red
+cooling_tower
+dock_crane
+enclosure
+factorychimney
+fir1
+fir2
+fir3
+gas_station
+hangar
+hangar1
+hangar2
+hedgehog
+lighthouse
+medi_house
+oil_pipe_bent_hori
+oil_pipe_bent_verti
+oil_pipe_straight_15m
+parasol_blue
+parasol_green
+parasol_red
+parasol_yellow
+pipe
+placard
+radar_dish
+railroad_curved_element
+rock_h1
+rock_h3
+rock_s1
+ruin_debris1
+ruin_debris2
+ruin_debris3
+street_ground_trash
+streetlantern
+streetlight
+tent
+tower_big
+train boxcar
+tropical_plant_01
+tropical_plant_02
+tropical_plant_03
+tropical_plant_04
+tropical_plant_05
+tropical_plant_06
+tropical_plant_07
+trunks
+tyre1_lean
+tyre_pile
+ventilator
+warehouse
+warehouse2
+weapon_rack
+windmill
+world_statue
+ww2_bunker
+
+[decal (#decal template_ref)]
+# count: 8
+burned_ground
+dry_terrain
+helipad
+parking_line
+roadline
+stop_line
+stop_line2
+tennis_court
+
+[wall (template = material)]
+# count: 14
+BarbedWireFence1
+BarbwireWall1
+BrickWall1
+BrickWall2
+CorrugatedFence
+FarmFence1
+FarmFence2
+GardenWall1
+InvisibleWall1
+PlatformFence1
+SandbagWall1
+SecurityFence1
+SecurityFence2
+StoneWall1
+
+[building (material)]
+# count: 25
+BuildingArmory1
+BuildingArmory2
+BuildingBarracks1
+BuildingDefault
+BuildingFactory1
+BuildingFactory2
+BuildingRoofStory1
+BuildingShop1
+BuildingShop1End
+BuildingShop2
+BuildingShopShutter
+BuildingVilla
+BuildingWhite1
+BuildingWhite1Brick
+BuildingWhite1Busy
+BuildingWhite1RoofStory1
+BuildingWhite2
+BuildingWhite2Busy
+BuildingWhite2RoofStory1
+BuildingWhite3
+BuildingWhite3Busy
+BuildingWhite3RoofStory1
+BuildingWhite5
+BuildingWhite5RoofStory1
+BuildingWhiteParking
+
+[platform (wall_template)]
+# count: 5
+BrickWall2
+DummyWall1
+FarmFence1
+StoneWall1
+StoneWallCastle1
+
+[platform (base_wall_template)]
+# count: 10
+BrickWall1
+BrickWall2
+CliffWall2
+DummyWall1
+FarmFence1
+InvisibleWall
+InvisibleWall1
+SidePanelWall1
+StoneWall1
+StoneWallCastle1

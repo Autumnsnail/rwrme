@@ -21,6 +21,104 @@ public class MapExporter : MonoBehaviour
 
     private string FindTemplatePathLikeImporter() => MapImporter.FindFirstTemplateInTemplatesDir();
 
+    static void TryAddTemplateName(ISet<string> set, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+        set.Add(name.Trim());
+    }
+
+    static readonly (string key, string title)[] UsedTemplateLogSections =
+    {
+        ("mesh", "mesh (#mesh template_ref)"),
+        ("decal", "decal (#decal template_ref)"),
+        ("wall", "wall (template = material)"),
+        ("building", "building (material)"),
+        ("platform_wall", "platform (wall_template)"),
+        ("platform_base_wall", "platform (base_wall_template)"),
+    };
+
+    static Dictionary<string, HashSet<string>> CreateUsedTemplateGroups()
+    {
+        var groups = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        foreach ((string key, _) in UsedTemplateLogSections)
+            groups[key] = new HashSet<string>(StringComparer.Ordinal);
+        return groups;
+    }
+
+    static Dictionary<string, HashSet<string>> CollectUsedTemplateNamesByType()
+    {
+        var groups = CreateUsedTemplateGroups();
+        void ScanItems(IList<MapItem> items)
+        {
+            if (items == null) return;
+            foreach (MapItem mi in items)
+            {
+                switch (mi)
+                {
+                    case MeMesh mesh:
+                        TryAddTemplateName(groups["mesh"], mesh.template_ref);
+                        break;
+                    case Decal decal:
+                        TryAddTemplateName(groups["decal"], decal.template_ref);
+                        break;
+                    case Wall wall:
+                        TryAddTemplateName(groups["wall"], wall.material);
+                        break;
+                    case Building building:
+                        TryAddTemplateName(groups["building"], building.material);
+                        break;
+                    case Platform platform:
+                        TryAddTemplateName(groups["platform_wall"], platform.wall_template);
+                        TryAddTemplateName(groups["platform_base_wall"], platform.base_wall_template);
+                        break;
+                }
+            }
+        }
+
+        if (MetaMap.instance != null)
+        {
+            ScanItems(MetaMap.instance.defaultLayer?.mapItems);
+            ScanItems(MetaMap.instance.baseLayer?.mapItems);
+            ScanItems(MetaMap.instance.offroadLayer?.mapItems);
+        }
+        return groups;
+    }
+
+    /// <summary>
+    /// 编辑器：工程根（Assets 父目录）；独立构建：与 .exe 同级（*_Data 的父目录）。
+    /// </summary>
+    static string GetExecutableNearbyDirectory()
+    {
+        string dir = Path.GetDirectoryName(Application.dataPath);
+        return string.IsNullOrEmpty(dir) ? Application.dataPath : dir;
+    }
+
+    void WriteUsedTemplatesLog(Dictionary<string, HashSet<string>> groups)
+    {
+        string logPath = Path.Combine(GetExecutableNearbyDirectory(), "used_templates.log");
+
+        int total = groups.Values.Sum(s => s.Count);
+        var sb = new StringBuilder();
+        sb.AppendLine("# 本图导出时引用的 template 名称（按类型分组，组内按字母序）");
+        sb.AppendLine("# " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
+        sb.AppendLine("# path: " + logPath);
+        sb.AppendLine("# total: " + total.ToString(CultureInfo.InvariantCulture));
+
+        foreach ((string key, string title) in UsedTemplateLogSections)
+        {
+            if (!groups.TryGetValue(key, out HashSet<string> set) || set.Count == 0)
+                continue;
+            sb.AppendLine();
+            sb.AppendLine("[" + title + "]");
+            sb.AppendLine("# count: " + set.Count.ToString(CultureInfo.InvariantCulture));
+            foreach (string n in set.OrderBy(x => x, StringComparer.Ordinal))
+                sb.AppendLine(n);
+        }
+
+        File.WriteAllText(logPath, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        Debug.Log("MapExporter: 已写入 " + total + " 个 template 名称（" + UsedTemplateLogSections.Length + " 类）到 " + logPath);
+    }
+
     /// <summary>
     /// 从模板文档取出 inkscape:label="materials" 的 &lt;g&gt; 深拷贝，并去掉其中 inkscape:label 以 #general 开头的 &lt;rect&gt;。
     /// </summary>
@@ -778,6 +876,7 @@ public class MapExporter : MonoBehaviour
 
         File.WriteAllText(xmlFilePath, xmlContent);
 
+        WriteUsedTemplatesLog(CollectUsedTemplateNamesByType());
 
         exportTerrainHeightmap();
         exportTerrainAlphamap();

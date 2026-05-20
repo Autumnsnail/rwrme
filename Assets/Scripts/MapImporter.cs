@@ -1039,13 +1039,8 @@ public class MapImporter : MonoBehaviour
                 {
 //                    Debug.Log("MapImporter get collision_model_size: " + properties["collision_model_size"]);
                     string inputS = Regex.Replace(properties["collision_model_size"], @"\s+", " ").Trim();
-                    string[] parts = inputS.Split(' ');
-                    Vector3 vector = new Vector3(
-                        float.Parse(parts[0]),
-                        float.Parse(parts[1]),
-                        float.Parse(parts[2])
-                    );
-                    template.extend = vector;
+                    if (TryParseVector3(inputS, out Vector3 vector))
+                        template.extend = vector;
                 }
                 template.color = MathOfRwrme.StringToColor(template.name);
                 MetaMap.instance.meshTemplates.Add(template);

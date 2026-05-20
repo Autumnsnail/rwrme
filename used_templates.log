@@ -1,0 +1,78 @@
+# 本图导出时引用的 template 名称（按类型分组，组内按字母序）
+# 2026-05-20 22:43:12
+# path: D:\PLAY\projects\rwrme\used_templates.log
+# total: 56
+
+[mesh (#mesh template_ref)]
+# count: 27
+armory
+barell_blue
+barell_green
+barell_red
+bush0
+bush1
+bush2
+bush3
+bush4
+chairset_chair
+chairset_table
+concrete_barrier
+container_blue
+container_red
+factorychimney
+hedgehog
+ivy
+marram
+palmtree_1
+palmtree_2
+parasol_green
+parasol_red
+parasol_yellow
+pipe
+street_ground_trash
+streetlight
+weapon_rack
+
+[decal (#decal template_ref)]
+# count: 7
+cracks_1
+cracks_2
+cracks_3
+cracks_4
+cracks_7
+parking_line
+pavement_tile1
+
+[wall (template = material)]
+# count: 10
+CorrugatedFence
+FarmFence1
+FarmFence2
+GardenWall1
+InvisibleWall1
+RuinWall1
+RuinWall2
+SandbagWall1
+SandbagWall2
+SecurityFence1
+
+[building (material)]
+# count: 5
+BuildingFactory1
+BuildingHouse
+BuildingHouse2
+BuildingRoofStory1
+BuildingShopShutter
+
+[platform (wall_template)]
+# count: 4
+BrickWall1
+DummyWall1
+StoneWall1
+StoneWallCastle1
+
+[platform (base_wall_template)]
+# count: 3
+CliffWall2
+SidePanelWall1
+StoneWall1

@@ -14,6 +14,38 @@ public class UIManager : MonoBehaviour
     public const float RightPanelAnchorMinX = 0.73f;
     public const float RightPanelAnchorMaxX = 0.90f;
 
+    /// <summary>当前是否正在某个文本输入框（TMP_InputField / 旧版 InputField）里打字。</summary>
+    public static bool IsTypingInInputField()
+    {
+        var es = UnityEngine.EventSystems.EventSystem.current;
+        if (es == null || es.currentSelectedGameObject == null) return false;
+        var go = es.currentSelectedGameObject;
+        return go.GetComponent<TMP_InputField>() != null
+            || go.GetComponent<UnityEngine.UI.InputField>() != null;
+    }
+
+    /// <summary>
+    /// 指针是否压在「可拖拽浮动面板」（多选 / 顶点）当前矩形内。
+    /// 只看这两个面板的实际屏幕矩形，不用全局 EventSystem 射线——否则会被铺满视口的
+    /// raycastTarget UI 永远命中，导致 selector / 拖框失效。
+    /// </summary>
+    public static bool PointerOverDraggablePanel()
+    {
+        if (instance == null) return false;
+        return instance.RectActiveAndContains(instance.multiSelectPanel)
+            || instance.RectActiveAndContains(instance.vertexPanel);
+    }
+
+    private bool RectActiveAndContains(GameObject panel)
+    {
+        if (panel == null || !panel.activeInHierarchy) return false;
+        RectTransform rt = panel.transform as RectTransform;
+        if (rt == null) return false;
+        Canvas cv = rt.GetComponentInParent<Canvas>();
+        Camera cam = (cv != null && cv.renderMode != RenderMode.ScreenSpaceOverlay) ? cv.worldCamera : null;
+        return RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, cam);
+    }
+
     GameObject ddBT;//building drop down
 
     GameObject ddWT;//wall dd
@@ -22,8 +54,17 @@ public class UIManager : MonoBehaviour
     GameObject ddWTP;//platformSerface
     GameObject ddMt;// mesh templates
     GameObject ddDecalTemplates;// decal templates
-    TMP_InputField meshSearchField;
-    List<MeshTemplate> meshTemplatesCache;
+    // 通用可搜索下拉：在目标下拉框上方插一个搜索输入框，按名子串过滤选项
+    class SearchableDropdown
+    {
+        public GameObject ddGO;
+        public TMP_InputField field;
+        public System.Func<List<string>> allOptions;   // 当前全量选项名（未过滤）
+        public Vector2? customAnchoredPos;             // 父面板本地坐标；null = 放下拉框正上方
+        public float customWidth = 0f;                 // <=0 沿用下拉框宽度
+        public string placeholder = "Search...";
+    }
+    SearchableDropdown sdMesh, sdBuilding, sdWall, sdPlatformBaseWall;
 
 
     Canvas showingCanvas;
@@ -35,6 +76,16 @@ public class UIManager : MonoBehaviour
     private TextMeshProUGUI multiSelectHeader;
     private GameObject multiSelectDetailPanel;
     private TextMeshProUGUI multiSelectDetailText;
+
+    // 多选窗口：拖拽 / 缩放 / 折叠 / 复位 状态
+    private RectTransform multiSelectRect;
+    private GameObject multiSelectScrollGO;
+    private GameObject multiSelectResizeGO;
+    private bool multiSelectCollapsed;
+    private float msCollapseShrink;   // 折叠时压低 offsetMin.y 的增量；展开时反向撤销，保留折叠期间的拖动位移
+    private static readonly Vector2 MsDefaultAnchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
+    private static readonly Vector2 MsDefaultAnchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
+    private const float MsHeaderHeight = 30f;
     private MapItem detailViewingItem;
     void Start()
     {
@@ -46,6 +97,15 @@ public class UIManager : MonoBehaviour
         ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
         ddMt = transform.Find("MeshEditor/MeshTemplates").gameObject;
         ddDecalTemplates = transform.Find("DecalEditor/DecalTypes").gameObject;
+
+        // 四个可搜索下拉：启动即建好搜索条，避免首次打开菜单时缺失（原先只在下拉框 PointerDown 惰性创建）
+        sdMesh = MakeSearchable(ddMt, () => MetaMap.instance.meshTemplates.Select(t => t.name).ToList());
+        // Building 编辑器上方是按钮带（y≈70~150），下拉正上方放不下；改放下方空区（Draw Bush 下方），整宽
+        sdBuilding = MakeSearchable(ddBT, () => MetaMap.instance.buildingTypes.Select(t => t.name).ToList(),
+            customPos: new Vector2(-0.4f, -90f), placeholder: "Search building...");
+        sdWall = MakeSearchable(ddWT, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList());
+        sdPlatformBaseWall = MakeSearchable(ddWTP, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList());
+
         CreateMultiSelectPanel();
         /*
         mms.Add(pMM);//0
@@ -112,17 +172,14 @@ public class UIManager : MonoBehaviour
     public void updatebBT()
     {
         Debug.Log("UIManager:update bBt");
-        TMP_Dropdown dd = ddBT.GetComponent<TMP_Dropdown>();
-        int saved = dd.value;
-        dd.ClearOptions();
-        List<BuildingType> btp = MetaMap.instance.buildingTypes;
-        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
-        dd.AddOptions(optionTexts);
-        dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
+        RefreshSearchable(sdBuilding);
     }
     public void changebtc(int ind)
     {
-        BuildingType bt = MetaMap.instance.buildingTypes[ind];
+        string nm = GetDropdownText(ddBT, ind);
+        BuildingType bt = MetaMap.instance.buildingTypes.FirstOrDefault(x => x.name == nm);
+        if (bt == null && ind >= 0 && ind < MetaMap.instance.buildingTypes.Count)
+            bt = MetaMap.instance.buildingTypes[ind];   // 兜底：搜索框未建好等异常情形
         if (bt != null)
         {
             MaterialChangerTool uci =  ToolController.inste.tools[4]as MaterialChangerTool;
@@ -136,23 +193,15 @@ public class UIManager : MonoBehaviour
 
     public void updateWT()
     {
-        TMP_Dropdown dd = ddWT.GetComponent<TMP_Dropdown>();
-        TMP_Dropdown dt = ddWTP.GetComponent<TMP_Dropdown>();
-        int savedDD = dd.value;
-        int savedDT = dt.value;
-        dd.ClearOptions();
-        dt.ClearOptions();
-        List<WallType> btp = MetaMap.instance.wallTypes;
-        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
-        dd.AddOptions(optionTexts);
-        dt.AddOptions(optionTexts);
-        int maxIdx = Mathf.Max(0, optionTexts.Count - 1);
-        dd.SetValueWithoutNotify(Mathf.Clamp(savedDD, 0, maxIdx));
-        dt.SetValueWithoutNotify(Mathf.Clamp(savedDT, 0, maxIdx));
+        RefreshSearchable(sdWall);
+        RefreshSearchable(sdPlatformBaseWall);
     }
     public void changewtc(int ind)
     {
-        WallType wt = MetaMap.instance.wallTypes[ind];
+        string nm = GetDropdownText(ddWT, ind);
+        WallType wt = MetaMap.instance.wallTypes.FirstOrDefault(x => x.name == nm);
+        if (wt == null && ind >= 0 && ind < MetaMap.instance.wallTypes.Count)
+            wt = MetaMap.instance.wallTypes[ind];
         if (wt != null)
         {
             MaterialChangerTool uci = ToolController.inste.tools[4] as MaterialChangerTool;
@@ -165,7 +214,10 @@ public class UIManager : MonoBehaviour
     }
     public void changebwt(int ind)
     {
-        WallType wt = MetaMap.instance.wallTypes[ind];
+        string nm = GetDropdownText(ddWTP, ind);
+        WallType wt = MetaMap.instance.wallTypes.FirstOrDefault(x => x.name == nm);
+        if (wt == null && ind >= 0 && ind < MetaMap.instance.wallTypes.Count)
+            wt = MetaMap.instance.wallTypes[ind];
         if (wt != null)
         {
             PlatformBasewallChanger uci = ToolController.inste.tools[9] as PlatformBasewallChanger;
@@ -180,38 +232,62 @@ public class UIManager : MonoBehaviour
 
     public void updateMTD()
     {
-        TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
-        string preserved = (dd.options.Count > 0 && dd.value >= 0 && dd.value < dd.options.Count)
-            ? dd.options[dd.value].text : null;
-
-        meshTemplatesCache = MetaMap.instance.meshTemplates;
-        EnsureMeshSearchField();
-        ApplyMeshFilter(meshSearchField != null ? meshSearchField.text : string.Empty, preserved);
+        RefreshSearchable(sdMesh);
     }
 
-    void EnsureMeshSearchField()
-    {
-        if (meshSearchField != null || ddMt == null) return;
+    // ---------- 通用可搜索下拉 ----------
 
-        Transform parent = ddMt.transform.parent;
-        RectTransform ddRect = ddMt.GetComponent<RectTransform>();
+    SearchableDropdown MakeSearchable(GameObject ddGO, System.Func<List<string>> allOptions,
+        Vector2? customPos = null, float customWidth = 0f, string placeholder = "Search...")
+    {
+        var s = new SearchableDropdown
+        {
+            ddGO = ddGO,
+            allOptions = allOptions,
+            customAnchoredPos = customPos,
+            customWidth = customWidth,
+            placeholder = placeholder
+        };
+        EnsureSearchUI(s);
+        return s;
+    }
+
+    /// <summary>刷新一个可搜索下拉：保留当前选中（按文本），按搜索框内容过滤。</summary>
+    void RefreshSearchable(SearchableDropdown s)
+    {
+        if (s == null || s.ddGO == null) return;
+        TMP_Dropdown dd = s.ddGO.GetComponent<TMP_Dropdown>();
+        if (dd == null) return;
+        string preserved = (dd.options.Count > 0 && dd.value >= 0 && dd.value < dd.options.Count)
+            ? dd.options[dd.value].text : null;
+        EnsureSearchUI(s);
+        ApplyFilter(s, preserved);
+    }
+
+    void EnsureSearchUI(SearchableDropdown s)
+    {
+        if (s == null || s.field != null || s.ddGO == null) return;
+
+        Transform parent = s.ddGO.transform.parent;
+        RectTransform ddRect = s.ddGO.GetComponent<RectTransform>();
         if (parent == null || ddRect == null) return;
 
-        GameObject searchGO = new GameObject("MeshSearch", typeof(RectTransform));
+        GameObject searchGO = new GameObject("SearchBox", typeof(RectTransform));
         searchGO.transform.SetParent(parent, false);
 
         RectTransform sRect = searchGO.GetComponent<RectTransform>();
         sRect.anchorMin = ddRect.anchorMin;
         sRect.anchorMax = ddRect.anchorMax;
         sRect.pivot = ddRect.pivot;
-        sRect.sizeDelta = new Vector2(ddRect.sizeDelta.x, 26);
-        sRect.anchoredPosition = ddRect.anchoredPosition
-            + new Vector2(0, ddRect.sizeDelta.y * 0.5f + sRect.sizeDelta.y * 0.5f + 4);
+        float w = s.customWidth > 0f ? s.customWidth : ddRect.sizeDelta.x;
+        sRect.sizeDelta = new Vector2(w, 26);
+        sRect.anchoredPosition = s.customAnchoredPos
+            ?? (ddRect.anchoredPosition + new Vector2(0, ddRect.sizeDelta.y * 0.5f + sRect.sizeDelta.y * 0.5f + 4));
 
         Image bg = searchGO.AddComponent<Image>();
         bg.color = new Color(0.95f, 0.95f, 0.95f, 1f);
 
-        meshSearchField = searchGO.AddComponent<TMP_InputField>();
+        s.field = searchGO.AddComponent<TMP_InputField>();
 
         GameObject textArea = new GameObject("TextArea", typeof(RectTransform), typeof(RectMask2D));
         textArea.transform.SetParent(searchGO.transform, false);
@@ -225,7 +301,7 @@ public class UIManager : MonoBehaviour
         phRect.anchorMin = Vector2.zero; phRect.anchorMax = Vector2.one;
         phRect.offsetMin = Vector2.zero; phRect.offsetMax = Vector2.zero;
         TextMeshProUGUI ph = placeholder.AddComponent<TextMeshProUGUI>();
-        ph.text = "搜索 mesh...";
+        ph.text = string.IsNullOrEmpty(s.placeholder) ? "Search..." : s.placeholder;
         ph.fontSize = 13;
         ph.color = new Color(0.5f, 0.5f, 0.5f);
         ph.alignment = TextAlignmentOptions.MidlineLeft;
@@ -242,35 +318,36 @@ public class UIManager : MonoBehaviour
         tmp.alignment = TextAlignmentOptions.MidlineLeft;
         if (tmp.font == null) tmp.font = TMP_Settings.defaultFontAsset;
 
-        meshSearchField.textComponent = tmp;
-        meshSearchField.placeholder = ph;
-        meshSearchField.textViewport = taR;
+        s.field.textComponent = tmp;
+        s.field.placeholder = ph;
+        s.field.textViewport = taR;
 
-        meshSearchField.onValueChanged.AddListener(s => ApplyMeshFilter(s, null));
+        var captured = s;
+        s.field.onValueChanged.AddListener(_ => ApplyFilter(captured, null));
     }
 
-    void ApplyMeshFilter(string filter, string preferredText)
+    void ApplyFilter(SearchableDropdown s, string preferredText)
     {
-        if (ddMt == null) return;
-        TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
-        if (dd == null || meshTemplatesCache == null) return;
+        if (s == null || s.ddGO == null) return;
+        TMP_Dropdown dd = s.ddGO.GetComponent<TMP_Dropdown>();
+        if (dd == null || s.allOptions == null) return;
+        List<string> all = s.allOptions();
+        if (all == null) return;
 
         string current = preferredText;
         if (current == null && dd.options.Count > 0 && dd.value >= 0 && dd.value < dd.options.Count)
             current = dd.options[dd.value].text;
 
+        string filter = s.field != null ? s.field.text : string.Empty;
         List<string> opts;
         if (string.IsNullOrEmpty(filter))
         {
-            opts = meshTemplatesCache.Select(t => t.name).ToList();
+            opts = new List<string>(all);
         }
         else
         {
             string f = filter.ToLowerInvariant();
-            opts = meshTemplatesCache
-                .Select(t => t.name)
-                .Where(n => !string.IsNullOrEmpty(n) && n.ToLowerInvariant().Contains(f))
-                .ToList();
+            opts = all.Where(n => !string.IsNullOrEmpty(n) && n.ToLowerInvariant().Contains(f)).ToList();
         }
 
         dd.ClearOptions();
@@ -285,12 +362,18 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public string GetMeshDropdownOptionText(int index)
+    string GetDropdownText(GameObject ddGO, int index)
     {
-        if (ddMt == null) return null;
-        TMP_Dropdown dd = ddMt.GetComponent<TMP_Dropdown>();
+        if (ddGO == null) return null;
+        TMP_Dropdown dd = ddGO.GetComponent<TMP_Dropdown>();
         if (dd == null || index < 0 || index >= dd.options.Count) return null;
         return dd.options[index].text;
+    }
+
+    /// <summary>ToolController.setMeshScatterTool 通过显示文本解析模板，过滤后仍正确。</summary>
+    public string GetMeshDropdownOptionText(int index)
+    {
+        return GetDropdownText(ddMt, index);
     }
 
     public void updateDecalTemplatesDropdown()
@@ -324,10 +407,11 @@ public class UIManager : MonoBehaviour
         multiSelectPanel.transform.SetParent(transform, false);
 
         RectTransform panelRect = multiSelectPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
-        panelRect.anchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
+        panelRect.anchorMin = MsDefaultAnchorMin;
+        panelRect.anchorMax = MsDefaultAnchorMax;
         panelRect.offsetMin = Vector2.zero;
         panelRect.offsetMax = Vector2.zero;
+        multiSelectRect = panelRect;
 
         Image panelBg = multiSelectPanel.AddComponent<Image>();
         panelBg.color = new Color(0.12f, 0.12f, 0.14f, 0.95f);
@@ -339,33 +423,178 @@ public class UIManager : MonoBehaviour
         panelVLG.childForceExpandWidth = true;
         panelVLG.childForceExpandHeight = false;
 
-        // --- Header ---
+        // --- Header（同时作为拖拽抓手）---
         GameObject headerGO = new GameObject("Header");
         headerGO.transform.SetParent(multiSelectPanel.transform, false);
-        multiSelectHeader = headerGO.AddComponent<TextMeshProUGUI>();
-        multiSelectHeader.text = "多选";
+        Image headerBg = headerGO.AddComponent<Image>();   // 拖拽热区：实体背景条，可靠接收指针事件
+        headerBg.color = new Color(0.18f, 0.20f, 0.24f, 1f);
+        headerBg.raycastTarget = true;
+        LayoutElement headerLE = headerGO.AddComponent<LayoutElement>();
+        headerLE.preferredHeight = 30;
+        DraggableUIPanel headerDrag = headerGO.AddComponent<DraggableUIPanel>();
+        headerDrag.target = panelRect;
+
+        // 标题文字作为子节点，不挡拖拽（raycastTarget=false）
+        GameObject headerTextGO = new GameObject("HeaderText");
+        headerTextGO.transform.SetParent(headerGO.transform, false);
+        RectTransform htRect = headerTextGO.AddComponent<RectTransform>();
+        htRect.anchorMin = Vector2.zero;
+        htRect.anchorMax = Vector2.one;
+        htRect.offsetMin = Vector2.zero;
+        htRect.offsetMax = Vector2.zero;
+        multiSelectHeader = headerTextGO.AddComponent<TextMeshProUGUI>();
+        multiSelectHeader.text = "= Multi-select";
         multiSelectHeader.fontSize = 18;
         multiSelectHeader.fontStyle = FontStyles.Bold;
         multiSelectHeader.color = new Color(0f, 0.9f, 0.9f);
         multiSelectHeader.alignment = TextAlignmentOptions.Center;
+        multiSelectHeader.raycastTarget = false;
         if (multiSelectHeader.font == null)
             multiSelectHeader.font = TMP_Settings.defaultFontAsset;
-        LayoutElement headerLE = headerGO.AddComponent<LayoutElement>();
-        headerLE.preferredHeight = 30;
+
+        // 最小化按钮（左 "-"）/ 关闭按钮（右 "X"，等效 ESC 退出菜单），盖在标题栏上、各自吃掉点击不触发拖拽
+        MakeHeaderButton(headerGO.transform, "MinimizeBtn", "-",
+            new Vector2(0, 0.5f), new Vector2(2, 0), ToggleMultiSelectCollapse);
+        MakeHeaderButton(headerGO.transform, "CloseBtn", "X",
+            new Vector2(1, 0.5f), new Vector2(-2, 0), CloseMultiSelectMenu);
 
         // --- Scroll View (list area) ---
         BuildScrollView(multiSelectPanel.transform);
 
-        // --- Detail Panel ---
-        BuildDetailPanel(multiSelectPanel.transform);
+        // --- Detail Panel ---（item 详细信息栏已禁用，保留代码以便回归）
+        // BuildDetailPanel(multiSelectPanel.transform);
+
+        // --- Resize 手柄（右下角，排除布局组）---
+        BuildResizeHandle(multiSelectPanel.transform, panelRect);
 
         multiSelectPanel.SetActive(false);
+    }
+
+    private void MakeHeaderButton(Transform headerParent, string name, string glyph,
+        Vector2 anchor, Vector2 anchoredPos, UnityEngine.Events.UnityAction onClick)
+    {
+        GameObject go = new GameObject(name);
+        go.transform.SetParent(headerParent, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = anchor;
+        rt.anchorMax = anchor;
+        rt.pivot = anchor;
+        rt.sizeDelta = new Vector2(26, 24);
+        rt.anchoredPosition = anchoredPos;
+
+        Image bg = go.AddComponent<Image>();
+        bg.color = new Color(0.30f, 0.32f, 0.38f, 1f);
+        bg.raycastTarget = true;
+
+        Button btn = go.AddComponent<Button>();
+        ColorBlock cb = btn.colors;
+        cb.highlightedColor = new Color(0.42f, 0.44f, 0.52f, 1f);
+        cb.pressedColor = new Color(0.20f, 0.22f, 0.26f, 1f);
+        btn.colors = cb;
+        btn.onClick.AddListener(onClick);
+
+        GameObject t = new GameObject("T");
+        t.transform.SetParent(go.transform, false);
+        RectTransform tr = t.AddComponent<RectTransform>();
+        tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one;
+        tr.offsetMin = Vector2.zero; tr.offsetMax = Vector2.zero;
+        TextMeshProUGUI tmp = t.AddComponent<TextMeshProUGUI>();
+        tmp.text = glyph;
+        tmp.fontSize = 16;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.raycastTarget = false;
+        if (tmp.font == null) tmp.font = TMP_Settings.defaultFontAsset;
+    }
+
+    private void BuildResizeHandle(Transform parent, RectTransform panelRect)
+    {
+        GameObject go = new GameObject("ResizeHandle");
+        go.transform.SetParent(parent, false);
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1, 0);
+        rt.anchorMax = new Vector2(1, 0);
+        rt.pivot = new Vector2(1, 0);
+        rt.sizeDelta = new Vector2(20, 20);
+        rt.anchoredPosition = Vector2.zero;
+
+        // 不参与 VerticalLayoutGroup，保持锚定在右下角
+        go.AddComponent<LayoutElement>().ignoreLayout = true;
+
+        Image img = go.AddComponent<Image>();
+        img.color = new Color(0.45f, 0.47f, 0.55f, 0.9f);
+        img.raycastTarget = true;
+
+        ResizeHandle rh = go.AddComponent<ResizeHandle>();
+        rh.target = panelRect;
+
+        go.transform.SetAsLastSibling(); // 画在内容之上，便于抓取
+        multiSelectResizeGO = go;
+    }
+
+    public void ToggleMultiSelectCollapse()
+    {
+        if (multiSelectRect == null) return;
+        multiSelectCollapsed = !multiSelectCollapsed;
+
+        if (multiSelectCollapsed)
+        {
+            if (multiSelectScrollGO != null) multiSelectScrollGO.SetActive(false);
+            if (multiSelectDetailPanel != null) multiSelectDetailPanel.SetActive(false);
+            if (multiSelectResizeGO != null) multiSelectResizeGO.SetActive(false);
+
+            // 只留标题栏高度：保持上边界(offsetMax.y)不动，抬高下边界。
+            // 只记录"压低的增量"，不存绝对快照——这样折叠期间的拖动位移会自然保留。
+            msCollapseShrink = 0f;
+            RectTransform p = multiSelectRect.parent as RectTransform;
+            if (p != null)
+            {
+                float spanH = (multiSelectRect.anchorMax.y - multiSelectRect.anchorMin.y) * p.rect.height;
+                float targetH = MsHeaderHeight + 16f; // VLG 上下 padding 各 8
+                Vector2 omin = multiSelectRect.offsetMin;
+                float newMinY = spanH + multiSelectRect.offsetMax.y - targetH;
+                msCollapseShrink = newMinY - omin.y;
+                omin.y = newMinY;
+                multiSelectRect.offsetMin = omin;
+            }
+            if (multiSelectHeader != null && !multiSelectHeader.text.StartsWith(">"))
+                multiSelectHeader.text = "> " + multiSelectHeader.text.TrimStart('=', '>', ' ');
+        }
+        else
+        {
+            // 反向撤销折叠时的高度收缩；offsetMin.x / offsetMax 保持当前值，
+            // 折叠期间拖动产生的位移（等量加在 min/max 上）因此得以保留。
+            Vector2 omin = multiSelectRect.offsetMin;
+            omin.y -= msCollapseShrink;
+            multiSelectRect.offsetMin = omin;
+            msCollapseShrink = 0f;
+
+            if (multiSelectScrollGO != null) multiSelectScrollGO.SetActive(true);
+            if (multiSelectDetailPanel != null) multiSelectDetailPanel.SetActive(true);
+            if (multiSelectResizeGO != null) multiSelectResizeGO.SetActive(true);
+            if (multiSelectHeader != null)
+                multiSelectHeader.text = "= " + multiSelectHeader.text.TrimStart('>', '=', ' ');
+        }
+    }
+
+    /// <summary>关闭多选菜单：等效于按 ESC 退出菜单（清空选择并隐藏相关面板）。</summary>
+    public void CloseMultiSelectMenu()
+    {
+        if (ToolController.inste != null)
+        {
+            ToolController.inste.miSelected = null;
+            ToolController.inste.misSelected.Clear();
+        }
+        changeShowingCanvas(null);
+        RefreshMultiSelectPanel(null);
+        RefreshVertexPanel(null);
     }
 
     private void BuildScrollView(Transform parent)
     {
         GameObject scrollGO = new GameObject("ScrollView");
         scrollGO.transform.SetParent(parent, false);
+        multiSelectScrollGO = scrollGO;
 
         LayoutElement scrollLE = scrollGO.AddComponent<LayoutElement>();
         scrollLE.flexibleHeight = 1;
@@ -413,6 +642,8 @@ public class UIManager : MonoBehaviour
         multiSelectContent = contentGO.transform;
     }
 
+    // [item 详细信息栏已禁用，保留以便回归] 取消注释 BuildDetailPanel 调用与下方方法体即可恢复
+    /*
     private void BuildDetailPanel(Transform parent)
     {
         multiSelectDetailPanel = new GameObject("DetailPanel");
@@ -442,6 +673,7 @@ public class UIManager : MonoBehaviour
 
         multiSelectDetailPanel.SetActive(false);
     }
+    */
 
     // ---------- public API ----------
 
@@ -458,17 +690,18 @@ public class UIManager : MonoBehaviour
         disVisableAll();
         multiSelectPanel.SetActive(true);
 
-        multiSelectHeader.text = items.Count + " items selected";
+        multiSelectHeader.text = (multiSelectCollapsed ? "> " : "= ") + items.Count + " items selected";
 
         ClearEntries();
         for (int i = 0; i < items.Count; i++)
             CreateEntry(items[i], i);
 
-        if (detailViewingItem != null && !items.Contains(detailViewingItem))
-        {
-            multiSelectDetailPanel.SetActive(false);
-            detailViewingItem = null;
-        }
+        // [详细信息栏已禁用，保留以便回归]
+        // if (detailViewingItem != null && !items.Contains(detailViewingItem))
+        // {
+        //     multiSelectDetailPanel.SetActive(false);
+        //     detailViewingItem = null;
+        // }
     }
 
     private void HideMultiSelectPanel()
@@ -584,29 +817,31 @@ public class UIManager : MonoBehaviour
 
     private void OnEntryClicked(MapItem item)
     {
-        if (detailViewingItem == item)
-        {
-            multiSelectDetailPanel.SetActive(false);
-            detailViewingItem = null;
-        }
-        else
-        {
-            detailViewingItem = item;
-            multiSelectDetailText.text = item.getInfoText();
-            multiSelectDetailPanel.SetActive(true);
-        }
-        RefreshMultiSelectPanel(ToolController.inste.misSelected);
+        // [item 详细信息栏已禁用，保留以便回归] 原为点击条目展开/收起详情
+        // if (detailViewingItem == item)
+        // {
+        //     multiSelectDetailPanel.SetActive(false);
+        //     detailViewingItem = null;
+        // }
+        // else
+        // {
+        //     detailViewingItem = item;
+        //     multiSelectDetailText.text = item.getInfoText();
+        //     multiSelectDetailPanel.SetActive(true);
+        // }
+        // RefreshMultiSelectPanel(ToolController.inste.misSelected);
     }
 
     private void OnEntryRemoved(MapItem item)
     {
         ToolController.inste.misSelected.Remove(item);
 
-        if (detailViewingItem == item)
-        {
-            multiSelectDetailPanel.SetActive(false);
-            detailViewingItem = null;
-        }
+        // [详细信息栏已禁用，保留以便回归]
+        // if (detailViewingItem == item)
+        // {
+        //     multiSelectDetailPanel.SetActive(false);
+        //     detailViewingItem = null;
+        // }
 
         if (ToolController.inste.misSelected.Count == 0)
             HideMultiSelectPanel();

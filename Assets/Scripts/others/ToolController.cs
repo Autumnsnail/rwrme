@@ -128,8 +128,8 @@ public class ToolController : MonoBehaviour
 
         // 设置 LineRenderer 属性 - 更粗更醒目
         dragVisualizer.positionCount = 5; // 矩形需要5个点（首尾相连）
-        dragVisualizer.startWidth = 1.5f; // 增加线宽
-        dragVisualizer.endWidth = 1.5f;
+        dragVisualizer.startWidth = 0.75f; // 增加线宽
+        dragVisualizer.endWidth = 0.75f;
         dragVisualizer.useWorldSpace = true;
         dragVisualizer.loop = false;
 
@@ -1205,9 +1205,9 @@ public class SelecterTool : Tool
         visualizer.SetPosition(3, p4);
         visualizer.SetPosition(4, p1);
 
-        float pulse = 1f + 0.2f * Mathf.Sin(Time.time * 5f);
-        visualizer.startWidth = 1.5f * pulse;
-        visualizer.endWidth = 1.5f * pulse;
+        float pulse = 1;
+        visualizer.startWidth = 0.75f * pulse;
+        visualizer.endWidth = 0.75f * pulse;
     }
 }
 public class DragTool : Tool

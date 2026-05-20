@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -18,15 +19,27 @@ public class MapExporter : MonoBehaviour
     [Header("导出路径配置")]
     public string basePath = "map"; // 基础路径
 
-    private string FindTemplatePathLikeImporter()
-    {
-        // 与 MapImporter.importTemplates 逻辑保持一致：在 templates 目录中寻找任意 *.xml，按文件名排序取第一个。
-        string templatesDir = Path.Combine(Application.dataPath, "templates");
-        if (!Directory.Exists(templatesDir)) return null;
+    private string FindTemplatePathLikeImporter() => MapImporter.FindFirstTemplateInTemplatesDir();
 
-        return Directory.GetFiles(templatesDir, "*.xml")
-            .OrderBy(p => Path.GetFileName(p))
-            .FirstOrDefault(); // GetFiles 返回全路径
+    /// <summary>
+    /// 从模板文档取出 inkscape:label="materials" 的 &lt;g&gt; 深拷贝，并去掉其中 inkscape:label 以 #general 开头的 &lt;rect&gt;。
+    /// </summary>
+    static XmlElement CloneMaterialsLayerWithoutGeneralRect(XmlDocument templateDoc)
+    {
+        XmlElement materials = MapImporter.FindMaterialsLayer(templateDoc?.DocumentElement);
+        if (materials == null) return null;
+
+        XmlElement clone = (XmlElement)materials.CloneNode(true);
+        var remove = new List<XmlNode>();
+        foreach (XmlNode child in clone.ChildNodes)
+        {
+            if (child is XmlElement rect && rect.Name == "rect"
+                && rect.GetAttribute("inkscape:label").StartsWith("#general", StringComparison.Ordinal))
+                remove.Add(child);
+        }
+        foreach (XmlNode n in remove)
+            clone.RemoveChild(n);
+        return clone;
     }
 
     void Start()
@@ -148,7 +161,7 @@ public class MapExporter : MonoBehaviour
         string templatePath = FindTemplatePathLikeImporter();
         if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
         {
-            Debug.LogError("MapExporter: 找不到模板 xml（*.xml），目录: " + Path.Combine(Application.dataPath, "templates"));
+            Debug.LogError("MapExporter: 找不到模板文件（*.xml / *.svg），目录: " + Path.Combine(Application.dataPath, "templates"));
             return;
         }
         XmlReaderSettings settings = new XmlReaderSettings();
@@ -159,8 +172,13 @@ public class MapExporter : MonoBehaviour
             templateDoc.Load(reader);
         }
 
-        XmlElement template = templateDoc.DocumentElement.ChildNodes[0] as XmlElement;
-        
+        XmlElement template = CloneMaterialsLayerWithoutGeneralRect(templateDoc);
+        if (template == null)
+        {
+            Debug.LogError("MapExporter: 模板中未找到 inkscape:label=\"materials\" 的图层");
+            return;
+        }
+
         XmlNode importedNode = xmlDoc.ImportNode(template, true);
 
         XmlElement generalRect = xmlDoc.CreateElement("rect");

@@ -625,6 +625,12 @@ public class MapImporter : MonoBehaviour
                                                             if (TryParseVector3(properties["offset"], out Vector3 mo))
                                                                 ms.offset = mo;
                                                         }
+                                                        if (properties.ContainsKey("collision_model_size")
+                                                            && TryParseVector3(properties["collision_model_size"], out Vector3 cs))
+                                                        {
+                                                            ms.reCollision = true;
+                                                            ms.collisionSize = cs;
+                                                        }
 
                                                         ms.position = position;
                                                         ms.rotation = angle;

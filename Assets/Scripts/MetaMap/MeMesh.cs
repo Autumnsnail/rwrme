@@ -1,11 +1,17 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MeMesh : MeRect
 {
     public bool templated=false;
     public string template_ref;
+
+    public bool reCollision = false;
+    public Vector3 collisionSize = Vector3.one;
 
     public override float Rank => 0.2f;
     public MeMesh(Vector2 pos, float r, Vector2 s, string key, int lI) : base(pos, r, s, key, lI)
@@ -16,7 +22,73 @@ public class MeMesh : MeRect
     {
     }
 
+    public void SetReCollision(bool on)
+    {
+        reCollision = on;
+        scatterThis();
+    }
 
+    public void SetCollisionSizeX(string value)
+    {
+        if (TryParseCollisionComponent(value, out float x))
+        {
+            collisionSize.x = x;
+            scatterThis();
+        }
+    }
+
+    public void SetCollisionSizeY(string value)
+    {
+        if (TryParseCollisionComponent(value, out float y))
+        {
+            collisionSize.y = y;
+            scatterThis();
+        }
+    }
+
+    public void SetCollisionSizeZ(string value)
+    {
+        if (TryParseCollisionComponent(value, out float z))
+        {
+            collisionSize.z = z;
+            scatterThis();
+        }
+    }
+
+    static bool TryParseCollisionComponent(string value, out float component)
+    {
+        return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out component);
+    }
+
+    void UpdateCollisionUi()
+    {
+        Transform canvas = transform.Find("Canvas");
+        if (canvas == null) return;
+
+        Toggle toggle = canvas.Find("ToggleReCollision")?.GetComponent<Toggle>();
+        if (toggle != null)
+            toggle.SetIsOnWithoutNotify(reCollision);
+
+        var inv = CultureInfo.InvariantCulture;
+        SetCollisionFieldActive(canvas, "x_Collision", reCollision);
+        SetCollisionFieldActive(canvas, "y_Collision", reCollision);
+        SetCollisionFieldActive(canvas, "z_Collision", reCollision);
+        if (!reCollision) return;
+
+        canvas.Find("x_Collision")?.GetComponent<TMP_InputField>()
+            ?.SetTextWithoutNotify(collisionSize.x.ToString(inv));
+        canvas.Find("y_Collision")?.GetComponent<TMP_InputField>()
+            ?.SetTextWithoutNotify(collisionSize.y.ToString(inv));
+        canvas.Find("z_Collision")?.GetComponent<TMP_InputField>()
+            ?.SetTextWithoutNotify(collisionSize.z.ToString(inv));
+    }
+
+    static void SetCollisionFieldActive(Transform canvas, string childName, bool active)
+    {
+        Transform t = canvas.Find(childName);
+        if (t != null)
+            t.gameObject.SetActive(active);
+    }
 
     public override void scatterThis()
     {
@@ -31,16 +103,21 @@ public class MeMesh : MeRect
             if (templated)
             {
                 MeshTemplate foundTemplate = MetaMap.instance.meshTemplates.FirstOrDefault(template => template.name == template_ref);
-                
+                if (foundTemplate == null) return;
+
                 go.transform.localScale = new Vector3 (size.x/2,foundTemplate.extend.y,size.y/2);
                 go.transform.GetChild(0).gameObject.GetComponent<Renderer>().material.color = new Color(foundTemplate.color.r, foundTemplate.color.g, foundTemplate.color.b,0.5f);
                 go.transform.GetChild(1).gameObject.GetComponent<Renderer>().material.color = new Color(foundTemplate.color.r, foundTemplate.color.g, foundTemplate.color.b,0.5f);
-                go.transform.GetChild(1).localScale = new Vector3 (foundTemplate.extend.x / go.transform.localScale.x, foundTemplate.extend.y / go.transform.localScale.y, foundTemplate.extend.z / go.transform.localScale.z);
+
+                Vector3 collisionExtend = reCollision ? collisionSize : foundTemplate.extend;
+                go.transform.GetChild(1).localScale = new Vector3 (
+                    collisionExtend.x / go.transform.localScale.x,
+                    collisionExtend.y / go.transform.localScale.y,
+                    collisionExtend.z / go.transform.localScale.z);
+
                 if (OgreRuntimeImporter.TryGetFromLibrary(foundTemplate.meshName, out List<MeshLoader.Result> submeshes))
                 {
                     go.transform.GetChild(0).gameObject.GetComponent<MeshFilter>().mesh = submeshes[0].Mesh;
-                    //make this true scale(from parent) 111
-
                     go.transform.GetChild(0).gameObject.transform.localScale = new Vector3(1/go.transform.localScale.x,1/go.transform.localScale.y,1/go.transform.localScale.z);
                 }
             }
@@ -50,7 +127,7 @@ public class MeMesh : MeRect
                 updateOffsetShow();
             }
         }
-
+        UpdateCollisionUi();
     }
 
     public override void scale(float scaler)
@@ -65,6 +142,8 @@ public class MeMesh : MeRect
         CopyMeRectFieldsTo(c);
         c.templated = templated;
         c.template_ref = template_ref;
+        c.reCollision = reCollision;
+        c.collisionSize = collisionSize;
         return c;
     }
 
@@ -76,6 +155,12 @@ public class MeMesh : MeRect
         {
             ou+=("\ntemplate:"+template_ref);
         }
+        if (reCollision)
+        {
+            ou += "\ncollision_model_size = " + collisionSize.x.ToString(CultureInfo.InvariantCulture)
+                + " " + collisionSize.y.ToString(CultureInfo.InvariantCulture)
+                + " " + collisionSize.z.ToString(CultureInfo.InvariantCulture);
+        }
         return ou; 
     }
 
@@ -84,3 +169,4 @@ public class MeMesh : MeRect
         
     }
 }
+

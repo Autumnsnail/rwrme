@@ -481,10 +481,18 @@ public class MapExporter : MonoBehaviour
 
                 XmlElement stpDesc = xmlDoc.CreateElement("desc");
                 stpDesc.SetAttribute("id", "desc_" + ms.id);
+                var inv = CultureInfo.InvariantCulture;
                 stpDesc.InnerText = "template = "+ms.template_ref+";";
                 if(ms.offset != Vector3.zero)
                 {
-                    stpDesc.InnerText = stpDesc.InnerText + "offset = " + ms.offset.x.ToString() + " " + ms.offset.y.ToString() + " " + ms.offset.z.ToString() + ";";
+                    stpDesc.InnerText += "offset = " + ms.offset.x.ToString(inv) + " " + ms.offset.y.ToString(inv) + " " + ms.offset.z.ToString(inv) + ";";
+                }
+                if (ms.reCollision)
+                {
+                    stpDesc.InnerText += "collision_model_type = 1;";
+
+                    stpDesc.InnerText += "collision_model_size = " + ms.collisionSize.x.ToString(inv)
+                        + " " + ms.collisionSize.y.ToString(inv) + " " + ms.collisionSize.z.ToString(inv) + ";";
                 }
                 ekE.AppendChild(stpDesc);
 

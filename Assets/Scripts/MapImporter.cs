@@ -1130,6 +1130,11 @@ public class MapImporter : MonoBehaviour
                     float width = float.Parse( rect.GetAttribute("width"));
                     float height = float.Parse( rect.GetAttribute("height"));
                     DecalTemplate decalTemplate = new DecalTemplate(name, width, height);
+                    if (properties.ContainsKey("texture0"))
+                        decalTemplate.textureName = properties["texture0"];
+                    if (properties.ContainsKey("texture0_atlas_cell")
+                        && IntVector4.TryParse(properties["texture0_atlas_cell"], out IntVector4 cut))
+                        decalTemplate.textureCut = cut;
                     MetaMap.instance.DecalTemplates.Add(decalTemplate);
                 }
             }

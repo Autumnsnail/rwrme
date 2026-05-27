@@ -18,6 +18,14 @@ public class OgreRuntimeImporter : MonoBehaviour
     /// </summary>
     public static readonly Dictionary<string, List<MeshLoader.Result>> RuntimeMeshLibrary =
         new Dictionary<string, List<MeshLoader.Result>>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// 运行时纹理库：键为相对路径（统一使用 '/'），值为 PNG 等图片加载后的 <see cref="Texture2D"/>。
+    /// 由 <see cref="ImportPngDirectoryAsync"/> 写入。
+    /// </summary>
+    public static readonly Dictionary<string, Texture2D> RuntimeTextureLibrary =
+        new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+
     public sealed class Options
     {
         /// <summary>
@@ -43,8 +51,156 @@ public class OgreRuntimeImporter : MonoBehaviour
         /// </summary>
         public string MeshSearchPath;
 
+        /// <summary>
+        /// PNG 纹理搜索目录。为空时使用 <see cref="OgreRuntimeSettings.TexturesPath"/>。
+        /// </summary>
+        public string TexturesPath;
+
         public bool FlipZ = true;
         public bool FixWindingAfterFlipZ = true;
+    }
+
+    /// <summary>
+    /// 从目录批量导入 PNG，加载到内存并可选合并进 <see cref="RuntimeTextureLibrary"/>。
+    /// 须在主线程调用（内部使用 <see cref="Texture2D.LoadImage"/>）。
+    /// </summary>
+    public static Task<Dictionary<string, Texture2D>> ImportPngDirectoryAsync(
+        string directoryPath,
+        bool recursive = true,
+        bool mergeIntoRuntimeLibrary = true,
+        IProgress<(int current, int total, string relativePath)> progress = null)
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath))
+            throw new ArgumentException("directoryPath is null/empty", nameof(directoryPath));
+
+        var rootFull = Path.GetFullPath(directoryPath);
+        if (!Directory.Exists(rootFull))
+            throw new DirectoryNotFoundException($"Directory not found: {rootFull}");
+
+        var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+        var files = Directory
+            .EnumerateFiles(rootFull, "*.png", searchOption)
+            .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var result = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        var total = files.Count;
+
+        for (var i = 0; i < files.Count; i++)
+        {
+            var abs = files[i];
+            var relativeKey = NormalizeRelativeKey(Path.GetRelativePath(rootFull, abs));
+            progress?.Report((i + 1, total, relativeKey));
+
+            try
+            {
+                var tex = LoadTextureFromImageFile(abs);
+                if (tex == null)
+                {
+                    Debug.LogWarning($"[OgreRuntimeImporter] Skip PNG (LoadImage failed): {abs}");
+                    continue;
+                }
+
+                tex.name = Path.GetFileNameWithoutExtension(abs);
+                result[relativeKey] = tex;
+
+                if (mergeIntoRuntimeLibrary)
+                {
+                    if (RuntimeTextureLibrary.TryGetValue(relativeKey, out var old) && old != null && old != tex)
+                        UnityEngine.Object.Destroy(old);
+                    RuntimeTextureLibrary[relativeKey] = tex;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[OgreRuntimeImporter] Skip PNG: {abs}\n{ex.Message}");
+            }
+        }
+
+        return Task.FromResult(result);
+    }
+
+    /// <summary>从内存纹理库按相对路径或文件名查找。</summary>
+    public static bool TryGetTextureFromLibrary(string relativeOrFileName, out Texture2D texture)
+    {
+        texture = null;
+        if (string.IsNullOrWhiteSpace(relativeOrFileName))
+            return false;
+
+        var key = NormalizeRelativeKey(relativeOrFileName.Replace('\\', '/'));
+        if (RuntimeTextureLibrary.TryGetValue(key, out texture) && texture != null)
+            return true;
+
+        var fileName = Path.GetFileName(relativeOrFileName.TrimEnd('/', '\\'));
+        foreach (var kv in RuntimeTextureLibrary)
+        {
+            if (string.Equals(Path.GetFileName(kv.Key), fileName, StringComparison.OrdinalIgnoreCase)
+                && kv.Value != null)
+            {
+                texture = kv.Value;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 在 <paramref name="searchDir"/> 下按文件名查找 PNG（支持无扩展名）。
+    /// </summary>
+    public static string ResolveTextureFilePath(string textureName, string searchDir = null)
+    {
+        if (string.IsNullOrWhiteSpace(textureName))
+            return null;
+
+        if (string.IsNullOrWhiteSpace(searchDir))
+            searchDir = OgreRuntimeSettings.TexturesPath;
+        if (string.IsNullOrWhiteSpace(searchDir) || !Directory.Exists(searchDir))
+            return null;
+
+        var name = Path.GetFileName(textureName.Trim().Replace('\\', '/'));
+        if (string.IsNullOrEmpty(name))
+            return null;
+
+        var direct = Path.Combine(searchDir, name);
+        if (File.Exists(direct))
+            return Path.GetFullPath(direct);
+
+        if (!Path.HasExtension(name))
+        {
+            var withPng = Path.Combine(searchDir, name + ".png");
+            if (File.Exists(withPng))
+                return Path.GetFullPath(withPng);
+        }
+
+        return null;
+    }
+
+    /// <summary>清空运行时纹理库并销毁已加载的 <see cref="Texture2D"/>。</summary>
+    public static void ClearRuntimeTextureLibrary()
+    {
+        foreach (var tex in RuntimeTextureLibrary.Values)
+        {
+            if (tex != null)
+                UnityEngine.Object.Destroy(tex);
+        }
+        RuntimeTextureLibrary.Clear();
+    }
+
+    static Texture2D LoadTextureFromImageFile(string absolutePath)
+    {
+        if (!File.Exists(absolutePath))
+            return null;
+
+        var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false, linear: false);
+        var bytes = File.ReadAllBytes(absolutePath);
+        if (!tex.LoadImage(bytes, markNonReadable: false))
+        {
+            UnityEngine.Object.Destroy(tex);
+            return null;
+        }
+        tex.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+        return tex;
     }
 
     /// <summary>
@@ -438,6 +594,7 @@ public static class OgreRuntimeSettings
 {
     private const string KeyConverter = "ogre.xmlConverterPath";
     private const string KeyMeshSearch = "ogre.meshSearchPath";
+    private const string KeyTextures = "ogre.texturesPath";
 
     public static string OgreXmlConverterPath
     {
@@ -455,6 +612,16 @@ public static class OgreRuntimeSettings
         set
         {
             PlayerPrefs.SetString(KeyMeshSearch, value ?? string.Empty);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public static string TexturesPath
+    {
+        get => PlayerPrefs.GetString(KeyTextures, string.Empty);
+        set
+        {
+            PlayerPrefs.SetString(KeyTextures, value ?? string.Empty);
             PlayerPrefs.Save();
         }
     }

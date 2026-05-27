@@ -149,12 +149,24 @@ public class UIManager : MonoBehaviour
     public void showMenuUseIndex(int index)
     {
         disVisableAll();
+        if (mms == null || index < 0 || index >= mms.Count)
+        {
+            Debug.LogWarning($"UIManager.showMenuUseIndex: index {index} out of range (mms count {(mms == null ? 0 : mms.Count)})");
+            return;
+        }
+        if (mms[index] == null)
+        {
+            Debug.LogWarning($"UIManager.showMenuUseIndex: mms[{index}] is not assigned in Inspector");
+            return;
+        }
         mms[index].transform.localScale = Vector3.one;
     }
     public void disVisableAll()
     {
+        if (mms == null) return;
         for (int i = 0; i < mms.Count; i++)
         {
+            if (mms[i] == null) continue;
             mms[i].transform.localScale = Vector3.zero;
         }
         /*

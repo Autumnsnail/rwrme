@@ -490,6 +490,7 @@ public class BuildingType:mapItemType
         {
             mat.SetFloat("_EdgeWidth", 0.04f);
             mat.SetFloat("_EdgeDarken", 0.45f);
+            mat.SetFloat("_Alpha", 1f);
         }
         return mat;
     }
@@ -517,11 +518,114 @@ public class WallType:mapItemType
     }
 }
 
+/// <summary>
+/// 四元整型（RWR texture0_atlas_cell）：x=块列, y=块行, z=图集列数, w=图集行数（均 0 起）。
+/// 勿用 <see cref="Vector4"/> 存索引，避免 Inspector 与 float 运算产生小数。
+/// </summary>
+[System.Serializable]
+public struct IntVector4
+{
+    public int x, y, z, w;
+
+    public IntVector4(int x, int y, int z, int w)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+    }
+
+    public Vector4 ToVector4() => new Vector4(x, y, z, w);
+
+    public static bool TryParse(string s, out IntVector4 v)
+    {
+        v = default;
+        if (string.IsNullOrWhiteSpace(s)) return false;
+        var parts = s.Split((char[])null, System.StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 4) return false;
+        if (!int.TryParse(parts[0], out int a)) return false;
+        if (!int.TryParse(parts[1], out int b)) return false;
+        if (!int.TryParse(parts[2], out int c)) return false;
+        if (!int.TryParse(parts[3], out int d)) return false;
+        v = new IntVector4(a, b, c, d);
+        return true;
+    }
+
+    /// <summary>当前图集块在纹理上的像素宽高（整图时 z,w 为 1）。</summary>
+    public Vector2 GetAtlasCellPixelSize(Texture2D texture)
+    {
+        if (texture == null)
+            return Vector2.zero;
+
+        int cols = z > 0 ? z : 1;
+        int rows = w > 0 ? w : 1;
+        return new Vector2(texture.width / (float)cols, texture.height / (float)rows);
+    }
+
+    /// <summary>RWR 图集单元在 0–1 UV 中的矩形（Unity 底向上 V）。</summary>
+    public bool TryGetRwrAtlasUvRect(out Rect uvRect)
+    {
+        uvRect = default;
+        int col = x, row = y, cols = z, rows = w;
+        if (cols <= 0 || rows <= 0 || col < 0 || row < 0 || col >= cols || row >= rows)
+            return false;
+
+        float du = 1f / cols;
+        float dv = 1f / rows;
+        float u0 = col * du;
+        float u1 = (col + 1) * du;
+        float v1 = 1f - row * dv;
+        float v0 = 1f - (row + 1) * dv;
+        uvRect = Rect.MinMaxRect(u0, v0, u1, v1);
+        return true;
+    }
+
+    /// <summary>
+    /// 为 Cube 贴花设置图集 UV：仅处理朝 +Y 的顶面，按顶点 XZ 映射到图集块（侧面保持原 UV）。
+    /// </summary>
+    public void ApplyAtlasUvToMesh(Mesh mesh)
+    {
+        if (mesh == null || !TryGetRwrAtlasUvRect(out Rect atlas))
+            return;
+
+        Vector3[] verts = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        Vector2[] uvs = mesh.uv;
+        if (verts == null || uvs == null || verts.Length != uvs.Length)
+            return;
+
+        Bounds b = mesh.bounds;
+        float topY = b.max.y;
+        const float planeEps = 1e-4f;
+
+        for (int i = 0; i < verts.Length; i++)
+        {
+            bool onTopPlane = verts[i].y >= topY - planeEps;
+            bool facesUp = normals == null || normals.Length != verts.Length || normals[i].y > 0.5f;
+            if (!onTopPlane || !facesUp)
+                continue;
+
+            float u01 = Mathf.InverseLerp(b.min.x, b.max.x, verts[i].x);
+            float v01 = Mathf.InverseLerp(b.min.z, b.max.z, verts[i].z);
+            uvs[i] = new Vector2(
+                Mathf.Lerp(atlas.xMin, atlas.xMax, u01),
+                Mathf.Lerp(atlas.yMin, atlas.yMax, v01));
+        }
+
+        mesh.uv = uvs;
+    }
+}
+
 public class DecalTemplate
 {
     public string name =  "empty";
 
     public Color color=Color.white;
+
+    public string textureName = "40mm.png";
+
+    /// <summary>图集切块（块列 x, 块行 y, 列数 z, 行数 w），对应 texture0_atlas_cell。</summary>
+    public IntVector4 textureCut = new IntVector4(0, 0, 1, 1);
 
     public Vector2 size ;
 

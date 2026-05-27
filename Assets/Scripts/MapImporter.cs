@@ -985,7 +985,7 @@ public class MapImporter : MonoBehaviour
             if(rect == null) continue;
             if (rect.GetAttribute("inkscape:label").StartsWith("#general", StringComparison.Ordinal))
                 continue;
-            if(rect.GetAttribute("inkscape:label").StartsWith("#mesh_template"))
+            if(rect.GetAttribute("inkscape:label").StartsWith("#mesh"))
             {
 //                Debug.Log(rect.GetAttribute("id"));
                 float width = float.Parse( rect.GetAttribute("width"));
@@ -1016,7 +1016,6 @@ public class MapImporter : MonoBehaviour
                         template.extend = baseTemplate.extend;
                         template.color = baseTemplate.color;
                         template.size = baseTemplate.size;
-                        template.name = baseTemplate.name;
                     }
                 }
                 if (properties.ContainsKey("mesh_name"))

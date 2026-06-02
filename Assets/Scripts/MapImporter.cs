@@ -58,6 +58,7 @@ public class MapImporter : MonoBehaviour
     public GameObject ItemSupplyPref;
     public GameObject CratePref;
     public GameObject OffroadPref;
+    public GameObject PostPref;
     public GameObject TreePref;
 
     public Material cbdTl;
@@ -515,6 +516,9 @@ public class MapImporter : MonoBehaviour
                                                 }
                                                 if (bRect.GetAttribute("id").StartsWith("decal"))
                                                 {
+                                                    
+                                                    float cWidth = float.Parse(bRect.GetAttribute("width"));
+                                                    float cHeight = float.Parse(bRect.GetAttribute("height"));
                                                     XmlElement rdsc = bRect.FirstChild as XmlElement;
                                                     if (rdsc == null) continue;
                                                     var properties = rdsc.InnerText.Split(';')
@@ -528,6 +532,8 @@ public class MapImporter : MonoBehaviour
                                                     if(properties.ContainsKey("template"))
                                                     {
                                                         Decal decal = Instantiate(DecalPref).GetComponent<Decal>();
+                                                        decal.size = new Vector2(cWidth, cHeight);
+                                                        decal.length = Mathf.Max(cWidth, cHeight);
                                                         decal.template_ref = properties["template"];
                                                         decal.id = MetaMap.instance.getNewItemId("decal");
                                                         decal.position = position;
@@ -538,6 +544,7 @@ public class MapImporter : MonoBehaviour
                                                     }
                                                     continue;
                                                 }
+                                                
                                                 if (bRect.GetAttribute("inkscape:label").StartsWith("#spawnrect"))
                                                 {
                                                     if(r.ChildNodes.Count==0)
@@ -842,7 +849,66 @@ public class MapImporter : MonoBehaviour
                                                         gs.layerIndex = number;
                                                     }
                                                 }
+                                                if (bPath.HasAttribute("inkscape:label")
+                                                    && bPath.GetAttribute("inkscape:label").StartsWith("post"))
+                                                {
+                                                    string pathDataPost = bPath.GetAttribute("d");
+                                                    if (string.IsNullOrWhiteSpace(pathDataPost)) continue;
 
+                                                    List<List<Vector2>> postSegments = SvgPathParser.ParseSegments(pathDataPost);
+
+                                                    var properties = new Dictionary<string, string>();
+                                                    if (bPath.FirstChild is XmlElement descPost)
+                                                    {
+                                                        properties = descPost.InnerText.Split(';')
+                                                            .Where(p => p.Contains('='))
+                                                            .Select(p => p.Split('=', 2))
+                                                            .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+                                                            .ToDictionary(g => g.Key, g => g.First());
+                                                    }
+
+                                                    string templateRef = null;
+                                                    if (properties.ContainsKey("post_template"))
+                                                        templateRef = properties["post_template"];
+                                                    else
+                                                    {
+                                                        continue;
+                                                    }
+                                                    foreach (var segment in postSegments)
+                                                    {
+                                                        if (segment == null || segment.Count < 2) continue;
+
+                                                        GameObject go;
+                                                        if (PostPref != null)
+                                                            go = Instantiate(PostPref);
+                                                        else
+                                                            go = new GameObject("Post");
+
+                                                        Post ps = go.GetComponent<Post>();
+                                                        if (ps == null) ps = go.AddComponent<Post>();
+                                                        ps.positionLine = segment;
+
+                                                        for (int i = 0; i < ps.positionLine.Count; i++)
+                                                        {
+                                                            ps.positionLine[i] = ps.positionLine[i] * _scPath;
+                                                            ps.positionLine[i] = _rmPath * ps.positionLine[i];
+                                                            ps.positionLine[i] += _ovPath;
+
+                                                            ps.positionLine[i] = ps.positionLine[i] * _scGroup;
+                                                            ps.positionLine[i] = _rmGroup * ps.positionLine[i];
+                                                            ps.positionLine[i] += _ovGroup;
+                                                            ps.positionLine[i] = rmLayer * ps.positionLine[i];
+                                                            ps.positionLine[i] += ovLayer;
+                                                        }
+
+                                                        if (!string.IsNullOrEmpty(templateRef))
+                                                            ps.template_ref = templateRef;
+
+                                                        ps.id = MetaMap.instance.getNewItemId("post");
+                                                        ps.layerIndex = number;
+                                                        MetaMap.instance.defaultLayer.mapItems.Add(ps);
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -1127,15 +1193,34 @@ public class MapImporter : MonoBehaviour
                         );
                     if (!properties.ContainsKey("name")) continue;
                     string name = properties["name"];
-                    float width = float.Parse( rect.GetAttribute("width"));
-                    float height = float.Parse( rect.GetAttribute("height"));
-                    DecalTemplate decalTemplate = new DecalTemplate(name, width, height);
+                    DecalTemplate decalTemplate = new DecalTemplate(name);
                     if (properties.ContainsKey("texture0"))
                         decalTemplate.textureName = properties["texture0"];
                     if (properties.ContainsKey("texture0_atlas_cell")
                         && IntVector4.TryParse(properties["texture0_atlas_cell"], out IntVector4 cut))
                         decalTemplate.textureCut = cut;
+                        
+                    float cWidth = float.Parse(rect.GetAttribute("width"));
+                    float cHeight = float.Parse(rect.GetAttribute("height"));
+                    decalTemplate.length = Mathf.Max( cWidth, cHeight ); 
                     MetaMap.instance.DecalTemplates.Add(decalTemplate);
+                }
+            }
+            if(rect.GetAttribute("id").StartsWith("post_template"))
+            {
+                foreach (XmlNode node2 in rect.ChildNodes)
+                {
+                    var properties = node2.InnerText.Split(';')
+                        .Where(p => p.Contains('='))
+                        .Select(p => p.Split('=', 2))
+                        .GroupBy(kv => kv[0].Trim())
+                        .ToDictionary(g => g.Key, g => g.Last()[1].Trim());
+                    if (!properties.ContainsKey("name")) continue;
+                    string name = properties["name"];
+                    if (!properties.ContainsKey("mesh_template")) continue;
+                    string meshName = properties["mesh_template"];
+                    PostTemplate postTemplate = new PostTemplate(name, meshName);
+                    MetaMap.instance.PostTemplates.Add(postTemplate);
                 }
             }
         }

@@ -227,6 +227,9 @@ public class MapExporter : MonoBehaviour
 
     public void exportMap() 
     {
+        if (Syncer.instence != null)
+            Syncer.instence.updateMap();
+
         string xmlFilePath = Path.Combine(Application.dataPath, basePath, "objects.svg");
         xmlDoc = new XmlDocument();
         XmlDeclaration xd=  xmlDoc.CreateXmlDeclaration("1.0", "UTF-8","no");
@@ -391,6 +394,50 @@ public class MapExporter : MonoBehaviour
                 }
             }
             layer.AppendChild(platformLayer);
+
+            //add posts here
+            XmlElement postLayer = xmlDoc.CreateElement("g");
+            postLayer.SetAttribute("groupmode", inkscapeNs, "layer");
+            postLayer.SetAttribute("id", "layer" + i.ToString() + "posts");
+            postLayer.SetAttribute("label", inkscapeNs, "posts");
+            postLayer.SetAttribute("style", "display:inline");
+            bool hasPosts = false;
+            for (int j = 0; j < MetaMap.instance.defaultLayer.mapItems.Count; j++)
+            {
+                MapItem mi = MetaMap.instance.defaultLayer.mapItems[j];
+                if (mi.layerIndex != i) continue;
+                Post pt = mi as Post;
+                if (pt == null || pt.positionLine == null || pt.positionLine.Count < 2) continue;
+                hasPosts = true;
+
+                XmlElement ptE = xmlDoc.CreateElement("path");
+
+                string cmds = new string('c', pt.positionLine.Count);
+                ptE.SetAttribute("nodetypes", sodipodiNs, cmds);
+                ptE.SetAttribute("label", inkscapeNs, "post");
+                ptE.SetAttribute("connector-curvature", inkscapeNs, "0");
+                ptE.SetAttribute("id", pt.id);
+
+                string pcd = "m";
+                Vector2 pos = Vector2.zero;
+                for (int step = 0; step < pt.positionLine.Count; step++)
+                {
+                    Vector2 shownPos = pt.positionLine[step] - pos;
+                    pos = pt.positionLine[step];
+                    pcd += " " + shownPos.x.ToString(CultureInfo.InvariantCulture)
+                        + "," + shownPos.y.ToString(CultureInfo.InvariantCulture);
+                }
+                ptE.SetAttribute("d", pcd);
+                ptE.SetAttribute("style", "fill:none;stroke:#9d7b00;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new");
+
+                XmlElement ptEDesc = xmlDoc.CreateElement("desc");
+                ptEDesc.SetAttribute("id", "desc_" + pt.id);
+                ptEDesc.InnerText = "post_template = " + pt.template_ref + ";";
+                ptE.AppendChild(ptEDesc);
+
+                postLayer.AppendChild(ptE);
+            }
+            if (hasPosts) layer.AppendChild(postLayer);
 
             //add Building here
             XmlElement buildingLayer = xmlDoc.CreateElement("g");
@@ -618,8 +665,9 @@ public class MapExporter : MonoBehaviour
                 ekE.SetAttribute("x", 0.ToString());
 
                 ekE.SetAttribute("y", 0.ToString());
-                ekE.SetAttribute("height", decal.size.y.ToString());
-                ekE.SetAttribute("width", decal.size.x.ToString());
+                Vector2 decalFootprint = decal.GetSvgExportSize();
+                ekE.SetAttribute("height", decalFootprint.y.ToString(CultureInfo.InvariantCulture));
+                ekE.SetAttribute("width", decalFootprint.x.ToString(CultureInfo.InvariantCulture));
                 ekE.SetAttribute("transform", MathOfRwrme.angleToTransform(decal.rotation, decal.position));
                 ekE.SetAttribute("id", decal.id);
                 ekE.SetAttribute("style", "fill:#ff00ff;fill-opacity:1;stroke:none;display:inline;enable-background:new");

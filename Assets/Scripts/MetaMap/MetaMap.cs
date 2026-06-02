@@ -26,7 +26,7 @@ public class MetaMap : MonoBehaviour
     public List<MeshTemplate> meshTemplates;
 
     public List<DecalTemplate> DecalTemplates;
-
+    public List<PostTemplate> PostTemplates;
     public List<string> allowedExtensions = new List<string> { "default"};//import later
 
     public int terrainLayerCount = 4;
@@ -49,6 +49,7 @@ public class MetaMap : MonoBehaviour
         CombinedAlpha = new Texture2D(2, 2);
         meshTemplates = new List<MeshTemplate>();
         DecalTemplates = new List<DecalTemplate>();
+        PostTemplates = new List<PostTemplate>();
         //setBts();
         //setWts();
 
@@ -622,19 +623,42 @@ public class DecalTemplate
 
     public Color color=Color.white;
 
+    public float length = 1.0f;
+
     public string textureName = "40mm.png";
 
     /// <summary>图集切块（块列 x, 块行 y, 列数 z, 行数 w），对应 texture0_atlas_cell。</summary>
     public IntVector4 textureCut = new IntVector4(0, 0, 1, 1);
 
-    public Vector2 size ;
 
-    public DecalTemplate(string m_name, float sizeX ,float sizeY)
+    public DecalTemplate(string m_name)
     {
         name = m_name;
         color = MathOfRwrme.StringToColor(name);
-        size.x = sizeX;
-        size.y = sizeY;
+    }
+}
+
+public class PostTemplate
+{
+    public string name = "empty";
+
+    /// <summary>指向 <see cref="MeshTemplate.name"/>（SVG 字段 mesh_template），非 OGRE 文件名。</summary>
+    public string meshName = "";
+
+    public Color color = Color.white;
+
+    public PostTemplate(string m_name, string meshTemplateRef)
+    {
+        name = m_name;
+        meshName = meshTemplateRef;
+        color = MathOfRwrme.StringToColor(name);
+    }
+
+    public MeshTemplate ResolveMeshTemplate()
+    {
+        if (MetaMap.instance == null || string.IsNullOrEmpty(meshName))
+            return null;
+        return MetaMap.instance.meshTemplates.FirstOrDefault(m => m.name == meshName);
     }
 }
 public class MeshTemplate

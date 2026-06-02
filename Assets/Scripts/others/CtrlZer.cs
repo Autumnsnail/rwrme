@@ -70,6 +70,11 @@ public class CtrlZer : MonoBehaviour
                         od.RemoveLastVertex();
                         return;
                     }
+                    if (tool is PostDrawer postDrawer && postDrawer.drawing)
+                    {
+                        postDrawer.RemoveLastVertex();
+                        return;
+                    }
                 }
                 Undo();
             }

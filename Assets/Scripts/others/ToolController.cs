@@ -42,6 +42,9 @@ public class ToolController : MonoBehaviour
     private OffroadPathHandle activeOffroadHandle;
     private Offroad lastOffroadHandleTarget;
 
+    private PostPathHandle activePostHandle;
+    private Post lastPostHandleTarget;
+
     public int axisLock = 0; // 0=none, 1=lock X (free X, fix Z), 2=lock Z (free Z, fix X)
     private Vector3 lockOrigin;
 
@@ -90,6 +93,7 @@ public class ToolController : MonoBehaviour
         tools.Add(new HeightSmudge("HS")); //tool 17 = terrainSmudge
         tools.Add(new OffraodDrawer("offraodDrawer")); //tool 18 = offroad path drawer
         tools.Add(new DecalScatter("DecalScatter")); //tool 19 = decal scatter
+        tools.Add(new PostDrawer("PostDrawer")); //tool 20 = post path drawer
 
         currentTool = tools[0];
 
@@ -333,11 +337,13 @@ public class ToolController : MonoBehaviour
         UpdatePlatformHandle();
         UpdateWallHandle();
         UpdateOffroadHandle();
+        UpdatePostHandle();
 
         bool handleBusy = (activeScaleHandle != null && activeScaleHandle.IsDragging)
             || (activePlatformHandle != null && activePlatformHandle.IsDragging)
             || (activeWallHandle != null && activeWallHandle.IsDragging)
-            || (activeOffroadHandle != null && activeOffroadHandle.IsDragging);
+            || (activeOffroadHandle != null && activeOffroadHandle.IsDragging)
+            || (activePostHandle != null && activePostHandle.IsDragging);
 
         if (Input.GetKeyDown(KeyCode.X))
         {
@@ -726,6 +732,19 @@ public class ToolController : MonoBehaviour
         DecalScatter ms = tools[19] as DecalScatter;
         ms.ChooseThis(MetaMap.instance.DecalTemplates[index].name);
     }
+
+    public void setPostDrawerTool(int index)
+    {
+        PostDrawer pd = tools[20] as PostDrawer;
+        if (pd == null) return;
+        string name = UIManager.instance != null ? UIManager.instance.GetPostDropdownOptionText(index) : null;
+        if (string.IsNullOrEmpty(name))
+        {
+            if (index < 0 || index >= MetaMap.instance.PostTemplates.Count) return;
+            name = MetaMap.instance.PostTemplates[index].name;
+        }
+        pd.ChooseThis(name);
+    }
     public GameObject InsOnePref(GameObject partten)
     {
         return Instantiate(partten);
@@ -922,6 +941,27 @@ public class ToolController : MonoBehaviour
             GameObject go = new GameObject("_OffroadPathHandle");
             activeOffroadHandle = go.AddComponent<OffroadPathHandle>();
             activeOffroadHandle.Init(target);
+        }
+    }
+
+    private void UpdatePostHandle()
+    {
+        Post target = (!MultiSelectMode && miSelected is Post p) ? p : null;
+
+        if (target == lastPostHandleTarget) return;
+        lastPostHandleTarget = target;
+
+        if (activePostHandle != null)
+        {
+            Destroy(activePostHandle.gameObject);
+            activePostHandle = null;
+        }
+
+        if (target != null)
+        {
+            GameObject go = new GameObject("_PostPathHandle");
+            activePostHandle = go.AddComponent<PostPathHandle>();
+            activePostHandle.Init(target);
         }
     }
 
@@ -1939,6 +1979,114 @@ public class WallDrawer : Tool
 
 }
 
+public class PostDrawer : Tool
+{
+    string templateName;
+    public bool drawing = false;
+    public List<Vector3> PointSelected;
+    public List<Vector2> PathDrawed;
+    int lid = 1;
+
+    public PostDrawer(string name) : base(name)
+    {
+        drawing = false;
+        PathDrawed = new List<Vector2>();
+        PointSelected = new List<Vector3>();
+    }
+
+    public void ChooseThis(string name)
+    {
+        templateName = name;
+        ToolController.inste.setToolWithIndex(20);
+    }
+
+    public override void startUse(Vector3 Position, GameObject hitO)
+    {
+        if (drawing == false)
+        {
+            ToolController.inste.dragVisualizer.enabled = true;
+            lid = 1;
+            if (hitO.GetComponent<MapItem>() != null)
+            {
+                lid = hitO.GetComponent<MapItem>().layerIndex + 1;
+            }
+        }
+        drawing = true;
+        PointSelected.Add(Position);
+        PathDrawed.Add(MathOfRwrme.U3dPosToSvgPos(Position));
+        UpdateVisualizer();
+    }
+
+    public override void escape()
+    {
+        ToolController.inste.dragVisualizer.enabled = false;
+        drawing = false;
+        PathDrawed.Clear();
+        PointSelected.Clear();
+    }
+
+    public override void space()
+    {
+        ToolController.inste.dragVisualizer.enabled = false;
+        if (!drawing || PathDrawed.Count == 0)
+            return;
+
+        CtrlZer.instance.checkPoint();
+        drawing = false;
+
+        GameObject go;
+        Post ps;
+        if (MapImporter.instate != null && MapImporter.instate.PostPref != null)
+        {
+            go = ToolController.inste.InsOnePref(MapImporter.instate.PostPref);
+            ps = go.GetComponent<Post>();
+            if (ps == null) ps = go.AddComponent<Post>();
+        }
+        else
+        {
+            go = new GameObject("Post");
+            ps = go.AddComponent<Post>();
+        }
+
+        ps.positionLine = new List<Vector2>(PathDrawed);
+        ps.template_ref = templateName;
+        ps.id = MetaMap.instance.getNewItemId("post");
+        ps.layerIndex = lid;
+
+        PathDrawed.Clear();
+        PointSelected.Clear();
+
+        MetaMap.instance.defaultLayer.mapItems.Add(ps);
+        ps.scatterThis();
+    }
+
+    public void RemoveLastVertex()
+    {
+        if (PointSelected.Count > 0)
+        {
+            PointSelected.RemoveAt(PointSelected.Count - 1);
+            PathDrawed.RemoveAt(PathDrawed.Count - 1);
+            UpdateVisualizer();
+        }
+        if (PointSelected.Count == 0)
+        {
+            drawing = false;
+            ToolController.inste.dragVisualizer.enabled = false;
+        }
+    }
+
+    private void UpdateVisualizer()
+    {
+        if (ToolController.inste.dragVisualizer == null) return;
+        ToolController.inste.dragVisualizer.positionCount = 0;
+        for (int i = 0; i < PointSelected.Count; i++)
+        {
+            ToolController.inste.dragVisualizer.positionCount++;
+            ToolController.inste.dragVisualizer.SetPosition(i, PointSelected[i] + Vector3.up * 5f);
+        }
+    }
+}
+
 public class OffraodDrawer : Tool
 {
     public bool drawing;
@@ -2439,6 +2587,7 @@ public class DecalScatter : Tool
         }
         decal.position = MathOfRwrme.U3dPosToSvgPos(position);
         decal.template_ref = templateName;
+        decal.length = MetaMap.instance.DecalTemplates.Find(x => x.name == templateName).length;
         MetaMap.instance.defaultLayer.mapItems.Add(decal);
         decal.scatterThis();
         ToolController.inste.miSelected = decal;
@@ -3456,6 +3605,239 @@ public class WallPathHandle : MonoBehaviour
     public void Init(Wall wall)
     {
         target = wall;
+        linksRoot = new GameObject("Links").transform;
+        linksRoot.SetParent(transform, false);
+        handlesRoot = new GameObject("Handles").transform;
+        handlesRoot.SetParent(transform, false);
+
+        Shader sh = Shader.Find("Hidden/Internal-Colored");
+        if (sh == null) sh = Shader.Find("Sprites/Default");
+        if (sh == null) sh = Shader.Find("Unlit/Color");
+
+        matLine = MkMat(sh, new Color(1f, 0.88f, 0.15f, 1f));
+        matV = MkMat(sh, new Color(0.25f, 0.92f, 1f, 1f));
+        matHL = MkMat(sh, Color.white);
+
+        RebuildIfNeeded();
+    }
+
+    private static Material MkMat(Shader sh, Color c)
+    {
+        Material m = new Material(sh);
+        m.color = c;
+        m.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+        m.SetInt("_ZWrite", 0);
+        m.renderQueue = 4000;
+        return m;
+    }
+
+    private int GetVertexCount()
+    {
+        if (target == null || target.positionLine == null) return 0;
+        return target.positionLine.Count;
+    }
+
+    private void RebuildIfNeeded()
+    {
+        int n = GetVertexCount();
+        int expectedSeg = n >= 2 ? n - 1 : 0;
+        if (n == vertexCount && segmentLines.Count == expectedSeg && hitZones.Count == n)
+            return;
+
+        foreach (var lr in segmentLines)
+            if (lr != null) Destroy(lr.gameObject);
+        segmentLines.Clear();
+        foreach (Transform t in handlesRoot)
+            if (t != null) Destroy(t.gameObject);
+        hitZones.Clear();
+        handleRenderers.Clear();
+
+        vertexCount = n;
+
+        for (int i = 0; i < expectedSeg; i++)
+        {
+            GameObject lrGo = new GameObject("Seg_" + i);
+            lrGo.transform.SetParent(linksRoot, false);
+            LineRenderer lr = lrGo.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.useWorldSpace = true;
+            lr.startWidth = 0.2f;
+            lr.endWidth = 0.2f;
+            lr.material = matLine;
+            lr.startColor = matLine.color;
+            lr.endColor = matLine.color;
+            lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            segmentLines.Add(lr);
+        }
+
+        for (int i = 0; i < n; i++)
+            MkVertexHandle(i);
+    }
+
+    private void MkVertexHandle(int index)
+    {
+        GameObject root = new GameObject("V_" + index);
+        root.transform.SetParent(handlesRoot, false);
+
+        GameObject vis = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        vis.name = "Vis";
+        vis.transform.SetParent(root.transform, false);
+        vis.transform.localScale = Vector3.one * 0.36f;
+        Destroy(vis.GetComponent<Collider>());
+        Renderer rend = vis.GetComponent<Renderer>();
+        rend.material = matV;
+        rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        GameObject hitGO = new GameObject("Hit");
+        hitGO.transform.SetParent(root.transform, false);
+        hitGO.layer = 2;
+        BoxCollider box = hitGO.AddComponent<BoxCollider>();
+        box.size = Vector3.one * (HitHalf * 2f);
+        box.center = Vector3.zero;
+
+        hitZones.Add(box);
+        handleRenderers.Add(rend);
+    }
+
+    private Vector3 VertexWorld(int i)
+    {
+        Vector2 svg = target.positionLine[i];
+        Vector3 pot = Vector3.zero;
+        VpMetaToucher.getXYHeightWithLayer(MathOfRwrme.SvgPosToU3dPos(svg), target.layerIndex, ref pot, target.Rank);
+        return new Vector3(pot.x, pot.y + LiftY, pot.z);
+    }
+
+    private void SyncTransforms(int n)
+    {
+        for (int i = 0; i < n - 1; i++)
+        {
+            segmentLines[i].SetPosition(0, VertexWorld(i));
+            segmentLines[i].SetPosition(1, VertexWorld(i + 1));
+        }
+
+        for (int i = 0; i < n; i++)
+            handlesRoot.GetChild(i).position = VertexWorld(i);
+    }
+
+    void Update()
+    {
+        if (target == null) { Destroy(gameObject); return; }
+
+        RebuildIfNeeded();
+        int n = GetVertexCount();
+        if (n == 0)
+        {
+            linksRoot.gameObject.SetActive(false);
+            handlesRoot.gameObject.SetActive(false);
+            return;
+        }
+        linksRoot.gameObject.SetActive(true);
+        handlesRoot.gameObject.SetActive(true);
+
+        SyncTransforms(n);
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (!IsDragging)
+        {
+            for (int s = 0; s < handleRenderers.Count; s++)
+                handleRenderers[s].material = matV;
+
+            hoveredSlot = -1;
+            float best = float.MaxValue;
+            for (int s = 0; s < hitZones.Count; s++)
+            {
+                RaycastHit hit;
+                if (hitZones[s].Raycast(ray, out hit, 800f) && hit.distance < best)
+                {
+                    best = hit.distance;
+                    hoveredSlot = s;
+                }
+            }
+            if (hoveredSlot >= 0)
+                handleRenderers[hoveredSlot].material = matHL;
+
+            if (Input.GetMouseButtonDown(0) && hoveredSlot >= 0)
+            {
+                CtrlZer.instance.checkPoint();
+                IsDragging = true;
+                dragSlot = hoveredSlot;
+                undoRecorded = false;
+            }
+        }
+        else
+        {
+            handleRenderers[dragSlot].material = matHL;
+            ApplyDrag();
+            if (Input.GetMouseButtonUp(0))
+            {
+                IsDragging = false;
+                dragSlot = -1;
+            }
+        }
+    }
+
+    private void ApplyDrag()
+    {
+        int layerMask = 1 << 6;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (!Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
+            return;
+
+        int i = dragSlot;
+        Vector2 svg = MathOfRwrme.U3dPosToSvgPos(new Vector2(hit.point.x, hit.point.z));
+        Vector2 before = target.positionLine[i];
+        if (!undoRecorded && (svg - before).sqrMagnitude > 0.0004f)
+        {
+            CtrlZer.instance.checkPoint();
+            undoRecorded = true;
+        }
+
+        target.positionLine[i] = svg;
+        target.scatterThis();
+    }
+
+    void OnDestroy()
+    {
+        if (matLine != null) Destroy(matLine);
+        if (matV != null) Destroy(matV);
+        if (matHL != null) Destroy(matHL);
+    }
+}
+
+/// <summary>
+/// 选中 Post 时在场景中显示折线与顶点手柄（与 <see cref="WallPathHandle"/> 相同，无曲线控制点）。
+/// </summary>
+[DefaultExecutionOrder(-100)]
+public class PostPathHandle : MonoBehaviour
+{
+    public bool IsDragging { get; private set; }
+
+    private Post target;
+    private Transform linksRoot;
+    private Transform handlesRoot;
+
+    private List<LineRenderer> segmentLines = new List<LineRenderer>();
+    private List<BoxCollider> hitZones = new List<BoxCollider>();
+    private List<Renderer> handleRenderers = new List<Renderer>();
+
+    private Material matLine;
+    private Material matV;
+    private Material matHL;
+
+    private int vertexCount = -1;
+    private int hoveredSlot = -1;
+    private int dragSlot = -1;
+    private bool undoRecorded;
+
+    private const float LiftY = 0.35f;
+    private const float HitHalf = 0.55f;
+
+    public void Init(Post post)
+    {
+        target = post;
         linksRoot = new GameObject("Links").transform;
         linksRoot.SetParent(transform, false);
         handlesRoot = new GameObject("Handles").transform;

@@ -1,10 +1,10 @@
 # 本图导出时引用的 template 名称（按类型分组，组内按字母序）
-# 2026-05-20 22:43:12
+# 2026-06-02 18:07:10
 # path: D:\PLAY\projects\rwrme\used_templates.log
-# total: 56
+# total: 60
 
 [mesh (#mesh template_ref)]
-# count: 27
+# count: 31
 armory
 barell_blue
 barell_green
@@ -29,6 +29,10 @@ parasol_green
 parasol_red
 parasol_yellow
 pipe
+rock_b4
+rock_m1
+rock_m2
+rock_s2
 street_ground_trash
 streetlight
 weapon_rack

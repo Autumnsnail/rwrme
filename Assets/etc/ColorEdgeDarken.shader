@@ -3,12 +3,19 @@ Shader "RWRME/Color Edge Darken"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
+        _Alpha ("Opacity", Range(0, 1)) = 1
         _EdgeWidth ("Edge Width (UV)", Range(0.001, 0.2)) = 0.04
         _EdgeDarken ("Edge Darken", Range(0, 1)) = 0.45
     }
     SubShader
     {
-        Tags { "Queue"="Geometry" "RenderType"="Opaque" }
+        Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
+        LOD 100
+
+        Blend SrcAlpha OneMinusSrcAlpha
+        ZWrite Off
+        Cull Back
+
         Pass
         {
             CGPROGRAM
@@ -29,6 +36,7 @@ Shader "RWRME/Color Edge Darken"
             };
 
             fixed4 _Color;
+            float _Alpha;
             float _EdgeWidth;
             float _EdgeDarken;
 
@@ -46,10 +54,11 @@ Shader "RWRME/Color Edge Darken"
                 float dist = min(d.x, d.y);
                 float edge = dist < _EdgeWidth ? 1.0 : 0.0;
                 float shade = 1.0 - edge * _EdgeDarken;
-                return fixed4(_Color.rgb * shade, _Color.a);
+                float a = _Color.a * _Alpha;
+                return fixed4(_Color.rgb * shade, a);
             }
             ENDCG
         }
     }
-    FallBack "Diffuse"
+    FallBack "Transparent/Diffuse"
 }

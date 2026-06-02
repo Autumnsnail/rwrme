@@ -53,6 +53,7 @@ public class UIManager : MonoBehaviour
     GameObject ddPS;//platformSerface
     GameObject ddWTP;//platformSerface
     GameObject ddMt;// mesh templates
+    GameObject ddPosts;// post templates
     GameObject ddDecalTemplates;// decal templates
     // 通用可搜索下拉：在目标下拉框上方插一个搜索输入框，按名子串过滤选项
     class SearchableDropdown
@@ -97,6 +98,8 @@ public class UIManager : MonoBehaviour
         ddWTP = transform.Find("PlatformEditor/BaseWallTypes").gameObject;
         ddMt = transform.Find("MeshEditor/MeshTemplates").gameObject;
         ddDecalTemplates = transform.Find("DecalEditor/DecalTypes").gameObject;
+        Transform postsTr = transform.Find("MeshEditor/PostsTemplates");
+        if (postsTr != null) ddPosts = postsTr.gameObject;
 
         // 四个可搜索下拉：启动即建好搜索条，避免首次打开菜单时缺失（原先只在下拉框 PointerDown 惰性创建）
         sdMesh = MakeSearchable(ddMt, () => MetaMap.instance.meshTemplates.Select(t => t.name).ToList());
@@ -149,12 +152,24 @@ public class UIManager : MonoBehaviour
     public void showMenuUseIndex(int index)
     {
         disVisableAll();
+        if (mms == null || index < 0 || index >= mms.Count)
+        {
+            Debug.LogWarning($"UIManager.showMenuUseIndex: index {index} out of range (mms count {(mms == null ? 0 : mms.Count)})");
+            return;
+        }
+        if (mms[index] == null)
+        {
+            Debug.LogWarning($"UIManager.showMenuUseIndex: mms[{index}] is not assigned in Inspector");
+            return;
+        }
         mms[index].transform.localScale = Vector3.one;
     }
     public void disVisableAll()
     {
+        if (mms == null) return;
         for (int i = 0; i < mms.Count; i++)
         {
+            if (mms[i] == null) continue;
             mms[i].transform.localScale = Vector3.zero;
         }
         /*
@@ -376,6 +391,12 @@ public class UIManager : MonoBehaviour
         return GetDropdownText(ddMt, index);
     }
 
+    /// <summary>ToolController.setPostDrawerTool 通过显示文本解析模板。</summary>
+    public string GetPostDropdownOptionText(int index)
+    {
+        return GetDropdownText(ddPosts, index);
+    }
+
     public void updateDecalTemplatesDropdown()
     {
         TMP_Dropdown dd = ddDecalTemplates.GetComponent<TMP_Dropdown>();
@@ -386,7 +407,18 @@ public class UIManager : MonoBehaviour
         dd.AddOptions(optionTexts);
         dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
     }
-    
+    public void updatePostsTemplatesDropdown()
+    {
+        if (ddPosts == null) return;
+        TMP_Dropdown dd = ddPosts.GetComponent<TMP_Dropdown>();
+        int saved = dd.value;
+        dd.ClearOptions();
+        List<PostTemplate> btp = MetaMap.instance.PostTemplates;
+        List<string> optionTexts = btp.Select(bt => bt.name).ToList();
+        dd.AddOptions(optionTexts);
+        dd.SetValueWithoutNotify(Mathf.Clamp(saved, 0, Mathf.Max(0, optionTexts.Count - 1)));
+    }
+
     public void setGeneralSetting(string s)
     {
         MetaMap.instance.m_settings = s;

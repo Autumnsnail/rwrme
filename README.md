@@ -1,6 +1,5 @@
+基本功能（被认为）全部完成
 
+接下来的几个周到几年时间会被用于生活质量更新
 
-when refreshing items refresh display info on right
-
-
-reselect same dropdown make nothing
+等待RWR2

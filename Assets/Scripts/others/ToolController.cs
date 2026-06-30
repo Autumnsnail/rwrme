@@ -45,6 +45,9 @@ public class ToolController : MonoBehaviour
     private PostPathHandle activePostHandle;
     private Post lastPostHandleTarget;
 
+    private CurvedMePathHandle activeTerrainPathHandle;
+    private MePath lastTerrainPathHandleTarget;
+
     public int axisLock = 0; // 0=none, 1=lock X (free X, fix Z), 2=lock Z (free Z, fix X)
     private Vector3 lockOrigin;
 
@@ -62,6 +65,11 @@ public class ToolController : MonoBehaviour
     public float heightMapGlobalNoiseAmplitude = 0.018f;
     /// <summary>全局噪点：Perlin 采样密度（越大纹理越细）。</summary>
     public float heightMapGlobalNoiseFrequency = 0.06f;
+
+    string idSearchQuery = "";
+    bool idSearchFocusRequested;
+    string idSearchStatus = "";
+    float idSearchStatusUntil;
 
     void Start()
     {
@@ -94,6 +102,8 @@ public class ToolController : MonoBehaviour
         tools.Add(new OffraodDrawer("offraodDrawer")); //tool 18 = offroad path drawer
         tools.Add(new DecalScatter("DecalScatter")); //tool 19 = decal scatter
         tools.Add(new PostDrawer("PostDrawer")); //tool 20 = post path drawer
+        tools.Add(new HeightPathDrawer("HeightPathDrawer")); //tool 21 = height path drawer
+        tools.Add(new MaterialPathDrawer("MaterialPathDrawer")); //tool 22 = material path drawer
 
         currentTool = tools[0];
 
@@ -118,6 +128,8 @@ public class ToolController : MonoBehaviour
             { KeyCode.F7,     16 },  // HeightBush (HBS)
             { KeyCode.F8,     17 },  // HeightSmudge
             { KeyCode.F9,     18 },  // OffraodDrawer
+            { KeyCode.F10,    21 },  // HeightPathDrawer
+            { KeyCode.F11,    22 },  // MaterialPathDrawer
         };
 
         // 创建拖选可视化对象
@@ -184,6 +196,15 @@ public class ToolController : MonoBehaviour
             GUI.Label(rect, "height:" + htb.height+" hardness:"+htb.hardness +" range:"+htb.range);
         }
 
+        if (currentTool is HeightPathDrawer hpdHint)
+        {
+            DrawPathToolHint(hpdHint.GetHintText(), new Color(0.55f, 0.85f, 1f));
+        }
+        else if (currentTool is MaterialPathDrawer mpdHint)
+        {
+            DrawPathToolHint(mpdHint.GetHintText(), new Color(0.55f, 0.95f, 0.45f));
+        }
+
         string modeLabel = sdt.GetModeLabel();
         if (modeLabel != null)
         {
@@ -192,7 +213,7 @@ public class ToolController : MonoBehaviour
             style.fontStyle = FontStyle.Bold;
             style.normal.textColor = Color.yellow;
             style.alignment = TextAnchor.MiddleCenter;
-            Rect modeRect = new Rect(Screen.width * 0.5f - 80, 10, 160, 30);
+            Rect modeRect = new Rect(Screen.width * 0.5f - 80, 42, 160, 30);
             GUI.Label(modeRect, modeLabel, style);
         }
 
@@ -204,9 +225,134 @@ public class ToolController : MonoBehaviour
             lockStyle.normal.textColor = axisLock == 1 ? Color.red : Color.cyan;
             lockStyle.alignment = TextAnchor.MiddleCenter;
             string lockLabel = axisLock == 1 ? "Lock: X" : "Lock: Z(Y)";
-            Rect lockRect = new Rect(Screen.width * 0.5f - 60, 40, 120, 25);
+            Rect lockRect = new Rect(Screen.width * 0.5f - 60, 72, 120, 25);
             GUI.Label(lockRect, lockLabel, lockStyle);
         }
+
+        DrawIdSearchBar();
+    }
+
+    void DrawIdSearchBar()
+    {
+        const string controlName = "MapItemIdSearch";
+        const float barWidth = 318f;
+        const float barHeight = 28f;
+        float barX = (Screen.width - barWidth) * 0.5f;
+        const float barY = 8f;
+
+        GUI.Box(new Rect(barX, barY, barWidth, barHeight), GUIContent.none);
+
+        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.normal.textColor = new Color(0.85f, 0.9f, 1f);
+        GUI.Label(new Rect(barX + 6f, barY + 4f, 28f, 20f), "ID", labelStyle);
+
+        GUI.SetNextControlName(controlName);
+        idSearchQuery = GUI.TextField(new Rect(barX + 36f, barY + 3f, 210f, 22f), idSearchQuery ?? string.Empty);
+
+        if (idSearchFocusRequested)
+        {
+            GUI.FocusControl(controlName);
+            idSearchFocusRequested = false;
+        }
+
+        if (GUI.Button(new Rect(barX + 250f, barY + 2f, 62f, 24f), "查找"))
+            TrySelectById(idSearchQuery);
+
+        if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return
+            && GUI.GetNameOfFocusedControl() == controlName)
+        {
+            TrySelectById(idSearchQuery);
+            Event.current.Use();
+        }
+
+        if (!string.IsNullOrEmpty(idSearchStatus) && Time.unscaledTime < idSearchStatusUntil)
+        {
+            GUIStyle statusStyle = new GUIStyle(GUI.skin.label);
+            statusStyle.fontSize = 11;
+            statusStyle.alignment = TextAnchor.MiddleCenter;
+            statusStyle.normal.textColor = idSearchStatus.StartsWith("已选") ? new Color(0.5f, 1f, 0.55f) : new Color(1f, 0.55f, 0.45f);
+            GUI.Label(new Rect(Screen.width * 0.5f - 200f, barY + barHeight + 2f, 400f, 18f), idSearchStatus, statusStyle);
+        }
+    }
+
+    public bool TrySelectById(string query)
+    {
+        if (MetaMap.instance == null)
+        {
+            SetIdSearchStatus("MetaMap 未就绪");
+            return false;
+        }
+
+        query = query?.Trim();
+        if (string.IsNullOrEmpty(query))
+        {
+            SetIdSearchStatus("请输入 id");
+            return false;
+        }
+
+        MapItem found = MetaMap.instance.FindMapItemById(query);
+        if (found == null)
+        {
+            int matches = MetaMap.instance.CountMapItemIdMatches(query);
+            if (matches > 1)
+                SetIdSearchStatus($"匹配 {matches} 个，请输入更完整的 id");
+            else
+                SetIdSearchStatus("未找到: " + query);
+            Debug.Log("ToolController: 未找到 id = " + query);
+            return false;
+        }
+
+        SelectMapItem(found);
+        FocusCameraOnMapItem(found);
+        SetIdSearchStatus("已选: " + found.id);
+        Debug.Log("ToolController: 已选中 " + found.id + " (" + found.GetType().Name + ")");
+        return true;
+    }
+
+    public void SelectMapItem(MapItem item)
+    {
+        if (item == null) return;
+
+        sdt.state = 0;
+        axisLock = 0;
+        misSelected.Clear();
+        miSelected = item;
+
+        if (item.gameObject != null && !item.gameObject.activeSelf)
+            item.gameObject.SetActive(true);
+
+        setToolSelector();
+    }
+
+    public void FocusCameraOnMapItem(MapItem item)
+    {
+        if (item == null) return;
+
+        Vector2 anchor = item.GetAnchor();
+        Vector2 u3d = MathOfRwrme.SvgPosToU3dPos(anchor);
+        Camera cam = orthographicCamera != null ? orthographicCamera : Camera.main;
+        if (cam == null) return;
+
+        Vector3 pos = cam.transform.position;
+        cam.transform.position = new Vector3(u3d.x, pos.y, u3d.y);
+    }
+
+    void SetIdSearchStatus(string message)
+    {
+        idSearchStatus = message;
+        idSearchStatusUntil = Time.unscaledTime + 3f;
+    }
+
+    static void DrawPathToolHint(string text, Color color)
+    {
+        GUIStyle style = new GUIStyle(GUI.skin.box);
+        style.fontSize = 14;
+        style.wordWrap = true;
+        style.normal.textColor = color;
+        style.alignment = TextAnchor.UpperLeft;
+        style.padding = new RectOffset(8, 8, 6, 6);
+        float w = Mathf.Min(520f, Screen.width * 0.42f);
+        GUI.Box(new Rect(10f, 58f, w, 72f), text, style);
     }
 
         // Update is called once per frame
@@ -220,6 +366,12 @@ public class ToolController : MonoBehaviour
             bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
             if (!overUi && Syncer.instence != null)
                 Syncer.instence.updateMap();
+        }
+
+        if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
+            && Input.GetKeyDown(KeyCode.F))
+        {
+            idSearchFocusRequested = true;
         }
 
         if (EventSystem.current != null &&
@@ -303,7 +455,13 @@ public class ToolController : MonoBehaviour
                 }
             }
         }
-            if (lastMiS != miSelected || lastMisCount != misSelected.Count)
+
+        if (currentTool is HeightPathDrawer hpd)
+            HandleHeightPathDrawerKeys(hpd);
+        else if (currentTool is MaterialPathDrawer mpd)
+            HandleMaterialPathDrawerKeys(mpd);
+
+        if (lastMiS != miSelected || lastMisCount != misSelected.Count)
         {
             // 性能：MeRect 子类（Building/MeMesh）的每实例 offset UI 默认隐藏，仅给单选时的当前实例激活。
             if (lastMiS is MeRect oldR && oldR != null && oldR != miSelected) oldR.SetOffsetUiActive(false);
@@ -338,12 +496,14 @@ public class ToolController : MonoBehaviour
         UpdateWallHandle();
         UpdateOffroadHandle();
         UpdatePostHandle();
+        UpdateTerrainPathHandle();
 
         bool handleBusy = (activeScaleHandle != null && activeScaleHandle.IsDragging)
             || (activePlatformHandle != null && activePlatformHandle.IsDragging)
             || (activeWallHandle != null && activeWallHandle.IsDragging)
             || (activeOffroadHandle != null && activeOffroadHandle.IsDragging)
-            || (activePostHandle != null && activePostHandle.IsDragging);
+            || (activePostHandle != null && activePostHandle.IsDragging)
+            || (activeTerrainPathHandle != null && activeTerrainPathHandle.IsDragging);
 
         if (Input.GetKeyDown(KeyCode.X))
         {
@@ -495,6 +655,35 @@ public class ToolController : MonoBehaviour
         Vector2 gv2 = new Vector2(normalizedX, normalizedY);
         sdt.update(ofst, gv2);
     }
+    void HandleHeightPathDrawerKeys(HeightPathDrawer hpd)
+    {
+        if (Input.GetKeyDown(KeyCode.M))
+            hpd.CycleMode();
+
+        bool ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        if (Input.GetKey(KeyCode.Equals) || Input.GetKey(KeyCode.KeypadPlus))
+        {
+            if (ctrl) hpd.AdjustValue(0.005f);
+            else hpd.AdjustWidth(1f);
+        }
+        if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus))
+        {
+            if (ctrl) hpd.AdjustValue(-0.005f);
+            else hpd.AdjustWidth(-1f);
+        }
+    }
+
+    void HandleMaterialPathDrawerKeys(MaterialPathDrawer mpd)
+    {
+        if (Input.GetKeyDown(KeyCode.M))
+            mpd.CycleMaterial();
+
+        if (Input.GetKey(KeyCode.Equals) || Input.GetKey(KeyCode.KeypadPlus))
+            mpd.AdjustWidth(1f);
+        if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus))
+            mpd.AdjustWidth(-1f);
+    }
+
     private void HandleToolShortcuts()
     {
         // 需按住 Shift 才响应数字/F 键切工具，避免误触
@@ -514,15 +703,15 @@ public class ToolController : MonoBehaviour
 
     public void FunctionHeightMapSmooth()
     {
-        Terrain terrain = Terrain.activeTerrain;
-        if (terrain == null || terrain.terrainData == null)
-            return;
+        MetaMap mm = MetaMap.instance;
+        mm.EnsurePreTerrain();
+        GrayScaleImage img = mm.m_preTerrain.data;
+        if (img == null || img.Width <= 0) return;
 
         CtrlZer.instance.checkPointWithHeightmap();
 
-        TerrainData td = terrain.terrainData;
-        int res = td.heightmapResolution;
-        float[,] h = td.GetHeights(0, 0, res, res);
+        int res = img.Width;
+        float[,] h = img.CopyDataArray();
         float[,] scratch = new float[res, res];
         int passes = Mathf.Max(1, heightMapGlobalSmoothPasses);
 
@@ -537,13 +726,11 @@ public class ToolController : MonoBehaviour
                     for (int dy = -1; dy <= 1; dy++)
                     {
                         int yy = y + dy;
-                        if (yy < 0 || yy >= res)
-                            continue;
+                        if (yy < 0 || yy >= res) continue;
                         for (int dx = -1; dx <= 1; dx++)
                         {
                             int xx = x + dx;
-                            if (xx < 0 || xx >= res)
-                                continue;
+                            if (xx < 0 || xx >= res) continue;
                             sum += h[yy, xx];
                             cnt++;
                         }
@@ -556,21 +743,21 @@ public class ToolController : MonoBehaviour
             scratch = tmp;
         }
 
-        td.SetHeights(0, 0, h);
-        td.SyncHeightmap();
+        img.CopyFromArray(h);
+        if (Syncer.instence != null) Syncer.instence.ApplyPreHeightToTerrain();
     }
 
     public void FunctionHeightMapNoiser()
     {
-        Terrain terrain = Terrain.activeTerrain;
-        if (terrain == null || terrain.terrainData == null)
-            return;
+        MetaMap mm = MetaMap.instance;
+        mm.EnsurePreTerrain();
+        GrayScaleImage img = mm.m_preTerrain.data;
+        if (img == null || img.Width <= 0) return;
 
         CtrlZer.instance.checkPointWithHeightmap();
 
-        TerrainData td = terrain.terrainData;
-        int res = td.heightmapResolution;
-        float[,] heights = td.GetHeights(0, 0, res, res);
+        int res = img.Width;
+        float[,] heights = img.CopyDataArray();
         float amp = Mathf.Max(0f, heightMapGlobalNoiseAmplitude);
         float freq = Mathf.Max(0.0001f, heightMapGlobalNoiseFrequency);
         float ox = Random.Range(0f, 8192f);
@@ -586,23 +773,20 @@ public class ToolController : MonoBehaviour
             }
         }
 
-        td.SetHeights(0, 0, heights);
-        td.SyncHeightmap();
+        img.CopyFromArray(heights);
+        if (Syncer.instence != null) Syncer.instence.ApplyPreHeightToTerrain();
     }
 
     public void FunctionTerrainMaterialSmooth()
     {
-        Terrain terrain = Terrain.activeTerrain;
-        if (terrain == null || terrain.materialTemplate == null)
-            return;
-
-        Texture2D mask = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
-        if (mask == null)
-            return;
+        MetaMap mm = MetaMap.instance;
+        mm.EnsurePreCombinedAlpha();
+        Texture2D mask = mm.preCombinedAlpha;
+        if (mask == null) return;
 
         if (!mask.isReadable)
         {
-            Debug.LogError("ToolController: 地形 _Mask 需在 Inspector 中勾选 Read/Write Enabled，否则无法平滑。");
+            Debug.LogError("ToolController: pre combined alpha 需在 Inspector 中勾选 Read/Write Enabled。");
             return;
         }
 
@@ -651,6 +835,7 @@ public class ToolController : MonoBehaviour
 
         mask.SetPixels(src);
         mask.Apply();
+        if (Syncer.instence != null) Syncer.instence.ApplyPreAlphaToTerrain();
     }
 
     public void setToolPinTank()
@@ -673,6 +858,13 @@ public class ToolController : MonoBehaviour
         Debug.Log("ToolController:" + tools[ind].GetType().Name);
         currentTool = tools[ind];
         axisLock = 0;
+        if (Syncer.instence == null) return;
+        if (ind == 15)
+            Syncer.instence.ApplyPreAlphaToTerrain();
+        else if (ind == 16 || ind == 17)
+            Syncer.instence.ApplyPreHeightToTerrain();
+        else if (ind == 0 || ind == 21 || ind == 22)
+            Syncer.instence.ApplyPreviewTerrain();
     }
     public void setHeightSetter(int offset)
     {
@@ -745,6 +937,18 @@ public class ToolController : MonoBehaviour
         }
         pd.ChooseThis(name);
     }
+
+    public void setHeightPathDrawerTool()
+    {
+        HeightPathDrawer hd = tools[21] as HeightPathDrawer;
+        if (hd != null) hd.Activate();
+    }
+
+    public void setMaterialPathDrawerTool()
+    {
+        MaterialPathDrawer md = tools[22] as MaterialPathDrawer;
+        if (md != null) md.Activate();
+    }
     public GameObject InsOnePref(GameObject partten)
     {
         return Instantiate(partten);
@@ -787,28 +991,43 @@ public class ToolController : MonoBehaviour
     public void DeleteSelected()
     {
         CtrlZer.instance.checkPoint();
+        bool terrainPathsChanged = false;
         if (misSelected.Count > 0)
         {
             foreach (var mi in new List<MapItem>(misSelected))
             {
-                if (!MetaMap.instance.defaultLayer.mapItems.Remove(mi))
-                {
-                    if (!MetaMap.instance.baseLayer.mapItems.Remove(mi) && MetaMap.instance.offroadLayer != null)
-                        MetaMap.instance.offroadLayer.mapItems.Remove(mi);
-                }
+                if (mi is HeightPath || mi is MaterialPath)
+                    terrainPathsChanged = true;
+                RemoveMapItemFromLayers(mi);
                 mi.gameObject.SetActive(false);
             }
             misSelected.Clear();
         }
         else if (miSelected != null)
         {
-            if (!MetaMap.instance.defaultLayer.mapItems.Remove(miSelected))
-            {
-                if (!MetaMap.instance.baseLayer.mapItems.Remove(miSelected) && MetaMap.instance.offroadLayer != null)
-                    MetaMap.instance.offroadLayer.mapItems.Remove(miSelected);
-            }
+            if (miSelected is HeightPath || miSelected is MaterialPath)
+                terrainPathsChanged = true;
+            RemoveMapItemFromLayers(miSelected);
             miSelected.gameObject.SetActive(false);
         }
+
+        if (terrainPathsChanged && Syncer.instence != null)
+            Syncer.instence.ApplyPreviewTerrain();
+    }
+
+    static bool RemoveMapItemFromLayers(MapItem mi)
+    {
+        if (MetaMap.instance.defaultLayer.mapItems.Remove(mi))
+            return true;
+        if (MetaMap.instance.baseLayer.mapItems.Remove(mi))
+            return true;
+        if (MetaMap.instance.offroadLayer != null && MetaMap.instance.offroadLayer.mapItems.Remove(mi))
+            return true;
+        if (MetaMap.instance.heightPathLayer != null && MetaMap.instance.heightPathLayer.mapItems.Remove(mi))
+            return true;
+        if (MetaMap.instance.materialPathLayer != null && MetaMap.instance.materialPathLayer.mapItems.Remove(mi))
+            return true;
+        return false;
     }
 
     public void ClearMultiSelect()
@@ -965,6 +1184,30 @@ public class ToolController : MonoBehaviour
         }
     }
 
+    private void UpdateTerrainPathHandle()
+    {
+        MePath target = (!MultiSelectMode && (miSelected is HeightPath || miSelected is MaterialPath))
+            ? miSelected as MePath
+            : null;
+
+        if (target == lastTerrainPathHandleTarget) return;
+        lastTerrainPathHandleTarget = target;
+
+        if (activeTerrainPathHandle != null)
+        {
+            Destroy(activeTerrainPathHandle.gameObject);
+            activeTerrainPathHandle = null;
+        }
+
+        if (target != null)
+        {
+            float yOffset = target is MaterialPath ? 1.5f : 2f;
+            GameObject go = new GameObject("_TerrainPathHandle");
+            activeTerrainPathHandle = go.AddComponent<CurvedMePathHandle>();
+            activeTerrainPathHandle.Init(target, yOffset);
+        }
+    }
+
     // 复制选中对象：多选时整批，单选时单个（统一存进 copiedItems）
     private void CopySelectedItem()
     {
@@ -1059,11 +1302,22 @@ public class ToolController : MonoBehaviour
 
         CtrlZer.instance.checkPoint();   // 整批一个撤销点
 
+        bool terrainPathsPasted = false;
         // 先全部入层并分配 id，但不立即 scatter
         foreach (MapItem clone in pending)
         {
             clone.id = MetaMap.instance.getNewItemId(clone.IdPrefix);
-            if (clone is Offroad && MetaMap.instance.offroadLayer != null)
+            if (clone is HeightPath && MetaMap.instance.heightPathLayer != null)
+            {
+                MetaMap.instance.heightPathLayer.mapItems.Add(clone);
+                terrainPathsPasted = true;
+            }
+            else if (clone is MaterialPath && MetaMap.instance.materialPathLayer != null)
+            {
+                MetaMap.instance.materialPathLayer.mapItems.Add(clone);
+                terrainPathsPasted = true;
+            }
+            else if (clone is Offroad && MetaMap.instance.offroadLayer != null)
                 MetaMap.instance.offroadLayer.mapItems.Add(clone);
             else
                 MetaMap.instance.defaultLayer.mapItems.Add(clone);
@@ -1093,6 +1347,9 @@ public class ToolController : MonoBehaviour
             first = false;
         }
         Physics.SyncTransforms();
+
+        if (terrainPathsPasted && Syncer.instence != null)
+            Syncer.instence.ApplyPreviewTerrain();
 
         // 粘贴后选中新对象，方便继续移动/删除
         if (pending.Count == 1)
@@ -1890,6 +2147,11 @@ public class SideTool
             item.scale(offset.x);
         }
         item.scatterThis();
+        if (item is HeightPath || item is MaterialPath)
+        {
+            if (Syncer.instence != null)
+                Syncer.instence.ApplyPreviewTerrain();
+        }
     }
 }
 public class WallDrawer : Tool
@@ -2076,6 +2338,271 @@ public class PostDrawer : Tool
     }
 
     private void UpdateVisualizer()
+    {
+        if (ToolController.inste.dragVisualizer == null) return;
+        ToolController.inste.dragVisualizer.positionCount = 0;
+        for (int i = 0; i < PointSelected.Count; i++)
+        {
+            ToolController.inste.dragVisualizer.positionCount++;
+            ToolController.inste.dragVisualizer.SetPosition(i, PointSelected[i] + Vector3.up * 5f);
+        }
+    }
+}
+
+public class HeightPathDrawer : Tool
+{
+    public bool drawing = false;
+    public List<Vector3> PointSelected;
+    public List<Vector2> PathDrawed;
+    public float width = 20f;
+    public float heightDelta = 0.03f;
+    public HeightPathMode mode = HeightPathMode.Offset;
+
+    public HeightPathDrawer(string name) : base(name)
+    {
+        PathDrawed = new List<Vector2>();
+        PointSelected = new List<Vector3>();
+    }
+
+    public void Activate()
+    {
+        ToolController.inste.setToolWithIndex(21);
+    }
+
+    public void CycleMode()
+    {
+        int next = ((int)mode + 1) % 4;
+        mode = (HeightPathMode)next;
+        if (mode == HeightPathMode.Lower || mode == HeightPathMode.Raise)
+            heightDelta = Mathf.Abs(heightDelta);
+    }
+
+    public void AdjustWidth(float delta)
+    {
+        width = Mathf.Clamp(width + delta, 1f, 200f);
+    }
+
+    public void AdjustValue(float delta)
+    {
+        if (mode == HeightPathMode.Offset)
+            heightDelta = Mathf.Clamp(heightDelta + delta, -1f, 1f);
+        else if (mode == HeightPathMode.Set)
+            heightDelta = Mathf.Clamp(heightDelta + delta, 0f, 1f);
+        else
+            heightDelta = Mathf.Clamp(Mathf.Abs(heightDelta) + delta, 0f, 1f);
+    }
+
+    static string ModeDisplayName(HeightPathMode m)
+    {
+        switch (m)
+        {
+            case HeightPathMode.Lower: return "降低";
+            case HeightPathMode.Set: return "定量";
+            case HeightPathMode.Offset: return "偏移";
+            default: return "抬高";
+        }
+    }
+
+    static string ValueParamName(HeightPathMode m)
+    {
+        switch (m)
+        {
+            case HeightPathMode.Set: return "height";
+            case HeightPathMode.Offset: return "height_offset";
+            default: return "height_delta";
+        }
+    }
+
+    public string GetHintText()
+    {
+        string sign = mode == HeightPathMode.Offset && heightDelta >= 0 ? "+" : "";
+        return "高度路径  |  模式:" + ModeDisplayName(mode)
+            + "  |  宽度:" + width.ToString("F1")
+            + "  |  " + ValueParamName(mode) + ":" + sign + heightDelta.ToString("F3")
+            + (drawing ? "  |  绘制中(" + PathDrawed.Count + "点)" : "")
+            + "\n[M]切换模式  [=/-]线宽  [Ctrl+=/-]数值  [Space]完成  [Esc]取消  [Ctrl+Z]撤销点";
+    }
+
+    public override void startUse(Vector3 Position, GameObject hitO)
+    {
+        if (!drawing)
+            ToolController.inste.dragVisualizer.enabled = true;
+        drawing = true;
+        PointSelected.Add(Position);
+        PathDrawed.Add(MathOfRwrme.U3dPosToSvgPos(Position));
+        UpdateVisualizer();
+    }
+
+    public override void escape()
+    {
+        ToolController.inste.dragVisualizer.enabled = false;
+        drawing = false;
+        PathDrawed.Clear();
+        PointSelected.Clear();
+    }
+
+    public override void space()
+    {
+        ToolController.inste.dragVisualizer.enabled = false;
+        if (!drawing || PathDrawed.Count < 2) return;
+
+        CtrlZer.instance.checkPoint();
+        drawing = false;
+
+        HeightPath hp = new GameObject("HeightPath").AddComponent<HeightPath>();
+        hp.positionLine = new List<Vector2>(PathDrawed);
+        hp.curve = new List<bool>();
+        hp.controlPoints = new List<Vector2>();
+        MePathCurve.ApplyAutoBezierCurveAnnotations(hp.positionLine, hp.curve, hp.controlPoints);
+        hp.width = width;
+        hp.heightDelta = heightDelta;
+        hp.mode = mode;
+        hp.id = MetaMap.instance.getNewItemId("height_path");
+        hp.layerIndex = 1;
+
+        PathDrawed.Clear();
+        PointSelected.Clear();
+
+        MetaMap.instance.heightPathLayer.mapItems.Add(hp);
+        hp.scatterThis();
+        if (Syncer.instence != null) Syncer.instence.ApplyPreviewTerrain();
+    }
+
+    public void RemoveLastVertex()
+    {
+        if (PointSelected.Count > 0)
+        {
+            PointSelected.RemoveAt(PointSelected.Count - 1);
+            PathDrawed.RemoveAt(PathDrawed.Count - 1);
+            UpdateVisualizer();
+        }
+        if (PointSelected.Count == 0)
+        {
+            drawing = false;
+            ToolController.inste.dragVisualizer.enabled = false;
+        }
+    }
+
+    void UpdateVisualizer()
+    {
+        if (ToolController.inste.dragVisualizer == null) return;
+        ToolController.inste.dragVisualizer.positionCount = 0;
+        for (int i = 0; i < PointSelected.Count; i++)
+        {
+            ToolController.inste.dragVisualizer.positionCount++;
+            ToolController.inste.dragVisualizer.SetPosition(i, PointSelected[i] + Vector3.up * 5f);
+        }
+    }
+}
+
+public class MaterialPathDrawer : Tool
+{
+    public bool drawing = false;
+    public List<Vector3> PointSelected;
+    public List<Vector2> PathDrawed;
+    public float width = 20f;
+    public int materialIndex = 2;
+
+    public MaterialPathDrawer(string name) : base(name)
+    {
+        PathDrawed = new List<Vector2>();
+        PointSelected = new List<Vector3>();
+    }
+
+    public void Activate()
+    {
+        ToolController.inste.setToolWithIndex(22);
+    }
+
+    public void CycleMaterial()
+    {
+        materialIndex = materialIndex >= 4 ? 1 : materialIndex + 1;
+    }
+
+    public void AdjustWidth(float delta)
+    {
+        width = Mathf.Clamp(width + delta, 1f, 200f);
+    }
+
+    public static string MaterialName(int index)
+    {
+        switch (index)
+        {
+            case 1: return "sand";
+            case 3: return "asphalt";
+            case 4: return "road";
+            default: return "grass";
+        }
+    }
+
+    public string GetHintText()
+    {
+        return "材质路径  |  材质:" + MaterialName(materialIndex) + "(" + materialIndex + ")"
+            + "  |  宽度:" + width.ToString("F1")
+            + (drawing ? "  |  绘制中(" + PathDrawed.Count + "点)" : "")
+            + "\n[M]切换材质  [=/-]线宽  [Space]完成  [Esc]取消  [Ctrl+Z]撤销点";
+    }
+
+    public override void startUse(Vector3 Position, GameObject hitO)
+    {
+        if (!drawing)
+            ToolController.inste.dragVisualizer.enabled = true;
+        drawing = true;
+        PointSelected.Add(Position);
+        PathDrawed.Add(MathOfRwrme.U3dPosToSvgPos(Position));
+        UpdateVisualizer();
+    }
+
+    public override void escape()
+    {
+        ToolController.inste.dragVisualizer.enabled = false;
+        drawing = false;
+        PathDrawed.Clear();
+        PointSelected.Clear();
+    }
+
+    public override void space()
+    {
+        ToolController.inste.dragVisualizer.enabled = false;
+        if (!drawing || PathDrawed.Count < 2) return;
+
+        CtrlZer.instance.checkPoint();
+        drawing = false;
+
+        MaterialPath mp = new GameObject("MaterialPath").AddComponent<MaterialPath>();
+        mp.positionLine = new List<Vector2>(PathDrawed);
+        mp.curve = new List<bool>();
+        mp.controlPoints = new List<Vector2>();
+        MePathCurve.ApplyAutoBezierCurveAnnotations(mp.positionLine, mp.curve, mp.controlPoints);
+        mp.width = width;
+        mp.materialIndex = materialIndex;
+        mp.id = MetaMap.instance.getNewItemId("material_path");
+        mp.layerIndex = 1;
+
+        PathDrawed.Clear();
+        PointSelected.Clear();
+
+        MetaMap.instance.materialPathLayer.mapItems.Add(mp);
+        mp.scatterThis();
+        if (Syncer.instence != null) Syncer.instence.ApplyPreviewTerrain();
+    }
+
+    public void RemoveLastVertex()
+    {
+        if (PointSelected.Count > 0)
+        {
+            PointSelected.RemoveAt(PointSelected.Count - 1);
+            PathDrawed.RemoveAt(PathDrawed.Count - 1);
+            UpdateVisualizer();
+        }
+        if (PointSelected.Count == 0)
+        {
+            drawing = false;
+            ToolController.inste.dragVisualizer.enabled = false;
+        }
+    }
+
+    void UpdateVisualizer()
     {
         if (ToolController.inste.dragVisualizer == null) return;
         ToolController.inste.dragVisualizer.positionCount = 0;
@@ -2756,16 +3283,17 @@ public class TerrainMaterialPainter : Tool
     public override void startUse(Vector3 position, GameObject hitO)
     {
         CtrlZer.instance.checkPointWithTerrainMask();
+        MetaMap.instance.EnsurePreCombinedAlpha();
         if (tarind == 0) tarCol = new Color(0, 0, 0, 1);
         if (tarind == 1) tarCol = new Color(1, 0, 0, 1);
         if (tarind == 2) tarCol = new Color(1, 1, 0, 1);
         if (tarind == 3) tarCol = new Color(1, 1, 1, 1);
         if (tarind == 4) tarCol = new Color(1, 1, 1, 0);
-        Terrain terrain = Terrain.activeTerrain;
-        tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
+        tex = MetaMap.instance.preCombinedAlpha;
         underUse = true;
         curPos = MathOfRwrme.U3dPosToSvgPos(position);
         DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol);
+        if (Syncer.instence != null) Syncer.instence.ApplyPreAlphaToTerrain();
     }
 
     public override void OnDragging(Vector3 position)
@@ -2773,6 +3301,7 @@ public class TerrainMaterialPainter : Tool
         if (!underUse) return;
         curPos = MathOfRwrme.U3dPosToSvgPos(position);
         DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol);
+        if (Syncer.instence != null) Syncer.instence.ApplyPreAlphaToTerrain();
     }
 
     public override void EndUse()
@@ -2862,17 +3391,22 @@ public class HeightBush : Tool
 
     private void ApplyHeightBrush(Vector3 worldPos, bool isStart)
     {
-        TerrainData terrainData = currentTerrain.terrainData;
-        Vector3 size = terrainData.size;
-        int res = terrainData.heightmapResolution;
+        MetaMap mm = MetaMap.instance;
+        mm.EnsurePreTerrain();
+        GrayScaleImage img = mm.m_preTerrain.data;
 
-        Vector3 localPos = worldPos - currentTerrain.transform.position;
-        int cx = Mathf.Clamp((int)(localPos.x / size.x * res), 0, res - 1);
-        int cy = Mathf.Clamp((int)(localPos.z / size.z * res), 0, res - 1);
+        Terrain terrain = currentTerrain ?? Terrain.activeTerrain;
+        if (terrain == null) return;
+
+        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : terrain.terrainData.size.x;
+        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : terrain.terrainData.size.z;
+        int res = img.Width;
+
+        Vector3 localPos = worldPos - terrain.transform.position;
+        int cx = Mathf.Clamp((int)(localPos.x / worldX * res), 0, res - 1);
+        int cy = Mathf.Clamp((int)(localPos.z / worldZ * res), 0, res - 1);
         Vector2Int centerCoord = new Vector2Int(cx, cy);
         int radiusInPixels = Mathf.CeilToInt(range / 2);
-
-        float[,] heights = terrainData.GetHeights(0, 0, res, res);
 
         int startX = Mathf.Max(0, centerCoord.x - radiusInPixels);
         int endX = Mathf.Min(res, centerCoord.x + radiusInPixels);
@@ -2889,15 +3423,14 @@ public class HeightBush : Tool
                 if (distance <= 1.0f)
                 {
                     float falloff = Mathf.Pow(1 - distance, hardness);
-
-                    float targetHeight = heights[y, x]*(1-falloff) + height * falloff;
-                    heights[y, x] = Mathf.Clamp(targetHeight, 0, 1);
+                    float current = img[y, x];
+                    float targetHeight = current * (1f - falloff) + height * falloff;
+                    img[y, x] = Mathf.Clamp01(targetHeight);
                 }
             }
         }
 
-        terrainData.SetHeights(0, 0, heights);
-        terrainData.SyncHeightmap();
+        if (Syncer.instence != null) Syncer.instence.ApplyPreHeightToTerrain();
     }
 }
 public class HeightSmudge : Tool
@@ -2919,22 +3452,26 @@ public class HeightSmudge : Tool
 
     public override void OnDragging(Vector3 currentPos)
     {
-        if (currentTerrain == null) return;
+        MetaMap mm = MetaMap.instance;
+        mm.EnsurePreTerrain();
+        GrayScaleImage img = mm.m_preTerrain.data;
 
-        TerrainData data = currentTerrain.terrainData;
-        Vector3 size = data.size;
-        int res = data.heightmapResolution;
+        Terrain terrain = currentTerrain ?? Terrain.activeTerrain;
+        if (terrain == null) return;
 
-        Vector3 localPos = currentPos - currentTerrain.transform.position;
-        Vector3 lastLocalPos = lastPos - currentTerrain.transform.position;
+        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : terrain.terrainData.size.x;
+        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : terrain.terrainData.size.z;
+        int res = img.Width;
 
-        int cx = (int)(localPos.x / size.x * res);
-        int cy = (int)(localPos.z / size.z * res);
-        int lcx = (int)(lastLocalPos.x / size.x * res);
-        int lcy = (int)(lastLocalPos.z / size.z * res);
+        Vector3 localPos = currentPos - terrain.transform.position;
+        Vector3 lastLocalPos = lastPos - terrain.transform.position;
+
+        int cx = (int)(localPos.x / worldX * res);
+        int cy = (int)(localPos.z / worldZ * res);
+        int lcx = (int)(lastLocalPos.x / worldX * res);
+        int lcy = (int)(lastLocalPos.z / worldZ * res);
 
         int radius = Mathf.CeilToInt(range / 2);
-        float[,] heights = data.GetHeights(0, 0, res, res);
 
         for (int y = Mathf.Max(0, cy - radius); y < Mathf.Min(res, cy + radius); y++)
             for (int x = Mathf.Max(0, cx - radius); x < Mathf.Min(res, cx + radius); x++)
@@ -2943,10 +3480,10 @@ public class HeightSmudge : Tool
                 int srcX = lcx + (x - cx);
 
                 if (srcY >= 0 && srcY < res && srcX >= 0 && srcX < res)
-                    heights[y, x] = Mathf.Lerp(heights[y, x], heights[srcY, srcX], strength);
+                    img[y, x] = Mathf.Lerp(img[y, x], img[srcY, srcX], strength);
             }
 
-        data.SetHeights(0, 0, heights);
+        if (Syncer.instence != null) Syncer.instence.ApplyPreHeightToTerrain();
         lastPos = currentPos;
     }
 }
@@ -3803,6 +4340,328 @@ public class WallPathHandle : MonoBehaviour
     {
         if (matLine != null) Destroy(matLine);
         if (matV != null) Destroy(matV);
+        if (matHL != null) Destroy(matHL);
+    }
+}
+
+/// <summary>
+/// 选中 HeightPath / MaterialPath 时：锚点 + 贝塞尔控制点手柄（与 Offroad 相同）。
+/// </summary>
+[DefaultExecutionOrder(-100)]
+public class CurvedMePathHandle : MonoBehaviour
+{
+    public bool IsDragging { get; private set; }
+
+    private MePath target;
+    private float terrainYOffset;
+    private Transform linksRoot;
+    private Transform tangentsRoot;
+    private Transform handlesRoot;
+
+    private List<LineRenderer> segmentLines = new List<LineRenderer>();
+    private List<LineRenderer> tangentLines = new List<LineRenderer>();
+    private List<BoxCollider> hitZones = new List<BoxCollider>();
+    private List<Renderer> handleRenderers = new List<Renderer>();
+    private readonly List<int> cpHandleToListIndex = new List<int>();
+    private readonly List<(int iEnd, int cp0, int cp1)> cubicTangentSpecs = new List<(int, int, int)>();
+
+    private Material matLine;
+    private Material matTangent;
+    private Material matV;
+    private Material matCp;
+    private Material matHL;
+
+    private int layoutAnchorCount = -1;
+    private int layoutCpHandleCount = -1;
+    private int layoutTangentLineCount = -1;
+    private int hoveredSlot = -1;
+    private int dragSlot = -1;
+    private bool undoRecorded;
+
+    private const float HitHalf = 0.55f;
+    private const float HitHalfCp = 0.48f;
+
+    public void Init(MePath path, float terrainSampleYOffset)
+    {
+        target = path;
+        terrainYOffset = terrainSampleYOffset;
+        linksRoot = new GameObject("Links").transform;
+        linksRoot.SetParent(transform, false);
+        tangentsRoot = new GameObject("Tangents").transform;
+        tangentsRoot.SetParent(transform, false);
+        handlesRoot = new GameObject("Handles").transform;
+        handlesRoot.SetParent(transform, false);
+
+        Shader sh = Shader.Find("Hidden/Internal-Colored");
+        if (sh == null) sh = Shader.Find("Sprites/Default");
+        if (sh == null) sh = Shader.Find("Unlit/Color");
+
+        Color lineColor = target is MaterialPath
+            ? new Color(0.35f, 0.95f, 0.45f, 1f)
+            : new Color(0.95f, 0.75f, 0.2f, 1f);
+        matLine = MkMat(sh, lineColor);
+        matTangent = MkMat(sh, new Color(0.95f, 0.55f, 1f, 0.55f));
+        matV = MkMat(sh, new Color(0.25f, 0.92f, 1f, 1f));
+        matCp = MkMat(sh, new Color(1f, 0.62f, 0.18f, 1f));
+        matHL = MkMat(sh, Color.white);
+
+        RebuildIfNeeded();
+    }
+
+    private static Material MkMat(Shader sh, Color c)
+    {
+        Material m = new Material(sh);
+        m.color = c;
+        m.SetInt("_ZTest", (int)UnityEngine.Rendering.CompareFunction.Always);
+        m.SetInt("_ZWrite", 0);
+        m.renderQueue = 4000;
+        return m;
+    }
+
+    private int GetVertexCount()
+    {
+        if (target == null || target.positionLine == null) return 0;
+        return target.positionLine.Count;
+    }
+
+    private void RebuildIfNeeded()
+    {
+        int n = GetVertexCount();
+        int expectedSeg = n >= 2 ? n - 1 : 0;
+        MePathCurve.WalkCpLayout(target, n, cpHandleToListIndex, cubicTangentSpecs);
+        int cpH = cpHandleToListIndex.Count;
+        int tangL = cubicTangentSpecs.Count * 2;
+        int totalHandles = n + cpH;
+
+        if (n == layoutAnchorCount && cpH == layoutCpHandleCount && tangL == layoutTangentLineCount
+            && segmentLines.Count == expectedSeg && hitZones.Count == totalHandles)
+            return;
+
+        foreach (var lr in segmentLines)
+            if (lr != null) Destroy(lr.gameObject);
+        segmentLines.Clear();
+        foreach (var lr in tangentLines)
+            if (lr != null) Destroy(lr.gameObject);
+        tangentLines.Clear();
+        foreach (Transform t in handlesRoot)
+            if (t != null) Destroy(t.gameObject);
+        hitZones.Clear();
+        handleRenderers.Clear();
+
+        layoutAnchorCount = n;
+        layoutCpHandleCount = cpH;
+        layoutTangentLineCount = tangL;
+
+        for (int i = 0; i < expectedSeg; i++)
+        {
+            GameObject lrGo = new GameObject("Seg_" + i);
+            lrGo.transform.SetParent(linksRoot, false);
+            LineRenderer lr = lrGo.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.useWorldSpace = true;
+            lr.startWidth = 0.2f;
+            lr.endWidth = 0.2f;
+            lr.material = matLine;
+            lr.startColor = matLine.color;
+            lr.endColor = matLine.color;
+            lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            segmentLines.Add(lr);
+        }
+
+        for (int t = 0; t < tangL; t++)
+        {
+            GameObject lrGo = new GameObject("Tan_" + t);
+            lrGo.transform.SetParent(tangentsRoot, false);
+            LineRenderer lr = lrGo.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.useWorldSpace = true;
+            lr.startWidth = 0.1f;
+            lr.endWidth = 0.1f;
+            lr.material = matTangent;
+            lr.startColor = matTangent.color;
+            lr.endColor = matTangent.color;
+            lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            tangentLines.Add(lr);
+        }
+
+        for (int i = 0; i < n; i++)
+            MkVertexHandle(i, false);
+        for (int j = 0; j < cpH; j++)
+            MkVertexHandle(j, true);
+    }
+
+    private void MkVertexHandle(int index, bool isControlPoint)
+    {
+        string nm = isControlPoint ? "C_" + index : "V_" + index;
+        GameObject root = new GameObject(nm);
+        root.transform.SetParent(handlesRoot, false);
+
+        GameObject vis = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        vis.name = "Vis";
+        vis.transform.SetParent(root.transform, false);
+        vis.transform.localScale = Vector3.one * (isControlPoint ? 0.3f : 0.36f);
+        Destroy(vis.GetComponent<Collider>());
+        Renderer rend = vis.GetComponent<Renderer>();
+        rend.material = isControlPoint ? matCp : matV;
+        rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        GameObject hitGO = new GameObject("Hit");
+        hitGO.transform.SetParent(root.transform, false);
+        hitGO.layer = 2;
+        BoxCollider box = hitGO.AddComponent<BoxCollider>();
+        float h = isControlPoint ? HitHalfCp : HitHalf;
+        box.size = Vector3.one * (h * 2f);
+        box.center = Vector3.zero;
+
+        hitZones.Add(box);
+        handleRenderers.Add(rend);
+    }
+
+    private Vector3 SvgPointWorld(Vector2 svg)
+    {
+        Vector2 u3d = MathOfRwrme.SvgPosToU3dPos(svg);
+        float y = 0f;
+        if (Terrain.activeTerrain != null)
+            y = Terrain.activeTerrain.SampleHeight(new Vector3(u3d.x, 0f, u3d.y)) + terrainYOffset;
+        return new Vector3(u3d.x, y, u3d.y);
+    }
+
+    private Vector3 VertexWorld(int i) => SvgPointWorld(target.positionLine[i]);
+
+    private Vector3 CpWorld(int cpListIndex) => SvgPointWorld(target.controlPoints[cpListIndex]);
+
+    private void SyncTransforms(int n)
+    {
+        for (int i = 0; i < n - 1; i++)
+        {
+            segmentLines[i].SetPosition(0, VertexWorld(i));
+            segmentLines[i].SetPosition(1, VertexWorld(i + 1));
+        }
+
+        for (int k = 0; k < cubicTangentSpecs.Count; k++)
+        {
+            var spec = cubicTangentSpecs[k];
+            int iEnd = spec.iEnd;
+            tangentLines[k * 2].SetPosition(0, VertexWorld(iEnd - 1));
+            tangentLines[k * 2].SetPosition(1, CpWorld(spec.cp0));
+            tangentLines[k * 2 + 1].SetPosition(0, CpWorld(spec.cp1));
+            tangentLines[k * 2 + 1].SetPosition(1, VertexWorld(iEnd));
+        }
+
+        for (int i = 0; i < n; i++)
+            handlesRoot.GetChild(i).position = VertexWorld(i);
+        for (int j = 0; j < cpHandleToListIndex.Count; j++)
+            handlesRoot.GetChild(n + j).position = CpWorld(cpHandleToListIndex[j]);
+    }
+
+    void Update()
+    {
+        if (target == null) { Destroy(gameObject); return; }
+
+        RebuildIfNeeded();
+        int n = GetVertexCount();
+        if (n == 0)
+        {
+            linksRoot.gameObject.SetActive(false);
+            tangentsRoot.gameObject.SetActive(false);
+            handlesRoot.gameObject.SetActive(false);
+            return;
+        }
+        linksRoot.gameObject.SetActive(true);
+        tangentsRoot.gameObject.SetActive(cubicTangentSpecs.Count > 0);
+        handlesRoot.gameObject.SetActive(true);
+
+        SyncTransforms(n);
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        if (!IsDragging)
+        {
+            for (int s = 0; s < n; s++)
+                handleRenderers[s].material = matV;
+            for (int s = n; s < handleRenderers.Count; s++)
+                handleRenderers[s].material = matCp;
+
+            hoveredSlot = -1;
+            float best = float.MaxValue;
+            for (int s = 0; s < hitZones.Count; s++)
+            {
+                RaycastHit hit;
+                if (hitZones[s].Raycast(ray, out hit, 800f) && hit.distance < best)
+                {
+                    best = hit.distance;
+                    hoveredSlot = s;
+                }
+            }
+            if (hoveredSlot >= 0)
+                handleRenderers[hoveredSlot].material = matHL;
+
+            if (Input.GetMouseButtonDown(0) && hoveredSlot >= 0)
+            {
+                CtrlZer.instance.checkPoint();
+                IsDragging = true;
+                dragSlot = hoveredSlot;
+                undoRecorded = false;
+            }
+        }
+        else
+        {
+            handleRenderers[dragSlot].material = matHL;
+            ApplyDrag(n);
+            if (Input.GetMouseButtonUp(0))
+            {
+                IsDragging = false;
+                dragSlot = -1;
+            }
+        }
+    }
+
+    private void ApplyDrag(int n)
+    {
+        int layerMask = 1 << 6;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        if (!Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
+            return;
+
+        Vector2 svg = MathOfRwrme.U3dPosToSvgPos(new Vector2(hit.point.x, hit.point.z));
+
+        if (dragSlot < n)
+        {
+            int i = dragSlot;
+            Vector2 before = target.positionLine[i];
+            if (!undoRecorded && (svg - before).sqrMagnitude > 0.0004f)
+            {
+                CtrlZer.instance.checkPoint();
+                undoRecorded = true;
+            }
+            target.positionLine[i] = svg;
+        }
+        else
+        {
+            int cpList = cpHandleToListIndex[dragSlot - n];
+            Vector2 before = target.controlPoints[cpList];
+            if (!undoRecorded && (svg - before).sqrMagnitude > 0.0004f)
+            {
+                CtrlZer.instance.checkPoint();
+                undoRecorded = true;
+            }
+            target.controlPoints[cpList] = svg;
+        }
+
+        target.scatterThis();
+        if (Syncer.instence != null)
+            Syncer.instence.ApplyPreviewTerrain();
+    }
+
+    void OnDestroy()
+    {
+        if (matLine != null) Destroy(matLine);
+        if (matTangent != null) Destroy(matTangent);
+        if (matV != null) Destroy(matV);
+        if (matCp != null) Destroy(matCp);
         if (matHL != null) Destroy(matHL);
     }
 }

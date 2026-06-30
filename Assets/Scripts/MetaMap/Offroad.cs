@@ -3,9 +3,6 @@ using UnityEngine;
 
 public class Offroad : MePath
 {
-    public List<bool> curve;
-    public List<Vector2> controlPoints;
-
     [Header("曲线显示")]
     public float lineWidth = 3.2f;
     public int samplesPerCubicSegment = 24;
@@ -205,7 +202,7 @@ public class Offroad : MePath
                 for (int s = 1; s <= steps; s++)
                 {
                     float t = s / (float)steps;
-                    Vector2 p = CubicBezier2(p0, c1, c2, p3, t);
+                    Vector2 p = MePathCurve.CubicBezier2(p0, c1, c2, p3, t);
                     AppendWorld(p);
                 }
             }
@@ -216,47 +213,8 @@ public class Offroad : MePath
         return list;
     }
 
-    static Vector2 CubicBezier2(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float t)
-    {
-        Vector2 a = Vector2.Lerp(p0, p1, t);
-        Vector2 b = Vector2.Lerp(p1, p2, t);
-        Vector2 c = Vector2.Lerp(p2, p3, t);
-        Vector2 d = Vector2.Lerp(a, b, t);
-        Vector2 e = Vector2.Lerp(b, c, t);
-        return Vector2.Lerp(d, e, t);
-    }
-
-    /// <summary>
-    /// 根据锚点折线填充 <paramref name="curve"/> 与 <paramref name="controlPoints"/>，与 <see cref="BuildWorldCurvePoints"/> 约定一致：
-    /// <c>curve[0]=false</c>，<c>curve[1..]</c> 为 true 表示段 (i-1)→i 为三次贝塞尔；控制点为均匀 Catmull-Rom 转 Cubic（端点用虚拟邻点外推）。
-    /// </summary>
     public static void ApplyAutoBezierCurveAnnotations(List<Vector2> anchors, List<bool> curve, List<Vector2> controlPoints)
-    {
-        curve.Clear();
-        controlPoints.Clear();
-        int n = anchors != null ? anchors.Count : 0;
-        if (n < 2)
-        {
-            if (n == 1)
-                curve.Add(false);
-            return;
-        }
-
-        curve.Add(false);
-        for (int i = 1; i < n; i++)
-            curve.Add(true);
-
-        for (int i = 1; i < n; i++)
-        {
-            Vector2 p0 = i >= 2 ? anchors[i - 2] : anchors[0] + (anchors[0] - anchors[1]);
-            Vector2 p1 = anchors[i - 1];
-            Vector2 p2 = anchors[i];
-            Vector2 p3 = i + 1 < n ? anchors[i + 1] : anchors[n - 1] + (anchors[n - 1] - anchors[n - 2]);
-
-            controlPoints.Add(p1 + (p2 - p0) * (1f / 6f));
-            controlPoints.Add(p2 - (p3 - p1) * (1f / 6f));
-        }
-    }
+        => MePathCurve.ApplyAutoBezierCurveAnnotations(anchors, curve, controlPoints);
 
     void Start()
     {

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;           // .NET 标准 XML
 using UnityEngine;
 
@@ -218,11 +219,189 @@ public class MapExporter : MonoBehaviour
         return sb.ToString();
     }
 
+    static string BuildCurvedMePathSvgPathD(MePath path)
+    {
+        var pts = path.positionLine;
+        if (pts == null || pts.Count < 2) return string.Empty;
+
+        var sb = new StringBuilder();
+        Vector2 penAbs = Vector2.zero;
+        bool hasCurve = path.curve != null && path.curve.Count == pts.Count;
+        bool hasCp = path.controlPoints != null && path.controlPoints.Count >= 2;
+        int cpIdx = 0;
+
+        sb.Append('m').Append(' ');
+        AppendSvgCoordPair(sb, pts[0].x - penAbs.x, pts[0].y - penAbs.y);
+        penAbs = pts[0];
+
+        for (int i = 1; i < pts.Count; i++)
+        {
+            bool cubic = hasCurve && hasCp && path.curve[i] && cpIdx + 1 < path.controlPoints.Count;
+            if (cubic)
+            {
+                Vector2 p0 = pts[i - 1];
+                Vector2 c1 = path.controlPoints[cpIdx++];
+                Vector2 c2 = path.controlPoints[cpIdx++];
+                Vector2 p3 = pts[i];
+                sb.Append(" c ");
+                AppendSvgCoordPair(sb, c1.x - p0.x, c1.y - p0.y);
+                sb.Append(' ');
+                AppendSvgCoordPair(sb, c2.x - p0.x, c2.y - p0.y);
+                sb.Append(' ');
+                AppendSvgCoordPair(sb, p3.x - p0.x, p3.y - p0.y);
+                penAbs = p3;
+            }
+            else
+            {
+                Vector2 d = pts[i] - penAbs;
+                sb.Append(" l ");
+                AppendSvgCoordPair(sb, d.x, d.y);
+                penAbs = pts[i];
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    static string BuildPolylineSvgPathD(List<Vector2> pts)
+    {
+        if (pts == null || pts.Count < 2) return string.Empty;
+        var sb = new StringBuilder();
+        Vector2 penAbs = Vector2.zero;
+        sb.Append('m').Append(' ');
+        AppendSvgCoordPair(sb, pts[0].x - penAbs.x, pts[0].y - penAbs.y);
+        penAbs = pts[0];
+        for (int i = 1; i < pts.Count; i++)
+        {
+            Vector2 d = pts[i] - penAbs;
+            sb.Append(" l ");
+            AppendSvgCoordPair(sb, d.x, d.y);
+            penAbs = pts[i];
+        }
+        return sb.ToString();
+    }
+
+    void ExportTerrainPathLayer(XmlElement root, string inkscapeNs, string sodipodiNs, string layerLabel, Layer layer, bool isHeight)
+    {
+        if (layer?.mapItems == null || layer.mapItems.Count == 0) return;
+
+        XmlElement group = xmlDoc.CreateElement("g");
+        group.SetAttribute("groupmode", inkscapeNs, "layer");
+        group.SetAttribute("id", "layer_" + layerLabel);
+        group.SetAttribute("label", inkscapeNs, layerLabel);
+        group.SetAttribute("insensitive", sodipodiNs, "true");
+
+        int idx = 0;
+        foreach (MapItem mi in layer.mapItems)
+        {
+            MePath path = mi as MePath;
+            if (path?.positionLine == null || path.positionLine.Count < 2) continue;
+
+            string pcd = BuildCurvedMePathSvgPathD(path);
+            if (string.IsNullOrWhiteSpace(pcd)) continue;
+
+            XmlElement pathEl = xmlDoc.CreateElement("path");
+            pathEl.SetAttribute("label", inkscapeNs, isHeight ? "height_path" : "material_path");
+            pathEl.SetAttribute("id", (isHeight ? "height_path_" : "material_path_") + idx);
+            pathEl.SetAttribute("d", pcd);
+            pathEl.SetAttribute("style", isHeight
+                ? "fill:none;stroke:#33ccff;stroke-width:1px;stroke-opacity:1"
+                : "fill:none;stroke:#66cc33;stroke-width:1px;stroke-opacity:1");
+
+            XmlElement desc = xmlDoc.CreateElement("desc");
+            if (isHeight && mi is HeightPath hp)
+            {
+                var sb = new StringBuilder();
+                sb.Append("width=").Append(hp.width.ToString(CultureInfo.InvariantCulture)).Append(';');
+                switch (hp.mode)
+                {
+                    case HeightPathMode.Offset:
+                        sb.Append("height_offset=").Append(hp.heightDelta.ToString(CultureInfo.InvariantCulture)).Append(';');
+                        sb.Append("mode=offset;");
+                        break;
+                    case HeightPathMode.Set:
+                        sb.Append("height=").Append(hp.heightDelta.ToString(CultureInfo.InvariantCulture)).Append(';');
+                        sb.Append("mode=set;");
+                        break;
+                    case HeightPathMode.Lower:
+                        sb.Append("height_delta=").Append(hp.heightDelta.ToString(CultureInfo.InvariantCulture)).Append(';');
+                        sb.Append("mode=lower;");
+                        break;
+                    default:
+                        sb.Append("height_delta=").Append(hp.heightDelta.ToString(CultureInfo.InvariantCulture)).Append(';');
+                        sb.Append("mode=raise;");
+                        break;
+                }
+                desc.InnerText = sb.ToString();
+            }
+            else if (!isHeight && mi is MaterialPath mp)
+            {
+                desc.InnerText = "width=" + mp.width.ToString(CultureInfo.InvariantCulture) + ";"
+                    + "material_index=" + mp.materialIndex + ";";
+            }
+            pathEl.AppendChild(desc);
+            group.AppendChild(pathEl);
+            idx++;
+        }
+
+        if (idx > 0) root.AppendChild(group);
+    }
+
+    public void exportPreTerrainHeightmap()
+    {
+        m_mm.EnsurePreTerrain();
+        string filePath = Path.Combine(Application.dataPath, basePath, MetaMap.PreHeightmapFileName);
+        File.WriteAllBytes(filePath, m_mm.m_preTerrain.data.convToPng());
+        Debug.Log("MapExporter: exported " + MetaMap.PreHeightmapFileName);
+    }
+
+    public void exportPreTerrainAlphamap()
+    {
+        m_mm.EnsurePreCombinedAlpha();
+        if (m_mm.preCombinedAlpha == null) return;
+
+        string filePath = Path.Combine(Application.dataPath, basePath, MetaMap.PreCombinedAlphaFileName);
+        File.WriteAllBytes(filePath, m_mm.preCombinedAlpha.EncodeToPNG());
+        Debug.Log("MapExporter: exported " + MetaMap.PreCombinedAlphaFileName);
+    }
+
     static void AppendSvgCoordPair(StringBuilder sb, float x, float y)
     {
         sb.Append(x.ToString(CultureInfo.InvariantCulture));
         sb.Append(',');
         sb.Append(y.ToString(CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
+    /// Unity VectorGraphics 要求 stroke-miterlimit &gt;= 1；Inkscape 模板里常见 0.69999999。
+    /// </summary>
+    static string SanitizeSvgForUnityImport(string svg)
+    {
+        if (string.IsNullOrEmpty(svg)) return svg;
+
+        svg = Regex.Replace(
+            svg,
+            @"stroke-miterlimit:([0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)",
+            m =>
+            {
+                if (float.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float v)
+                    && v < 1f)
+                    return "stroke-miterlimit:1";
+                return m.Value;
+            });
+
+        svg = Regex.Replace(
+            svg,
+            @"stroke-miterlimit=""([0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)""",
+            m =>
+            {
+                if (float.TryParse(m.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float v)
+                    && v < 1f)
+                    return "stroke-miterlimit=\"1\"";
+                return m.Value;
+            });
+
+        return svg;
     }
 
     public void exportMap() 
@@ -910,22 +1089,23 @@ public class MapExporter : MonoBehaviour
             rootElement.AppendChild(offroadGroup);
         }
 
+        ExportTerrainPathLayer(rootElement, inkscapeNs, sodipodiNs, "height_paths", MetaMap.instance.heightPathLayer, true);
+        ExportTerrainPathLayer(rootElement, inkscapeNs, sodipodiNs, "material_paths", MetaMap.instance.materialPathLayer, false);
+
         Debug.Log("MapExport");
-        string fullPath = System.IO.Path.Combine(Application.dataPath, basePath, m_mm.m_metaTerrain.fileName);
-        System.IO.File.WriteAllBytes(fullPath, m_mm.m_metaTerrain.data.convToPng());
-
-
-        Debug.Log("MapExporter:exportSVG!");
         xmlDoc.Save(xmlFilePath);
 
         string xmlContent = File.ReadAllText(xmlFilePath);
-        
+
         xmlContent = xmlContent.Replace("inkscape:label=\"#general\"", "\ninkscape:label=\"#general\"");
+        xmlContent = SanitizeSvgForUnityImport(xmlContent);
 
         File.WriteAllText(xmlFilePath, xmlContent);
 
         WriteUsedTemplatesLog(CollectUsedTemplateNamesByType());
 
+        exportPreTerrainHeightmap();
+        exportPreTerrainAlphamap();
         exportTerrainHeightmap();
         exportTerrainAlphamap();
         exportMapConfig();
@@ -944,110 +1124,42 @@ public class MapExporter : MonoBehaviour
     /// </summary>
     public void exportTerrainHeightmap()
     {
-        Debug.Log("=== 开始导出地形高度图 ===");
-        
-        // 检查地形对象
-        if (targetTerrain == null)
+        Debug.Log("=== 开始导出成品地形高度图 (pre_ + height_paths) ===");
+
+        m_mm.EnsurePreTerrain();
+        GrayScaleImage baked = m_mm.BakeFinalHeightmap();
+        if (baked == null || baked.Width <= 0)
         {
-            targetTerrain = Terrain.activeTerrain;
-            if (targetTerrain == null)
-            {
-                targetTerrain = FindObjectOfType<Terrain>();
-            }
-        }
-        
-        if (targetTerrain == null)
-        {
-            Debug.LogError("无法导出地形高度图：未找到地形对象！");
+            Debug.LogError("无法导出地形高度图：烘焙结果为空");
             return;
         }
 
-        Debug.Log($"正在导出地形: {targetTerrain.name}");
-
-        // 获取地形数据
-        TerrainData terrainData = targetTerrain.terrainData;
-        int resolution = terrainData.heightmapResolution;
-        Debug.Log($"地形高度图分辨率: {resolution} x {resolution}");
-
-        // 获取当前地形高度数据
-        float[,] heights = terrainData.GetHeights(0, 0, resolution, resolution);
-
-        // 创建灰度纹理（使用 R8 单通道格式）
-        Texture2D exportTexture = new Texture2D(resolution, resolution, TextureFormat.R8, false);
-
-        // 与 MapImporter.ConvertTextureToGrayScaleImage / Syncer 一致：PNG 灰度 = Unity 高度 [0,1] 线性映射到 0..255，
-        // 不使用 min-max 拉伸，否则重导入会破坏绝对标高。
-        float actualMin = float.MaxValue;
-        float actualMax = float.MinValue;
-        byte[] grayPixels = new byte[resolution * resolution];
-
-        for (int y = 0; y < resolution; y++)
-        {
-            for (int x = 0; x < resolution; x++)
-            {
-                float height = heights[y, x];
-                if (height < actualMin) actualMin = height;
-                if (height > actualMax) actualMax = height;
-
-                int pixelIndex = y * resolution + x;
-                grayPixels[pixelIndex] = (byte)Mathf.Clamp(Mathf.RoundToInt(height * 255f), 0, 255);
-            }
-
-            // 每处理10%报告一次进度
-            if (resolution >= 10 && y % (resolution / 10) == 0)
-            {
-                float progress = (float)y / resolution * 100f;
-                Debug.Log($"导出进度: {progress:F1}%");
-            }
-        }
-
-        // 使用 LoadRawTextureData 加载灰度数据
-        exportTexture.LoadRawTextureData(grayPixels);
-        exportTexture.Apply();
-
-        // 保存为PNG文件
-        string fileName = $"terrain5_heightmap.png";
-        string filePath = Path.Combine(Application.dataPath, basePath, fileName);
-        
-        // 确保map目录存在
-        string mapDir = Path.Combine(Application.dataPath, basePath);
-        if (!Directory.Exists(mapDir))
-        {
-            Directory.CreateDirectory(mapDir);
-            Debug.Log($"创建目录: {mapDir}");
-        }
-
-        byte[] pngData = exportTexture.EncodeToPNG();
-        File.WriteAllBytes(filePath, pngData);
-
-        // 清理临时纹理
-        DestroyImmediate(exportTexture);
-
-        Debug.Log($"✓ 地形高度图已导出至: {filePath}");
-        Debug.Log($"✓ 文件大小: {pngData.Length / 1024} KB");
-        Debug.Log($"✓ 图片格式: 灰度PNG (单通道 8 位)");
-        Debug.Log($"✓ 归一化高度采样范围: {actualMin:F3} ~ {actualMax:F3}（世界竖直尺度 terrain size.y = {terrainData.size.y:F1}m）");
-        Debug.Log("=== 地形高度图导出完成！ ===");
-
+        string filePath = Path.Combine(Application.dataPath, basePath, MetaMap.FinalHeightmapFileName);
+        File.WriteAllBytes(filePath, baked.convToPng());
+        Debug.Log("MapExporter: exported " + MetaMap.FinalHeightmapFileName + " (pre + height paths)");
 #if UNITY_EDITOR
-        // 在编辑器中刷新资产数据库
         UnityEditor.AssetDatabase.Refresh();
-        Debug.Log("已刷新Unity资产数据库");
 #endif
     }
 
     public void exportTerrainAlphamap()
     {
-        Texture2D tex = Terrain.activeTerrain.materialTemplate.GetTexture("_Mask") as Texture2D; 
-        byte[] pngData = tex.EncodeToPNG();
-        int width = tex.width;
-        int height = tex.height;
-        Color32[] srcPixels = tex.GetPixels32();
+        m_mm.EnsurePreCombinedAlpha();
+        Texture2D baked = m_mm.BakeFinalCombinedAlpha();
+        if (baked == null)
+        {
+            Debug.LogError("无法导出 combined alpha：烘焙结果为空");
+            return;
+        }
 
-        string filePath = Path.Combine(Application.dataPath, basePath,"terrain5_combined_alpha.png");
-        File.WriteAllBytes(filePath, pngData);
+        int width = baked.width;
+        int height = baked.height;
+        Color32[] srcPixels = baked.GetPixels32();
 
-        for(int i=1;i<5;i++)
+        string filePath = Path.Combine(Application.dataPath, basePath, MetaMap.FinalCombinedAlphaFileName);
+        File.WriteAllBytes(filePath, baked.EncodeToPNG());
+
+        for (int i = 1; i < 5; i++)
         {
             string fileName = MetaMap.instance.terrainAlphaFileName[i];
             Texture2D channelTex = new Texture2D(width, height, TextureFormat.R8, false);
@@ -1055,30 +1167,25 @@ public class MapExporter : MonoBehaviour
             for (int p = 0; p < srcPixels.Length; p++)
             {
                 byte value = 0;
-
                 switch (i)
                 {
                     case 1: value = srcPixels[p].r; break;
                     case 2: value = srcPixels[p].g; break;
                     case 3: value = srcPixels[p].b; break;
-                    case 4: value = srcPixels[p].a;
-                        // value = (byte)(255 - value);
-                        break;
+                    case 4: value = srcPixels[p].a; break;
                 }
-
                 channelPixels[p] = new Color32(value, value, value, 255);
             }
             channelTex.SetPixels32(channelPixels);
             channelTex.Apply();
-            filePath = Path.Combine(
-                Application.dataPath,
-                basePath,
-                fileName
-            );
-
+            filePath = Path.Combine(Application.dataPath, basePath, fileName);
             File.WriteAllBytes(filePath, channelTex.EncodeToPNG());
         }
 
+        Debug.Log("MapExporter: exported " + MetaMap.FinalCombinedAlphaFileName + " (pre + material paths)");
+#if UNITY_EDITOR
+        UnityEditor.AssetDatabase.Refresh();
+#endif
     }
 
     public void exportMapConfig()

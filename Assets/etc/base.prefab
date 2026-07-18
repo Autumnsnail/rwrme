@@ -901,6 +901,7 @@ MonoBehaviour:
   position: {x: 0, y: 0}
   rotation: 0
   size: {x: 0, y: 0}
+  offset: {x: 0, y: 0, z: 0}
   factionIndex: 0
   _name: 
 --- !u!1 &6077250163661432596

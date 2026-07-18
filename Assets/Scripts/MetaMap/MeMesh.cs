@@ -64,8 +64,9 @@ public class MeMesh : MeRect
     {
         Transform canvas = transform.Find("Canvas");
         if (canvas == null) return;
+        MapItemParamUiLayout.Ensure(canvas);
 
-        Toggle toggle = canvas.Find("ToggleReCollision")?.GetComponent<Toggle>();
+        Toggle toggle = MapItemParamUiLayout.Find(canvas, "ToggleReCollision")?.GetComponent<Toggle>();
         if (toggle != null)
             toggle.SetIsOnWithoutNotify(reCollision);
 
@@ -75,17 +76,17 @@ public class MeMesh : MeRect
         SetCollisionFieldActive(canvas, "z_Collision", reCollision);
         if (!reCollision) return;
 
-        canvas.Find("x_Collision")?.GetComponent<TMP_InputField>()
+        MapItemParamUiLayout.Find(canvas, "x_Collision")?.GetComponent<TMP_InputField>()
             ?.SetTextWithoutNotify(collisionSize.x.ToString(inv));
-        canvas.Find("y_Collision")?.GetComponent<TMP_InputField>()
+        MapItemParamUiLayout.Find(canvas, "y_Collision")?.GetComponent<TMP_InputField>()
             ?.SetTextWithoutNotify(collisionSize.y.ToString(inv));
-        canvas.Find("z_Collision")?.GetComponent<TMP_InputField>()
+        MapItemParamUiLayout.Find(canvas, "z_Collision")?.GetComponent<TMP_InputField>()
             ?.SetTextWithoutNotify(collisionSize.z.ToString(inv));
     }
 
     static void SetCollisionFieldActive(Transform canvas, string childName, bool active)
     {
-        Transform t = canvas.Find(childName);
+        Transform t = MapItemParamUiLayout.Find(canvas, childName);
         if (t != null)
             t.gameObject.SetActive(active);
     }

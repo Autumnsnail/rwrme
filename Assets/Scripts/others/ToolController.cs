@@ -66,11 +66,6 @@ public class ToolController : MonoBehaviour
     /// <summary>全局噪点：Perlin 采样密度（越大纹理越细）。</summary>
     public float heightMapGlobalNoiseFrequency = 0.06f;
 
-    string idSearchQuery = "";
-    bool idSearchFocusRequested;
-    string idSearchStatus = "";
-    float idSearchStatusUntil;
-
     void Start()
     {
         inste = this;
@@ -175,14 +170,11 @@ public class ToolController : MonoBehaviour
         dragVisualizer.enabled = false;
     }
 
-    /// <summary>与鼠标按下一致：可打工具射线的屏幕区域（排除右侧 UI 与左下角一块）。</summary>
+    /// <summary>与鼠标按下一致：可打工具射线的屏幕区域。</summary>
     private static bool IsPointerInMainToolScreenArea()
     {
         if (Screen.width <= 0 || Screen.height <= 0) return false;
-        if (UIManager.PointerOverDraggablePanel()) return false;   // 面板被拖到任意位置也能正确判定为 UI
-        float nx = Input.mousePosition.x / Screen.width;
-        float ny = Input.mousePosition.y / Screen.height;
-        return nx < UIManager.RightPanelAnchorMinX && (nx > 0.21f || ny > 0.23f);
+        return !CoverUiLayout.BlocksMapToolInput(Input.mousePosition);
     }
 
     void OnGUI()
@@ -213,7 +205,7 @@ public class ToolController : MonoBehaviour
             style.fontStyle = FontStyle.Bold;
             style.normal.textColor = Color.yellow;
             style.alignment = TextAnchor.MiddleCenter;
-            Rect modeRect = new Rect(Screen.width * 0.5f - 80, 42, 160, 30);
+            Rect modeRect = new Rect(Screen.width * 0.5f - 80, 10, 160, 30);
             GUI.Label(modeRect, modeLabel, style);
         }
 
@@ -225,53 +217,8 @@ public class ToolController : MonoBehaviour
             lockStyle.normal.textColor = axisLock == 1 ? Color.red : Color.cyan;
             lockStyle.alignment = TextAnchor.MiddleCenter;
             string lockLabel = axisLock == 1 ? "Lock: X" : "Lock: Z(Y)";
-            Rect lockRect = new Rect(Screen.width * 0.5f - 60, 72, 120, 25);
+            Rect lockRect = new Rect(Screen.width * 0.5f - 60, 40, 120, 25);
             GUI.Label(lockRect, lockLabel, lockStyle);
-        }
-
-        DrawIdSearchBar();
-    }
-
-    void DrawIdSearchBar()
-    {
-        const string controlName = "MapItemIdSearch";
-        const float barWidth = 318f;
-        const float barHeight = 28f;
-        float barX = (Screen.width - barWidth) * 0.5f;
-        const float barY = 8f;
-
-        GUI.Box(new Rect(barX, barY, barWidth, barHeight), GUIContent.none);
-
-        GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.normal.textColor = new Color(0.85f, 0.9f, 1f);
-        GUI.Label(new Rect(barX + 6f, barY + 4f, 28f, 20f), "ID", labelStyle);
-
-        GUI.SetNextControlName(controlName);
-        idSearchQuery = GUI.TextField(new Rect(barX + 36f, barY + 3f, 210f, 22f), idSearchQuery ?? string.Empty);
-
-        if (idSearchFocusRequested)
-        {
-            GUI.FocusControl(controlName);
-            idSearchFocusRequested = false;
-        }
-
-        if (GUI.Button(new Rect(barX + 250f, barY + 2f, 62f, 24f), "查找"))
-            TrySelectById(idSearchQuery);
-
-        if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Return
-            && GUI.GetNameOfFocusedControl() == controlName)
-        {
-            TrySelectById(idSearchQuery);
-            Event.current.Use();
-        }
-
-        if (!string.IsNullOrEmpty(idSearchStatus) && Time.unscaledTime < idSearchStatusUntil)
-        {
-            GUIStyle statusStyle = new GUIStyle(GUI.skin.label);
-            statusStyle.fontSize = 11;
-            statusStyle.alignment = TextAnchor.MiddleCenter;
-            statusStyle.normal.textColor = idSearchStatus.StartsWith("已选") ? new Color(0.5f, 1f, 0.55f) : new Color(1f, 0.55f, 0.45f);
-            GUI.Label(new Rect(Screen.width * 0.5f - 200f, barY + barHeight + 2f, 400f, 18f), idSearchStatus, statusStyle);
         }
     }
 
@@ -279,14 +226,16 @@ public class ToolController : MonoBehaviour
     {
         if (MetaMap.instance == null)
         {
-            SetIdSearchStatus("MetaMap 未就绪");
+            if (UIManager.instance != null)
+                UIManager.instance.SetIdSearchStatus("MetaMap 未就绪", false);
             return false;
         }
 
         query = query?.Trim();
         if (string.IsNullOrEmpty(query))
         {
-            SetIdSearchStatus("请输入 id");
+            if (UIManager.instance != null)
+                UIManager.instance.SetIdSearchStatus("请输入 id", false);
             return false;
         }
 
@@ -294,17 +243,19 @@ public class ToolController : MonoBehaviour
         if (found == null)
         {
             int matches = MetaMap.instance.CountMapItemIdMatches(query);
-            if (matches > 1)
-                SetIdSearchStatus($"匹配 {matches} 个，请输入更完整的 id");
-            else
-                SetIdSearchStatus("未找到: " + query);
+            string msg = matches > 1
+                ? $"匹配 {matches} 个，请输入更完整的 id"
+                : "未找到: " + query;
+            if (UIManager.instance != null)
+                UIManager.instance.SetIdSearchStatus(msg, false);
             Debug.Log("ToolController: 未找到 id = " + query);
             return false;
         }
 
         SelectMapItem(found);
         FocusCameraOnMapItem(found);
-        SetIdSearchStatus("已选: " + found.id);
+        if (UIManager.instance != null)
+            UIManager.instance.SetIdSearchStatus("已选: " + found.id, true);
         Debug.Log("ToolController: 已选中 " + found.id + " (" + found.GetType().Name + ")");
         return true;
     }
@@ -337,12 +288,6 @@ public class ToolController : MonoBehaviour
         cam.transform.position = new Vector3(u3d.x, pos.y, u3d.y);
     }
 
-    void SetIdSearchStatus(string message)
-    {
-        idSearchStatus = message;
-        idSearchStatusUntil = Time.unscaledTime + 3f;
-    }
-
     static void DrawPathToolHint(string text, Color color)
     {
         GUIStyle style = new GUIStyle(GUI.skin.box);
@@ -371,7 +316,8 @@ public class ToolController : MonoBehaviour
         if ((Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
             && Input.GetKeyDown(KeyCode.F))
         {
-            idSearchFocusRequested = true;
+            if (UIManager.instance != null)
+                UIManager.instance.FocusIdSearchField();
         }
 
         if (EventSystem.current != null &&
@@ -380,8 +326,7 @@ public class ToolController : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(0))
             {
-                float nx = Input.mousePosition.x / Screen.width;
-                if (nx < UIManager.RightPanelAnchorMinX && !UIManager.PointerOverDraggablePanel())
+                if (IsPointerInMainToolScreenArea())
                     EventSystem.current.SetSelectedGameObject(null);
             }
             return;
@@ -1239,7 +1184,7 @@ public class ToolController : MonoBehaviour
             return;
         }
 
-        if (UIManager.PointerOverDraggablePanel() || Input.mousePosition.x / Screen.width >= 0.85f)
+        if (CoverUiLayout.BlocksMapToolInput(Input.mousePosition))
         {
             Debug.Log("不能在UI区域粘贴");
             return;

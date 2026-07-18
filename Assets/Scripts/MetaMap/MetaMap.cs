@@ -492,6 +492,7 @@ public class MeRect :MapItem//this class won,t use directly
         _offsetUiCached = true;
         Transform t = transform.Find("Canvas");
         _offsetUiRoot = (t != null) ? t.gameObject : null;
+        if (t != null) MapItemParamUiLayout.Ensure(t);
     }
 
     public void SetOffsetUiActive(bool on)
@@ -523,9 +524,10 @@ public class MeRect :MapItem//this class won,t use directly
         Canvas canvas = canvasTf.GetComponent<Canvas>();
         if (canvas == null) return;
 
-        TMP_InputField xText = canvas.transform.Find("x")?.GetComponent<TMP_InputField>();
-        TMP_InputField yText = canvas.transform.Find("y")?.GetComponent<TMP_InputField>();
-        TMP_InputField zText = canvas.transform.Find("z")?.GetComponent<TMP_InputField>();
+        MapItemParamUiLayout.Ensure(canvasTf);
+        TMP_InputField xText = MapItemParamUiLayout.Find(canvasTf, "x")?.GetComponent<TMP_InputField>();
+        TMP_InputField yText = MapItemParamUiLayout.Find(canvasTf, "y")?.GetComponent<TMP_InputField>();
+        TMP_InputField zText = MapItemParamUiLayout.Find(canvasTf, "z")?.GetComponent<TMP_InputField>();
         // SetTextWithoutNotify 切断 setter → onValueChanged → setOffset* → scatterThis 的回环
         if (xText != null) xText.SetTextWithoutNotify(offset.x.ToString(System.Globalization.CultureInfo.InvariantCulture));
         if (yText != null) yText.SetTextWithoutNotify(offset.y.ToString(System.Globalization.CultureInfo.InvariantCulture));

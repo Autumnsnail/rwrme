@@ -10,9 +10,13 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
 
-    /// <summary>右侧条（多选 / 顶点等）锚点横坐标，与 ToolController 里「可打工具射线」的右边界一致。</summary>
-    public const float RightPanelAnchorMinX = 0.73f;
-    public const float RightPanelAnchorMaxX = 0.90f;
+    /// <summary>右侧 cover 左缘（参考归一化兜底；工具死区请用 <see cref="CoverUiLayout.BlocksMapToolInput"/>）。</summary>
+    public static float RightPanelAnchorMinX => CoverUiLayout.CoverLeftNorm;
+    /// <summary>cover 内容区右缘（按钮列左侧）。</summary>
+    public static float RightPanelAnchorMaxX => CoverUiLayout.ContentRightNorm;
+
+    /// <summary>指针是否落在应屏蔽地图交互的 UI 上（固定带 + 弹窗 + 可拖面板）。</summary>
+    public static bool BlocksMapInteraction() => CoverUiLayout.BlocksMapToolInput();
 
     /// <summary>当前是否正在某个文本输入框（TMP_InputField / 旧版 InputField）里打字。</summary>
     public static bool IsTypingInInputField()
@@ -36,14 +40,69 @@ public class UIManager : MonoBehaviour
             || instance.RectActiveAndContains(instance.vertexPanel);
     }
 
+    /// <summary>指针是否在可见的中央弹窗（Ref / Settings / 3rd）上——动态死区。</summary>
+    public static bool PointerOverCenterPopup()
+    {
+        if (instance == null) return false;
+        GameObject popup = instance.GetVisibleCenterPopup();
+        return popup != null && instance.RectActiveAndContains(popup);
+    }
+
     private bool RectActiveAndContains(GameObject panel)
     {
         if (panel == null || !panel.activeInHierarchy) return false;
+        if (panel.transform.localScale.x < 0.01f) return false;
         RectTransform rt = panel.transform as RectTransform;
         if (rt == null) return false;
         Canvas cv = rt.GetComponentInParent<Canvas>();
         Camera cam = (cv != null && cv.renderMode != RenderMode.ScreenSpaceOverlay) ? cv.worldCamera : null;
         return RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, cam);
+    }
+
+    static bool IsCenterPopupMenu(GameObject go)
+    {
+        if (go == null) return false;
+        string n = go.name;
+        return n == "RefManager" || n == "SettingsManager" || n == "3rdSettingsManager";
+    }
+
+    GameObject GetVisibleCenterPopup()
+    {
+        if (mms == null) return null;
+        for (int i = 0; i < mms.Count; i++)
+        {
+            GameObject go = mms[i];
+            if (!IsCenterPopupMenu(go)) continue;
+            if (go.transform.localScale.x < 0.01f) continue;
+            return go;
+        }
+        // mms 未挂全时，仍按名字查找
+        string[] names = { "RefManager", "SettingsManager", "3rdSettingsManager" };
+        foreach (string name in names)
+        {
+            Transform t = transform.Find(name);
+            if (t != null && t.localScale.x >= 0.01f)
+                return t.gameObject;
+        }
+        return null;
+    }
+
+    public void HideCenterPopups()
+    {
+        if (mms != null)
+        {
+            for (int i = 0; i < mms.Count; i++)
+            {
+                if (IsCenterPopupMenu(mms[i]))
+                    mms[i].transform.localScale = Vector3.zero;
+            }
+        }
+        string[] names = { "RefManager", "SettingsManager", "3rdSettingsManager" };
+        foreach (string name in names)
+        {
+            Transform t = transform.Find(name);
+            if (t != null) t.localScale = Vector3.zero;
+        }
     }
 
     GameObject ddBT;//building drop down
@@ -84,10 +143,15 @@ public class UIManager : MonoBehaviour
     private GameObject multiSelectResizeGO;
     private bool multiSelectCollapsed;
     private float msCollapseShrink;   // 折叠时压低 offsetMin.y 的增量；展开时反向撤销，保留折叠期间的拖动位移
-    private static readonly Vector2 MsDefaultAnchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
-    private static readonly Vector2 MsDefaultAnchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
     private const float MsHeaderHeight = 30f;
     private MapItem detailViewingItem;
+
+    /// <summary>子菜单区顶部常驻：按 id 查找。</summary>
+    private GameObject idSearchPanel;
+    private TMP_InputField idSearchField;
+    private TextMeshProUGUI idSearchStatusText;
+    private const float IdSearchBarHeight = 40f;
+
     void Start()
     {
         showingCanvas = null;
@@ -109,7 +173,11 @@ public class UIManager : MonoBehaviour
         sdWall = MakeSearchable(ddWT, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList());
         sdPlatformBaseWall = MakeSearchable(ddWTP, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList());
 
+        CreateIdSearchPanel();
+        LayoutRightSubmenusBelowIdSearch();
+        LayoutLeftBottomManagers();
         CreateMultiSelectPanel();
+        EnsureOnlyUiCanvasScaler();
         /*
         mms.Add(pMM);//0
         if (pMM == null )
@@ -136,7 +204,12 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        // 中央弹窗：右键点在弹窗外 → 隐藏（旧版菜单行为）
+        if (Input.GetMouseButtonDown(1) && GetVisibleCenterPopup() != null)
+        {
+            if (!PointerOverCenterPopup())
+                HideCenterPopups();
+        }
     }
 
     public void changeShowingCanvas(Canvas canvas)
@@ -147,6 +220,7 @@ public class UIManager : MonoBehaviour
         }
         showingCanvas = canvas;
         if (showingCanvas == null) return;
+        MapItemParamUiLayout.Ensure(showingCanvas.transform);
         showingCanvas.enabled = true;
     }
     public void showMenuUseIndex(int index)
@@ -162,7 +236,15 @@ public class UIManager : MonoBehaviour
             Debug.LogWarning($"UIManager.showMenuUseIndex: mms[{index}] is not assigned in Inspector");
             return;
         }
-        mms[index].transform.localScale = Vector3.one;
+        GameObject panel = mms[index];
+        if (IsCenterPopupMenu(panel))
+        {
+            CoverUiLayout.ApplyCenterPopupPanel(panel.transform as RectTransform);
+            CoverUiLayout.ReflowCenterPopupContent(panel);
+            EnsurePopupCloseButton(panel);
+            panel.transform.SetAsLastSibling();
+        }
+        panel.transform.localScale = Vector3.one;
     }
     public void disVisableAll()
     {
@@ -182,6 +264,283 @@ public class UIManager : MonoBehaviour
         bEM.transform.localScale = Vector3.zero;
         wEM.transform.localScale = Vector3.zero;
         */
+    }
+
+    void CreateIdSearchPanel()
+    {
+        if (transform.Find("IdSearchPanel") != null)
+        {
+            idSearchPanel = transform.Find("IdSearchPanel").gameObject;
+            idSearchField = idSearchPanel.GetComponentInChildren<TMP_InputField>(true);
+            Transform st = idSearchPanel.transform.Find("Status");
+            if (st != null) idSearchStatusText = st.GetComponent<TextMeshProUGUI>();
+            return;
+        }
+
+        idSearchPanel = new GameObject("IdSearchPanel", typeof(RectTransform));
+        idSearchPanel.transform.SetParent(transform, false);
+        idSearchPanel.transform.SetAsLastSibling();
+
+        RectTransform rt = idSearchPanel.GetComponent<RectTransform>();
+        CoverUiLayout.ApplyIdSearchBar(rt, IdSearchBarHeight);
+
+        Image bg = idSearchPanel.AddComponent<Image>();
+        bg.color = new Color(0.12f, 0.14f, 0.18f, 0.92f);
+        bg.raycastTarget = true;
+
+        // ID 标签
+        GameObject labelGo = new GameObject("Label", typeof(RectTransform));
+        labelGo.transform.SetParent(idSearchPanel.transform, false);
+        RectTransform labelRt = labelGo.GetComponent<RectTransform>();
+        labelRt.anchorMin = new Vector2(0f, 0.5f);
+        labelRt.anchorMax = new Vector2(0f, 0.5f);
+        labelRt.pivot = new Vector2(0f, 0.5f);
+        labelRt.anchoredPosition = new Vector2(8f, 4f);
+        labelRt.sizeDelta = new Vector2(28f, 22f);
+        TextMeshProUGUI label = labelGo.AddComponent<TextMeshProUGUI>();
+        label.text = "ID";
+        label.fontSize = 14;
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        label.color = new Color(0.85f, 0.9f, 1f);
+        label.raycastTarget = false;
+
+        // 输入框
+        GameObject fieldGo = new GameObject("Input", typeof(RectTransform));
+        fieldGo.transform.SetParent(idSearchPanel.transform, false);
+        RectTransform fieldRt = fieldGo.GetComponent<RectTransform>();
+        fieldRt.anchorMin = new Vector2(0f, 0.5f);
+        fieldRt.anchorMax = new Vector2(1f, 0.5f);
+        fieldRt.pivot = new Vector2(0.5f, 0.5f);
+        fieldRt.offsetMin = new Vector2(36f, -11f);
+        fieldRt.offsetMax = new Vector2(-68f, 11f);
+
+        Image fieldBg = fieldGo.AddComponent<Image>();
+        fieldBg.color = new Color(0.22f, 0.24f, 0.28f, 1f);
+
+        GameObject textArea = new GameObject("Text Area", typeof(RectTransform));
+        textArea.transform.SetParent(fieldGo.transform, false);
+        RectTransform taRt = textArea.GetComponent<RectTransform>();
+        taRt.anchorMin = Vector2.zero;
+        taRt.anchorMax = Vector2.one;
+        taRt.offsetMin = new Vector2(6f, 2f);
+        taRt.offsetMax = new Vector2(-6f, -2f);
+        textArea.AddComponent<RectMask2D>();
+
+        GameObject placeholderGo = new GameObject("Placeholder", typeof(RectTransform));
+        placeholderGo.transform.SetParent(textArea.transform, false);
+        RectTransform phRt = placeholderGo.GetComponent<RectTransform>();
+        phRt.anchorMin = Vector2.zero;
+        phRt.anchorMax = Vector2.one;
+        phRt.offsetMin = Vector2.zero;
+        phRt.offsetMax = Vector2.zero;
+        TextMeshProUGUI placeholder = placeholderGo.AddComponent<TextMeshProUGUI>();
+        placeholder.text = "按 id 查找…";
+        placeholder.fontSize = 13;
+        placeholder.fontStyle = FontStyles.Italic;
+        placeholder.color = new Color(1f, 1f, 1f, 0.35f);
+        placeholder.alignment = TextAlignmentOptions.MidlineLeft;
+        placeholder.raycastTarget = false;
+
+        GameObject textGo = new GameObject("Text", typeof(RectTransform));
+        textGo.transform.SetParent(textArea.transform, false);
+        RectTransform textRt = textGo.GetComponent<RectTransform>();
+        textRt.anchorMin = Vector2.zero;
+        textRt.anchorMax = Vector2.one;
+        textRt.offsetMin = Vector2.zero;
+        textRt.offsetMax = Vector2.zero;
+        TextMeshProUGUI text = textGo.AddComponent<TextMeshProUGUI>();
+        text.fontSize = 13;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.raycastTarget = false;
+
+        idSearchField = fieldGo.AddComponent<TMP_InputField>();
+        idSearchField.textViewport = taRt;
+        idSearchField.textComponent = text;
+        idSearchField.placeholder = placeholder;
+        idSearchField.fontAsset = text.font;
+        idSearchField.pointSize = 13;
+        idSearchField.onSubmit.AddListener(_ => RunIdSearch());
+
+        // 查找按钮
+        GameObject btnGo = new GameObject("FindButton", typeof(RectTransform));
+        btnGo.transform.SetParent(idSearchPanel.transform, false);
+        RectTransform btnRt = btnGo.GetComponent<RectTransform>();
+        btnRt.anchorMin = new Vector2(1f, 0.5f);
+        btnRt.anchorMax = new Vector2(1f, 0.5f);
+        btnRt.pivot = new Vector2(1f, 0.5f);
+        btnRt.anchoredPosition = new Vector2(-6f, 4f);
+        btnRt.sizeDelta = new Vector2(58f, 24f);
+        Image btnBg = btnGo.AddComponent<Image>();
+        btnBg.color = new Color(0.25f, 0.45f, 0.7f, 1f);
+        Button btn = btnGo.AddComponent<Button>();
+        btn.targetGraphic = btnBg;
+        btn.onClick.AddListener(RunIdSearch);
+
+        GameObject btnLabelGo = new GameObject("Text", typeof(RectTransform));
+        btnLabelGo.transform.SetParent(btnGo.transform, false);
+        RectTransform btnLabelRt = btnLabelGo.GetComponent<RectTransform>();
+        btnLabelRt.anchorMin = Vector2.zero;
+        btnLabelRt.anchorMax = Vector2.one;
+        btnLabelRt.offsetMin = Vector2.zero;
+        btnLabelRt.offsetMax = Vector2.zero;
+        TextMeshProUGUI btnLabel = btnLabelGo.AddComponent<TextMeshProUGUI>();
+        btnLabel.text = "查找";
+        btnLabel.fontSize = 13;
+        btnLabel.alignment = TextAlignmentOptions.Center;
+        btnLabel.color = Color.white;
+        btnLabel.raycastTarget = false;
+
+        // 状态行
+        GameObject statusGo = new GameObject("Status", typeof(RectTransform));
+        statusGo.transform.SetParent(idSearchPanel.transform, false);
+        RectTransform statusRt = statusGo.GetComponent<RectTransform>();
+        statusRt.anchorMin = new Vector2(0f, 0f);
+        statusRt.anchorMax = new Vector2(1f, 0f);
+        statusRt.pivot = new Vector2(0.5f, 0f);
+        statusRt.anchoredPosition = new Vector2(0f, 1f);
+        statusRt.sizeDelta = new Vector2(-12f, 14f);
+        idSearchStatusText = statusGo.AddComponent<TextMeshProUGUI>();
+        idSearchStatusText.fontSize = 10;
+        idSearchStatusText.alignment = TextAlignmentOptions.MidlineLeft;
+        idSearchStatusText.color = new Color(0.7f, 0.75f, 0.8f, 1f);
+        idSearchStatusText.raycastTarget = false;
+        idSearchStatusText.text = "";
+    }
+
+    void LayoutRightSubmenusBelowIdSearch()
+    {
+        string[] names =
+        {
+            "PinManager", "BuildingEditor", "WallEditor", "PlatformEditor",
+            "FunctionObjectsEditor", "MeshEditor", "DecalEditor",
+            "TerrainMaterialEditor", "HeightMapEditor"
+        };
+        foreach (string name in names)
+        {
+            Transform t = transform.Find(name);
+            if (t == null) continue;
+            CoverUiLayout.ApplyRightToolSubmenu(t as RectTransform, IdSearchBarHeight);
+        }
+    }
+
+    void EnsureOnlyUiCanvasScaler()
+    {
+        CanvasScaler scaler = GetComponent<CanvasScaler>();
+        if (scaler == null) scaler = GetComponentInParent<CanvasScaler>();
+        CoverUiLayout.ApplySharedCanvasScaler(scaler);
+    }
+
+    /// <summary>左下角三个按钮；Ref / Settings / 3rd 子菜单改为中央弹窗并加关闭钮。</summary>
+    void LayoutLeftBottomManagers()
+    {
+        // 自底向上：Ref → 3rd → General
+        ApplyLeftRt("ButtonRefpManager", rt => CoverUiLayout.ApplyLeftBottomButton(rt, 0));
+        ApplyLeftRt("Button3rdManager", rt => CoverUiLayout.ApplyLeftBottomButton(rt, 1));
+        ApplyLeftRt("ButtonGeneralSettingsManager", rt => CoverUiLayout.ApplyLeftBottomButton(rt, 2));
+
+        string[] popups = { "RefManager", "SettingsManager", "3rdSettingsManager" };
+        foreach (string name in popups)
+        {
+            Transform t = transform.Find(name);
+            if (t == null) continue;
+            // 尺寸在首次打开时再按当前 Canvas 钳制并 reflow，避免 Start 时 canvas.rect 未就绪
+            EnsurePopupCloseButton(t.gameObject);
+            t.localScale = Vector3.zero;
+        }
+    }
+
+    void EnsurePopupCloseButton(GameObject panel)
+    {
+        if (panel == null) return;
+        if (panel.transform.Find("PopupCloseBtn") != null) return;
+
+        GameObject go = new GameObject("PopupCloseBtn");
+        go.transform.SetParent(panel.transform, false);
+        go.transform.SetAsLastSibling();
+
+        RectTransform rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = new Vector2(1f, 1f);
+        rt.anchorMax = new Vector2(1f, 1f);
+        rt.pivot = new Vector2(1f, 1f);
+        rt.sizeDelta = new Vector2(28f, 28f);
+        rt.anchoredPosition = new Vector2(-6f, -6f);
+
+        Image bg = go.AddComponent<Image>();
+        bg.color = new Color(0.35f, 0.22f, 0.22f, 1f);
+
+        LayoutElement le = go.AddComponent<LayoutElement>();
+        le.ignoreLayout = true;
+
+        Button btn = go.AddComponent<Button>();
+        ColorBlock cb = btn.colors;
+        cb.highlightedColor = new Color(0.55f, 0.28f, 0.28f, 1f);
+        cb.pressedColor = new Color(0.25f, 0.12f, 0.12f, 1f);
+        btn.colors = cb;
+        btn.onClick.AddListener(HideCenterPopups);
+
+        GameObject labelGo = new GameObject("Label");
+        labelGo.transform.SetParent(go.transform, false);
+        RectTransform lrt = labelGo.AddComponent<RectTransform>();
+        lrt.anchorMin = Vector2.zero;
+        lrt.anchorMax = Vector2.one;
+        lrt.offsetMin = Vector2.zero;
+        lrt.offsetMax = Vector2.zero;
+        TextMeshProUGUI tmp = labelGo.AddComponent<TextMeshProUGUI>();
+        tmp.text = "X";
+        tmp.fontSize = 16;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+        tmp.raycastTarget = false;
+        if (tmp.font == null)
+            tmp.font = TMP_Settings.defaultFontAsset;
+    }
+
+    void ApplyLeftRt(string name, System.Action<RectTransform> apply)
+    {
+        Transform t = transform.Find(name);
+        if (t == null) return;
+        RectTransform rt = t as RectTransform;
+        if (rt == null) return;
+        apply(rt);
+    }
+
+    void RunIdSearch()
+    {
+        string q = idSearchField != null ? idSearchField.text : "";
+        if (ToolController.inste == null) return;
+        bool ok = ToolController.inste.TrySelectById(q);
+        SetIdSearchStatus(
+            ok ? ("已选: " + (ToolController.inste.miSelected != null ? ToolController.inste.miSelected.id : q))
+               : GetLastIdSearchHint(q),
+            ok);
+    }
+
+    static string GetLastIdSearchHint(string q)
+    {
+        if (MetaMap.instance == null) return "MetaMap 未就绪";
+        q = q?.Trim();
+        if (string.IsNullOrEmpty(q)) return "请输入 id";
+        int matches = MetaMap.instance.CountMapItemIdMatches(q);
+        if (matches > 1) return $"匹配 {matches} 个，请输入更完整的 id";
+        return "未找到: " + q;
+    }
+
+    public void SetIdSearchStatus(string message, bool success)
+    {
+        if (idSearchStatusText == null) return;
+        idSearchStatusText.text = message ?? "";
+        idSearchStatusText.color = success
+            ? new Color(0.5f, 1f, 0.55f)
+            : new Color(1f, 0.55f, 0.45f);
+    }
+
+    public void FocusIdSearchField()
+    {
+        if (idSearchField == null) return;
+        idSearchField.Select();
+        idSearchField.ActivateInputField();
     }
 
     public void updatebBT()
@@ -439,10 +798,7 @@ public class UIManager : MonoBehaviour
         multiSelectPanel.transform.SetParent(transform, false);
 
         RectTransform panelRect = multiSelectPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = MsDefaultAnchorMin;
-        panelRect.anchorMax = MsDefaultAnchorMax;
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
+        CoverUiLayout.ApplyMiddleBandPanel(panelRect);
         multiSelectRect = panelRect;
 
         Image panelBg = multiSelectPanel.AddComponent<Image>();
@@ -919,10 +1275,7 @@ public class UIManager : MonoBehaviour
         vertexPanel.transform.SetParent(transform, false);
 
         RectTransform pRect = vertexPanel.AddComponent<RectTransform>();
-        pRect.anchorMin = new Vector2(RightPanelAnchorMinX, 0.02f);
-        pRect.anchorMax = new Vector2(RightPanelAnchorMaxX, 0.98f);
-        pRect.offsetMin = Vector2.zero;
-        pRect.offsetMax = Vector2.zero;
+        CoverUiLayout.ApplyMiddleBandPanel(pRect);
 
         Image bg = vertexPanel.AddComponent<Image>();
         bg.color = new Color(0.10f, 0.10f, 0.12f, 0.95f);

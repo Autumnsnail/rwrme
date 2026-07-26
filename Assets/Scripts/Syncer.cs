@@ -79,8 +79,115 @@ public class Syncer : MonoBehaviour
     public void updateMap()
     {
         PurgeInvalidWallAndOffroad();
-        setHeightFromMeta();
+        PurgeInvalidTerrainPaths();
+        ApplyPreviewTerrain();
         StartCoroutine(ScatterMapItems());
+    }
+
+    public void ApplyPreviewTerrain()
+    {
+        ApplyPreviewHeightmap();
+        ApplyPreviewCombinedAlpha();
+    }
+
+    void PurgeInvalidTerrainPaths()
+    {
+        if (m_mm == null) return;
+
+        if (m_mm.heightPathLayer != null)
+        {
+            for (int i = m_mm.heightPathLayer.mapItems.Count - 1; i >= 0; i--)
+            {
+                MapItem mi = m_mm.heightPathLayer.mapItems[i];
+                if (mi is HeightPath hp && IsPathTooShort(hp.positionLine))
+                {
+                    m_mm.heightPathLayer.mapItems.RemoveAt(i);
+                    if (hp.gameObject != null) Destroy(hp.gameObject);
+                }
+            }
+        }
+
+        if (m_mm.materialPathLayer != null)
+        {
+            for (int i = m_mm.materialPathLayer.mapItems.Count - 1; i >= 0; i--)
+            {
+                MapItem mi = m_mm.materialPathLayer.mapItems[i];
+                if (mi is MaterialPath mp && IsPathTooShort(mp.positionLine))
+                {
+                    m_mm.materialPathLayer.mapItems.RemoveAt(i);
+                    if (mp.gameObject != null) Destroy(mp.gameObject);
+                }
+            }
+        }
+    }
+
+    void ApplyPreviewHeightmap()
+    {
+        if (m_mm == null || m_terrain == null) return;
+
+        GrayScaleImage preview = m_mm.BakePreviewHeightmap();
+        if (preview == null || preview.Width <= 0) return;
+
+        TerrainData terrainData = m_terrain.terrainData;
+        terrainData.heightmapResolution = preview.Width;
+        int resolution = terrainData.heightmapResolution;
+        float[,] heights = new float[resolution, resolution];
+
+        for (int y = 0; y < resolution; y++)
+            for (int x = 0; x < resolution; x++)
+                heights[y, x] = preview[y, x];
+
+        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : terrainData.size.x;
+        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : terrainData.size.z;
+        terrainData.size = new Vector3(worldX, m_mm.m_metaTerrain.maxHeight, worldZ);
+        terrainData.SetHeights(0, 0, heights);
+    }
+
+    void ApplyPreviewCombinedAlpha()
+    {
+        if (m_mm == null || m_terrain == null || MapImporter.instate == null) return;
+
+        Texture2D baked = m_mm.BakePreviewCombinedAlpha();
+        if (baked == null) return;
+
+        Material mat = m_terrain.materialTemplate;
+        if (mat == null) mat = MapImporter.instate.cbdTl;
+        if (mat == null) return;
+
+        mat.SetTexture("_Mask", baked);
+    }
+
+    public void ApplyPreHeightToTerrain()
+    {
+        if (m_mm == null || m_terrain == null) return;
+        m_mm.EnsurePreTerrain();
+        GrayScaleImage pre = m_mm.m_preTerrain.data;
+        if (pre == null || pre.Width <= 0) return;
+
+        TerrainData terrainData = m_terrain.terrainData;
+        terrainData.heightmapResolution = pre.Width;
+        int resolution = terrainData.heightmapResolution;
+        float[,] heights = new float[resolution, resolution];
+        for (int y = 0; y < resolution; y++)
+            for (int x = 0; x < resolution; x++)
+                heights[y, x] = pre[y, x];
+
+        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : terrainData.size.x;
+        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : terrainData.size.z;
+        terrainData.size = new Vector3(worldX, m_mm.m_metaTerrain.maxHeight, worldZ);
+        terrainData.SetHeights(0, 0, heights);
+    }
+
+    public void ApplyPreAlphaToTerrain()
+    {
+        if (m_mm == null || MapImporter.instate == null) return;
+        m_mm.EnsurePreCombinedAlpha();
+        if (m_mm.preCombinedAlpha == null) return;
+
+        Material mat = m_terrain != null ? m_terrain.materialTemplate : null;
+        if (mat == null) mat = MapImporter.instate.cbdTl;
+        if (mat == null) return;
+        mat.SetTexture("_Mask", m_mm.preCombinedAlpha);
     }
 
     /// <summary>从地图数据中移除非法路径：锚点数小于 2 的 <see cref="Wall"/>、<see cref="Offroad"/>。</summary>
@@ -122,31 +229,7 @@ public class Syncer : MonoBehaviour
 
     public void setHeightFromMeta()
     {
-        Debug.Log("��ʼӦ�ûҶ�ͼ������...");
-        
-        TerrainData teerainData = m_terrain.terrainData;
-        
-        teerainData.heightmapResolution = m_mm.m_metaTerrain.resolutionX;
-
-        int resolution = teerainData.heightmapResolution;
-
-        Debug.Log($"resolutionX={resolution}");
-        float[,] heights = new float[resolution, resolution];
-
-        for(int y=0; y<resolution; y++)
-        {
-            for(int x=0; x<resolution; x++)
-            {
-                //Debug.Log($"{m_mm.m_metaTerrain.data[y, x]*m_mm.m_metaTerrain.maxHeight}");
-                heights[y, x] = m_mm.m_metaTerrain.data[y,x];
-            }
-        }
-
-        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : teerainData.size.x;
-        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : teerainData.size.z;
-        teerainData.size = new Vector3(worldX, m_mm.m_metaTerrain.maxHeight, worldZ);
-        teerainData.SetHeights(0, 0, heights);
-
+        ApplyPreviewHeightmap();
     }
 
     /*//deuse on 2025 11 27
@@ -210,6 +293,16 @@ public class Syncer : MonoBehaviour
                     yield return null;
                 }
             }
+        }
+        if (m_mm.heightPathLayer != null)
+        {
+            foreach (MapItem mapItem in m_mm.heightPathLayer.mapItems)
+                mapItem.scatterThis();
+        }
+        if (m_mm.materialPathLayer != null)
+        {
+            foreach (MapItem mapItem in m_mm.materialPathLayer.mapItems)
+                mapItem.scatterThis();
         }
     }
     public void destroyAllOutMapitems()

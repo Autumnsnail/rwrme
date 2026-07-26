@@ -81,12 +81,13 @@ public class Wall : MePath
     {
         Transform canvas = transform.Find("Canvas");
         if (canvas == null) return;
+        MapItemParamUiLayout.Ensure(canvas);
 
-        Toggle toggle = canvas.Find("Toggle")?.GetComponent<Toggle>();
+        Toggle toggle = MapItemParamUiLayout.Find(canvas, "Toggle")?.GetComponent<Toggle>();
         if (toggle != null)
             toggle.SetIsOnWithoutNotify(reHighed);
 
-        TMP_InputField heightInput = canvas.Find("height")?.GetComponent<TMP_InputField>();
+        TMP_InputField heightInput = MapItemParamUiLayout.Find(canvas, "height")?.GetComponent<TMP_InputField>();
         if (heightInput == null) return;
 
         heightInput.gameObject.SetActive(reHighed);

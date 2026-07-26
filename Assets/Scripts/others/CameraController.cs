@@ -214,7 +214,7 @@ public class DualModeCameraController : MonoBehaviour
     void ApplyFlightScrollSpeedAdjust()
     {
         // 同理：指针在面板上时不借滚轮调飞行速度
-        if (UIManager.PointerOverDraggablePanel()) return;
+        if (UIManager.BlocksMapInteraction()) return;
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scroll) < 1e-5f) return;
@@ -294,7 +294,7 @@ public class DualModeCameraController : MonoBehaviour
     void HandleZoom()
     {
         // 指针在可拖拽面板（多选/顶点）上时，滚轮交给该面板的列表滚动，不缩放地图
-        if (UIManager.PointerOverDraggablePanel()) return;
+        if (UIManager.BlocksMapInteraction()) return;
 
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0 && cam != null)

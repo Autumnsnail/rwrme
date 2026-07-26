@@ -923,6 +923,14 @@ public class MapImporter : MonoBehaviour
                         Debug.Log("import offroad");
                         ImportOffroadFromGroup(ele);
                     }
+                    if (ele.GetAttribute("inkscape:label").StartsWith("height_paths"))
+                    {
+                        ImportHeightPathsFromGroup(ele);
+                    }
+                    if (ele.GetAttribute("inkscape:label").StartsWith("material_paths"))
+                    {
+                        ImportMaterialPathsFromGroup(ele);
+                    }
                 }
             }
         }
@@ -1305,7 +1313,60 @@ public class MapImporter : MonoBehaviour
         importMapConfig();
         importObjects();
         importTerrain();
+        importPreTerrain();
         importTerrainCombinAplha();
+        importPreCombinedAlpha();
+    }
+
+    public void importPreTerrain()
+    {
+        MetaMap mm = gameObject.GetComponent<MetaMap>();
+        if (mm == null) return;
+
+        string prePath = Path.Combine(Application.dataPath, basePath, MetaMap.PreHeightmapFileName);
+        if (File.Exists(prePath))
+        {
+            GrayScaleImage pre = LoadGrayScaleImage(prePath);
+            mm.m_preTerrain.maxHeight = mm.m_metaTerrain.maxHeight;
+            mm.m_preTerrain.fileName = MetaMap.PreHeightmapFileName;
+            mm.m_preTerrain.setData(pre);
+            Debug.Log("MapImporter: loaded " + MetaMap.PreHeightmapFileName);
+        }
+        else
+        {
+            mm.InitPreTerrainFromReference();
+            Debug.Log("MapImporter: initialized pre heightmap from terrain5 reference");
+        }
+    }
+
+    public void importPreCombinedAlpha()
+    {
+        MetaMap mm = gameObject.GetComponent<MetaMap>();
+        if (mm == null || cbdTl == null) return;
+
+        string refPath = Path.Combine(Application.dataPath, basePath, MetaMap.FinalCombinedAlphaFileName);
+        if (File.Exists(refPath))
+        {
+            byte[] refData = File.ReadAllBytes(refPath);
+            Texture2D refTex = new Texture2D(2, 2);
+            refTex.LoadImage(refData);
+            mm.referenceCombinedAlpha = refTex;
+        }
+
+        string prePath = Path.Combine(Application.dataPath, basePath, MetaMap.PreCombinedAlphaFileName);
+        if (File.Exists(prePath))
+        {
+            byte[] preData = File.ReadAllBytes(prePath);
+            Texture2D preTex = new Texture2D(2, 2);
+            preTex.LoadImage(preData);
+            mm.preCombinedAlpha = preTex;
+            Debug.Log("MapImporter: loaded " + MetaMap.PreCombinedAlphaFileName);
+        }
+        else if (mm.referenceCombinedAlpha != null)
+        {
+            mm.preCombinedAlpha = TerrainPathRasterizer.CloneTexture(mm.referenceCombinedAlpha);
+            Debug.Log("MapImporter: initialized pre combined alpha from terrain5 reference");
+        }
     }
 
     public void importTerrainCombinAplha()
@@ -1537,6 +1598,123 @@ public class MapImporter : MonoBehaviour
                 nextChain.Add((grm, gov, gsc));
                 ImportOffroadRecursive(xe, nextChain, rmOff, ovOff, scOff);
             }*/
+        }
+    }
+
+    static Dictionary<string, string> ParsePathDesc(XmlElement pathEl)
+    {
+        if (pathEl.FirstChild is not XmlElement descEl) return new Dictionary<string, string>();
+        return descEl.InnerText.Split(';')
+            .Where(p => p.Contains('='))
+            .Select(p => p.Split('=', 2))
+            .GroupBy(k => k[0].Trim(), v => v[1].Trim())
+            .ToDictionary(g => g.Key, g => g.First());
+    }
+
+    void ImportHeightPathsFromGroup(XmlElement group)
+    {
+        float ra = 0f;
+        Matrix2x2 rm = Matrix2x2.CreateRotation(0f);
+        Vector2 ov = Vector2.zero;
+        Vector2 sc = Vector2.one;
+        if (group.HasAttribute("transform"))
+            dealWithTransform(group.GetAttribute("transform"), ref rm, ref ra, ref ov, ref sc);
+
+        foreach (XmlNode child in group.ChildNodes)
+        {
+            if (child is not XmlElement xe || xe.Name != "path") continue;
+            string pathData = xe.GetAttribute("d");
+            if (string.IsNullOrWhiteSpace(pathData)) continue;
+
+            var props = ParsePathDesc(xe);
+            List<SvgPathOp> pathOps = SvgPathParser.ParsePathDataToOps(pathData);
+            BuildOffroadFromPathOps(pathOps, out List<Vector2> anchors, out List<bool> curveFlags, out List<Vector2> cps);
+            if (anchors == null || anchors.Count < 2) continue;
+
+            for (int i = 0; i < anchors.Count; i++)
+                anchors[i] = rm * (anchors[i] * sc) + ov;
+            for (int i = 0; i < cps.Count; i++)
+                cps[i] = rm * (cps[i] * sc) + ov;
+
+            HeightPath hp = new GameObject("HeightPath").AddComponent<HeightPath>();
+            hp.positionLine = anchors;
+            hp.curve = curveFlags;
+            hp.controlPoints = cps;
+
+            if (props.TryGetValue("width", out string wStr) && float.TryParse(wStr, out float w))
+                hp.width = w;
+            if (props.TryGetValue("height_offset", out string hoStr) && float.TryParse(hoStr, out float ho))
+            {
+                hp.heightDelta = ho;
+                hp.mode = HeightPathMode.Offset;
+            }
+            else if (props.TryGetValue("height", out string hAbsStr) && float.TryParse(hAbsStr, out float hAbs))
+            {
+                hp.heightDelta = hAbs;
+                hp.mode = HeightPathMode.Set;
+            }
+            else if (props.TryGetValue("height_delta", out string hStr) && float.TryParse(hStr, out float hd))
+                hp.heightDelta = hd;
+            if (props.TryGetValue("mode", out string modeStr))
+            {
+                if (modeStr == "lower") hp.mode = HeightPathMode.Lower;
+                else if (modeStr == "set") hp.mode = HeightPathMode.Set;
+                else if (modeStr == "offset") hp.mode = HeightPathMode.Offset;
+                else if (modeStr == "raise") hp.mode = HeightPathMode.Raise;
+            }
+
+            hp.id = MetaMap.instance.getNewItemId("height_path");
+            MetaMap.instance.heightPathLayer.mapItems.Add(hp);
+        }
+    }
+
+    void ImportMaterialPathsFromGroup(XmlElement group)
+    {
+        float ra = 0f;
+        Matrix2x2 rm = Matrix2x2.CreateRotation(0f);
+        Vector2 ov = Vector2.zero;
+        Vector2 sc = Vector2.one;
+        if (group.HasAttribute("transform"))
+            dealWithTransform(group.GetAttribute("transform"), ref rm, ref ra, ref ov, ref sc);
+
+        foreach (XmlNode child in group.ChildNodes)
+        {
+            if (child is not XmlElement xe || xe.Name != "path") continue;
+            string pathData = xe.GetAttribute("d");
+            if (string.IsNullOrWhiteSpace(pathData)) continue;
+
+            var props = ParsePathDesc(xe);
+            List<SvgPathOp> pathOps = SvgPathParser.ParsePathDataToOps(pathData);
+            BuildOffroadFromPathOps(pathOps, out List<Vector2> anchors, out List<bool> curveFlags, out List<Vector2> cps);
+            if (anchors == null || anchors.Count < 2) continue;
+
+            for (int i = 0; i < anchors.Count; i++)
+                anchors[i] = rm * (anchors[i] * sc) + ov;
+            for (int i = 0; i < cps.Count; i++)
+                cps[i] = rm * (cps[i] * sc) + ov;
+
+            MaterialPath mp = new GameObject("MaterialPath").AddComponent<MaterialPath>();
+            mp.positionLine = anchors;
+            mp.curve = curveFlags;
+            mp.controlPoints = cps;
+
+            if (props.TryGetValue("width", out string wStr) && float.TryParse(wStr, out float w))
+                mp.width = w;
+            if (props.TryGetValue("material_index", out string miStr) && int.TryParse(miStr, out int mi))
+                mp.materialIndex = mi;
+            else if (props.TryGetValue("material", out string matStr))
+            {
+                switch (matStr.Trim().ToLowerInvariant())
+                {
+                    case "sand": mp.materialIndex = 1; break;
+                    case "grass": mp.materialIndex = 2; break;
+                    case "asphalt": mp.materialIndex = 3; break;
+                    case "road": mp.materialIndex = 4; break;
+                }
+            }
+
+            mp.id = MetaMap.instance.getNewItemId("material_path");
+            MetaMap.instance.materialPathLayer.mapItems.Add(mp);
         }
     }
 }

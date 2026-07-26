@@ -30,6 +30,8 @@ public class CtrlZer : MonoBehaviour
         public List<MapItem> defaultItems;
         public List<MapItem> baseItems;
         public List<MapItem> offroadItems;
+        public List<MapItem> heightPathItems;
+        public List<MapItem> materialPathItems;
         public List<ItemTransformData> transformData;
         public List<PathData> pathData;
         public float[,] heightmapData;
@@ -75,6 +77,16 @@ public class CtrlZer : MonoBehaviour
                         postDrawer.RemoveLastVertex();
                         return;
                     }
+                    if (tool is HeightPathDrawer hpd && hpd.drawing)
+                    {
+                        hpd.RemoveLastVertex();
+                        return;
+                    }
+                    if (tool is MaterialPathDrawer mpd && mpd.drawing)
+                    {
+                        mpd.RemoveLastVertex();
+                        return;
+                    }
                 }
                 Undo();
             }
@@ -92,18 +104,28 @@ public class CtrlZer : MonoBehaviour
         var orItems = MetaMap.instance.offroadLayer != null
             ? new List<MapItem>(MetaMap.instance.offroadLayer.mapItems)
             : new List<MapItem>();
+        var hpItems = MetaMap.instance.heightPathLayer != null
+            ? new List<MapItem>(MetaMap.instance.heightPathLayer.mapItems)
+            : new List<MapItem>();
+        var mpItems = MetaMap.instance.materialPathLayer != null
+            ? new List<MapItem>(MetaMap.instance.materialPathLayer.mapItems)
+            : new List<MapItem>();
         var transforms = new List<ItemTransformData>();
         var paths = new List<PathData>();
 
         CaptureItemData(defItems, transforms, paths);
         CaptureItemData(bsItems, transforms, paths);
         CaptureItemData(orItems, transforms, paths);
+        CaptureItemData(hpItems, transforms, paths);
+        CaptureItemData(mpItems, transforms, paths);
 
         return new Snapshot
         {
             defaultItems = defItems,
             baseItems = bsItems,
             offroadItems = orItems,
+            heightPathItems = hpItems,
+            materialPathItems = mpItems,
             transformData = transforms,
             pathData = paths
         };
@@ -181,40 +203,28 @@ public class CtrlZer : MonoBehaviour
     public void checkPointWithHeightmap()
     {
         Snapshot snap = CaptureSnapshot();
-
-        Terrain terrain = Terrain.activeTerrain;
-        if (terrain != null)
-        {
-            TerrainData td = terrain.terrainData;
-            int res = td.heightmapResolution;
-            float[,] src = td.GetHeights(0, 0, res, res);
-            float[,] copy = new float[res, res];
-            System.Buffer.BlockCopy(src, 0, copy, 0, res * res * sizeof(float));
-            snap.heightmapData = copy;
-        }
-
+        MetaMap mm = MetaMap.instance;
+        mm.EnsurePreTerrain();
+        if (mm.m_preTerrain?.data != null)
+            snap.heightmapData = mm.m_preTerrain.data.CopyDataArray();
         PushUndo(snap);
     }
 
     /// <summary>
-    /// Save mapItems + terrain mask texture before a terrain-paint operation.
+    /// Save mapItems + pre terrain mask before a terrain-paint operation.
     /// </summary>
     public void checkPointWithTerrainMask()
     {
         Snapshot snap = CaptureSnapshot();
-
-        Terrain terrain = Terrain.activeTerrain;
-        if (terrain != null)
+        MetaMap mm = MetaMap.instance;
+        mm.EnsurePreCombinedAlpha();
+        Texture2D tex = mm.preCombinedAlpha;
+        if (tex != null)
         {
-            Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
-            if (tex != null)
-            {
-                snap.maskPixels = tex.GetPixels();
-                snap.maskWidth = tex.width;
-                snap.maskHeight = tex.height;
-            }
+            snap.maskPixels = tex.GetPixels();
+            snap.maskWidth = tex.width;
+            snap.maskHeight = tex.height;
         }
-
         PushUndo(snap);
     }
 
@@ -282,21 +292,19 @@ public class CtrlZer : MonoBehaviour
         Snapshot snap = CaptureSnapshot();
 
         Terrain terrain = Terrain.activeTerrain;
-        if (terrain != null)
+        MetaMap mm = MetaMap.instance;
+        if (terrain != null && mm != null)
         {
-            TerrainData td = terrain.terrainData;
-            int res = td.heightmapResolution;
-            float[,] src = td.GetHeights(0, 0, res, res);
-            float[,] copy = new float[res, res];
-            System.Buffer.BlockCopy(src, 0, copy, 0, res * res * sizeof(float));
-            snap.heightmapData = copy;
+            mm.EnsurePreTerrain();
+            if (mm.m_preTerrain?.data != null)
+                snap.heightmapData = mm.m_preTerrain.data.CopyDataArray();
 
-            Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
-            if (tex != null)
+            mm.EnsurePreCombinedAlpha();
+            if (mm.preCombinedAlpha != null)
             {
-                snap.maskPixels = tex.GetPixels();
-                snap.maskWidth = tex.width;
-                snap.maskHeight = tex.height;
+                snap.maskPixels = mm.preCombinedAlpha.GetPixels();
+                snap.maskWidth = mm.preCombinedAlpha.width;
+                snap.maskHeight = mm.preCombinedAlpha.height;
             }
         }
 
@@ -315,12 +323,30 @@ public class CtrlZer : MonoBehaviour
                 foreach (var item in MetaMap.instance.offroadLayer.mapItems)
                     previousItems.Add(item);
             }
+            if (MetaMap.instance.heightPathLayer != null)
+            {
+                foreach (var item in MetaMap.instance.heightPathLayer.mapItems)
+                    previousItems.Add(item);
+            }
+            if (MetaMap.instance.materialPathLayer != null)
+            {
+                foreach (var item in MetaMap.instance.materialPathLayer.mapItems)
+                    previousItems.Add(item);
+            }
 
             MetaMap.instance.defaultLayer.mapItems = new List<MapItem>(snapshot.defaultItems);
             MetaMap.instance.baseLayer.mapItems = new List<MapItem>(snapshot.baseItems);
             if (MetaMap.instance.offroadLayer != null)
                 MetaMap.instance.offroadLayer.mapItems = snapshot.offroadItems != null
                     ? new List<MapItem>(snapshot.offroadItems)
+                    : new List<MapItem>();
+            if (MetaMap.instance.heightPathLayer != null)
+                MetaMap.instance.heightPathLayer.mapItems = snapshot.heightPathItems != null
+                    ? new List<MapItem>(snapshot.heightPathItems)
+                    : new List<MapItem>();
+            if (MetaMap.instance.materialPathLayer != null)
+                MetaMap.instance.materialPathLayer.mapItems = snapshot.materialPathItems != null
+                    ? new List<MapItem>(snapshot.materialPathItems)
                     : new List<MapItem>();
 
             HashSet<MapItem> restoredItems = new HashSet<MapItem>(snapshot.defaultItems);
@@ -329,6 +355,16 @@ public class CtrlZer : MonoBehaviour
             if (snapshot.offroadItems != null)
             {
                 foreach (var item in snapshot.offroadItems)
+                    restoredItems.Add(item);
+            }
+            if (snapshot.heightPathItems != null)
+            {
+                foreach (var item in snapshot.heightPathItems)
+                    restoredItems.Add(item);
+            }
+            if (snapshot.materialPathItems != null)
+            {
+                foreach (var item in snapshot.materialPathItems)
                     restoredItems.Add(item);
             }
 
@@ -380,29 +416,27 @@ public class CtrlZer : MonoBehaviour
 
         if (!snapshot.transformOnly)
         {
-            if (snapshot.heightmapData != null)
+            if (snapshot.heightmapData != null && MetaMap.instance != null)
             {
-                Terrain terrain = Terrain.activeTerrain;
-                if (terrain != null)
+                MetaMap.instance.EnsurePreTerrain();
+                MetaMap.instance.m_preTerrain.data.CopyFromArray(snapshot.heightmapData);
+                if (Syncer.instence != null) Syncer.instence.ApplyPreHeightToTerrain();
+            }
+
+            if (snapshot.maskPixels != null && MetaMap.instance != null)
+            {
+                MetaMap.instance.EnsurePreCombinedAlpha();
+                Texture2D tex = MetaMap.instance.preCombinedAlpha;
+                if (tex != null && tex.width == snapshot.maskWidth && tex.height == snapshot.maskHeight)
                 {
-                    terrain.terrainData.SetHeights(0, 0, snapshot.heightmapData);
-                    terrain.terrainData.SyncHeightmap();
+                    tex.SetPixels(snapshot.maskPixels);
+                    tex.Apply();
+                    if (Syncer.instence != null) Syncer.instence.ApplyPreAlphaToTerrain();
                 }
             }
 
-            if (snapshot.maskPixels != null)
-            {
-                Terrain terrain = Terrain.activeTerrain;
-                if (terrain != null)
-                {
-                    Texture2D tex = terrain.materialTemplate.GetTexture("_Mask") as Texture2D;
-                    if (tex != null)
-                    {
-                        tex.SetPixels(snapshot.maskPixels);
-                        tex.Apply();
-                    }
-                }
-            }
+            if (Syncer.instence != null)
+                Syncer.instence.ApplyPreviewTerrain();
         }
     }
 
@@ -418,6 +452,16 @@ public class CtrlZer : MonoBehaviour
             foreach (var item in MetaMap.instance.offroadLayer.mapItems)
                 keepAlive.Add(item);
         }
+        if (MetaMap.instance.heightPathLayer != null)
+        {
+            foreach (var item in MetaMap.instance.heightPathLayer.mapItems)
+                keepAlive.Add(item);
+        }
+        if (MetaMap.instance.materialPathLayer != null)
+        {
+            foreach (var item in MetaMap.instance.materialPathLayer.mapItems)
+                keepAlive.Add(item);
+        }
         foreach (var snap in undoStack)
         {
             foreach (var item in snap.defaultItems) keepAlive.Add(item);
@@ -425,6 +469,14 @@ public class CtrlZer : MonoBehaviour
             if (snap.offroadItems != null)
             {
                 foreach (var item in snap.offroadItems) keepAlive.Add(item);
+            }
+            if (snap.heightPathItems != null)
+            {
+                foreach (var item in snap.heightPathItems) keepAlive.Add(item);
+            }
+            if (snap.materialPathItems != null)
+            {
+                foreach (var item in snap.materialPathItems) keepAlive.Add(item);
             }
         }
 
@@ -444,6 +496,22 @@ public class CtrlZer : MonoBehaviour
             if (snap.offroadItems != null)
             {
                 foreach (var item in snap.offroadItems)
+                {
+                    if (item != null && !keepAlive.Contains(item) && alreadyDestroyed.Add(item))
+                        Destroy(item.gameObject);
+                }
+            }
+            if (snap.heightPathItems != null)
+            {
+                foreach (var item in snap.heightPathItems)
+                {
+                    if (item != null && !keepAlive.Contains(item) && alreadyDestroyed.Add(item))
+                        Destroy(item.gameObject);
+                }
+            }
+            if (snap.materialPathItems != null)
+            {
+                foreach (var item in snap.materialPathItems)
                 {
                     if (item != null && !keepAlive.Contains(item) && alreadyDestroyed.Add(item))
                         Destroy(item.gameObject);

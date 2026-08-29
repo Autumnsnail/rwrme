@@ -459,6 +459,19 @@ public class MapItem:MonoBehaviour
 
     }
 
+    /// <summary>多选刚体旋转：绕给定中心旋转几何，角度约定与 rotate(scaler) 相同（scaler*-2°）。</summary>
+    public virtual void RotateAround(Vector2 center, float scaler) { }
+
+    /// <summary>多选绕心：点位移用 +2°（与 MeRect.rotation 的 -2 在 SVG 映射下视觉同向）。</summary>
+    protected static Vector2 RotatePointAround(Vector2 p, Vector2 center, float scaler)
+    {
+        float rad = scaler * 2f * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(rad);
+        float sin = Mathf.Sin(rad);
+        Vector2 d = p - center;
+        return center + new Vector2(d.x * cos - d.y * sin, d.x * sin + d.y * cos);
+    }
+
     /// <summary>用于"以鼠标点为新锚点"翻译；MeRect 用 position，路径类用顶点均值。</summary>
     public virtual Vector2 GetAnchor() { return Vector2.zero; }
     /// <summary>getNewItemId 的前缀；与现有 import / 工具创建保持一致。</summary>
@@ -582,6 +595,13 @@ public class MeRect :MapItem//this class won,t use directly
     {
         rotation = rotation + scaler * -2;
     }
+
+    public override void RotateAround(Vector2 center, float scaler)
+    {
+        position = RotatePointAround(position, center, scaler);
+        rotation = rotation + scaler * -2;
+    }
+
     public override Vector2 GetAnchor() { return position; }
 
     protected void CopyMeRectFieldsTo(MeRect dst)
@@ -607,6 +627,16 @@ public class PathPair:MapItem
         if (positinLineL != null) foreach (var p in positinLineL) sum += p;
         if (positinLineR != null) foreach (var p in positinLineR) sum += p;
         return sum / total;
+    }
+
+    public override void RotateAround(Vector2 center, float scaler)
+    {
+        if (positinLineR != null)
+            for (int i = 0; i < positinLineR.Count; i++)
+                positinLineR[i] = RotatePointAround(positinLineR[i], center, scaler);
+        if (positinLineL != null)
+            for (int i = 0; i < positinLineL.Count; i++)
+                positinLineL[i] = RotatePointAround(positinLineL[i], center, scaler);
     }
 
     protected void CopyPathPairFieldsTo(PathPair dst)
@@ -639,6 +669,16 @@ public class MePath:MapItem
         if (controlPoints != null)
             for (int i = 0; i < controlPoints.Count; i++)
                 controlPoints[i] += offset;
+    }
+
+    public override void RotateAround(Vector2 center, float scaler)
+    {
+        if (positionLine != null)
+            for (int i = 0; i < positionLine.Count; i++)
+                positionLine[i] = RotatePointAround(positionLine[i], center, scaler);
+        if (controlPoints != null)
+            for (int i = 0; i < controlPoints.Count; i++)
+                controlPoints[i] = RotatePointAround(controlPoints[i], center, scaler);
     }
 
     protected void CopyMePathFieldsTo(MePath dst)
@@ -983,7 +1023,7 @@ public enum HeightPathMode
 static class TerrainPathPickUtil
 {
     const string PickChildPrefix = "_path_pick_";
-    const float PickWidthScale = 4f;
+    const float PickColliderWidthX = 3f;
     const float PickColliderHeight = 10f;
 
     static int s_pinAbleLayer = -2;
@@ -1006,7 +1046,6 @@ static class TerrainPathPickUtil
         if (worldPts == null || worldPts.Count < 2) return;
 
         int pin = PinAbleLayer;
-        float halfW = Mathf.Max(pathWidth * PickWidthScale * 0.5f, 0.35f);
         for (int i = 0; i < worldPts.Count - 1; i++)
         {
             Vector3 a = worldPts[i];
@@ -1028,7 +1067,7 @@ static class TerrainPathPickUtil
             BoxCollider box = pick.AddComponent<BoxCollider>();
             box.isTrigger = false;
             box.center = Vector3.zero;
-            box.size = new Vector3(halfW * 2f, PickColliderHeight, len);
+            box.size = new Vector3(PickColliderWidthX, PickColliderHeight, len);
         }
     }
 }
@@ -1141,116 +1180,6 @@ public class HeightPath : MePath
             lr.startColor = new Color(0.2f, 0.85f, 1f, 0.9f);
             lr.endColor = new Color(0.1f, 0.5f, 1f, 0.9f);
         }
-        lr.positionCount = worldPts.Count;
-        for (int i = 0; i < worldPts.Count; i++)
-            lr.SetPosition(i, worldPts[i]);
-
-        Shader shader = Shader.Find("Hidden/Internal-Colored") ?? Shader.Find("Sprites/Default");
-        lr.material = new Material(shader);
-        lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        lr.receiveShadows = false;
-
-        TerrainPathPickUtil.BuildPickColliders(lineGo.transform, worldPts, width);
-    }
-}
-
-public class MaterialPath : MePath
-{
-    public float width = 20f;
-    /// <summary>1=sand, 2=grass, 3=asphalt, 4=road</summary>
-    public int materialIndex = 2;
-    public int samplesPerCubicSegment = MePathCurve.DefaultSamplesPerCubicSegment;
-
-    public override float Rank => 0.04f;
-
-    const string LineChildName = "_material_path_line";
-
-    public override string IdPrefix => "material_path";
-
-    static readonly Color[] MaterialColors =
-    {
-        Color.black,
-        new Color(1f, 0.6f, 0.2f),
-        new Color(0.2f, 0.85f, 0.2f),
-        new Color(0.5f, 0.5f, 0.55f),
-        new Color(0.35f, 0.25f, 0.15f),
-    };
-
-    public override string getInfoText()
-    {
-        return "MaterialPath\nid = " + id + "\nwidth = " + width + "\nmaterial = " + materialIndex;
-    }
-
-    public override MapItem Duplicate()
-    {
-        MaterialPath c = new GameObject("MaterialPath").AddComponent<MaterialPath>();
-        CopyMePathFieldsTo(c);
-        c.width = width;
-        c.materialIndex = materialIndex;
-        return c;
-    }
-
-    void OnEnable()
-    {
-        scatterThis();
-    }
-
-    List<Vector3> BuildWorldCurvePoints()
-    {
-        var svgPts = new List<Vector2>();
-        MePathCurve.CollectSvgCurvePoints(this, samplesPerCubicSegment, svgPts);
-        var list = new List<Vector3>(svgPts.Count);
-        foreach (Vector2 svgPt in svgPts)
-        {
-            Vector2 u3d = MathOfRwrme.SvgPosToU3dPos(svgPt);
-            float y = 0f;
-            if (Terrain.activeTerrain != null)
-                y = Terrain.activeTerrain.SampleHeight(new Vector3(u3d.x, 0f, u3d.y)) + 1.5f;
-            Vector3 w = new Vector3(u3d.x, y, u3d.y);
-            if (list.Count > 0 && (list[list.Count - 1] - w).sqrMagnitude < 1e-8f)
-                continue;
-            list.Add(w);
-        }
-        return list;
-    }
-
-    void EnsureCurveData()
-    {
-        if (positionLine == null || positionLine.Count < 2) return;
-        if (curve != null && curve.Count == positionLine.Count
-            && controlPoints != null && controlPoints.Count >= 2)
-            return;
-        curve = new List<bool>();
-        controlPoints = new List<Vector2>();
-        MePathCurve.ApplyAutoBezierCurveAnnotations(positionLine, curve, controlPoints);
-    }
-
-    public override void scatterThis()
-    {
-        for (int i = transform.childCount - 1; i >= 0; i--)
-            Destroy(transform.GetChild(i).gameObject);
-
-        if (positionLine == null || positionLine.Count < 2) return;
-
-        EnsureCurveData();
-
-        List<Vector3> worldPts = BuildWorldCurvePoints();
-        if (worldPts.Count < 2) return;
-
-        int idx = Mathf.Clamp(materialIndex, 0, MaterialColors.Length - 1);
-        Color col = MaterialColors[idx];
-
-        GameObject lineGo = new GameObject(LineChildName);
-        lineGo.transform.SetParent(transform, false);
-        lineGo.layer = TerrainPathPickUtil.PinAbleLayer;
-
-        LineRenderer lr = lineGo.AddComponent<LineRenderer>();
-        lr.useWorldSpace = true;
-        lr.loop = false;
-        lr.startWidth = width * 0.05f;
-        lr.endWidth = width * 0.05f;
-        lr.startColor = col;
-        lr.endColor = col;
         lr.positionCount = worldPts.Count;
         for (int i = 0; i < worldPts.Count; i++)
             lr.SetPosition(i, worldPts[i]);
@@ -1385,10 +1314,13 @@ public static class TerrainPathRasterizer
     static void ApplyMaterialPath(Texture2D tex, MaterialPath path)
     {
         float halfWidthSvg = path.width * 0.5f;
-        List<Vector2> strokePoly = BuildStrokePolygonForMePath(path, halfWidthSvg, path.samplesPerCubicSegment);
-        if (strokePoly == null || strokePoly.Count < 3) return;
+        if (halfWidthSvg <= 0f) return;
 
-        GetPolygonBoundsSvg(strokePoly, out float minX, out float minY, out float maxX, out float maxY);
+        var sampled = new List<Vector2>();
+        MePathCurve.CollectSvgCurvePoints(path, path.samplesPerCubicSegment, sampled);
+        if (sampled == null || sampled.Count < 2) return;
+
+        GetPathBoundsSvg(sampled, halfWidthSvg, out float minX, out float minY, out float maxX, out float maxY);
 
         Vector2 pMin = SvgToTexturePixel(new Vector2(minX, minY), tex.width, tex.height);
         Vector2 pMax = SvgToTexturePixel(new Vector2(maxX, maxY), tex.width, tex.height);
@@ -1398,14 +1330,23 @@ public static class TerrainPathRasterizer
         int top = Mathf.Min(tex.height - 1, Mathf.Max((int)pMin.y, (int)pMax.y));
 
         Color paint = MaterialIndexToColor(path.materialIndex);
+        float hardness = Mathf.Max(path.hardness, 1e-4f);
 
         for (int py = bottom; py <= top; py++)
         {
             for (int px = left; px <= right; px++)
             {
-                Vector2 svg = TexturePixelToSvg(new Vector2(px, py), tex.width, tex.height);
-                if (!PointInPolygon(svg, strokePoly)) continue;
-                tex.SetPixel(px, py, paint);
+                Vector2 svg = TexturePixelToSvg(new Vector2(px + 0.5f, py + 0.5f), tex.width, tex.height);
+                float dist = DistanceToPolyline(svg, sampled);
+                if (dist > halfWidthSvg) continue; // 不外扩：仅半宽内上色
+
+                // 中心→边缘衰减指数：w = (1 - dist/R)^hardness（与 HeightBush 同语义）
+                float t = 1f - dist / halfWidthSvg;
+                float w = Mathf.Pow(Mathf.Clamp01(t), hardness);
+                if (w <= 0f) continue;
+
+                Color src = tex.GetPixel(px, py);
+                tex.SetPixel(px, py, Color.Lerp(src, paint, w));
             }
         }
 

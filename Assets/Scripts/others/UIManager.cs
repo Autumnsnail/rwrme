@@ -123,6 +123,7 @@ public class UIManager : MonoBehaviour
         public Vector2? customAnchoredPos;             // 父面板本地坐标；null = 放下拉框正上方
         public float customWidth = 0f;                 // <=0 沿用下拉框宽度
         public string placeholder = "Search...";
+        public System.Action<int> onFilteredSelect;    // 搜索过滤后对当前 dd.value 生效
     }
     SearchableDropdown sdMesh, sdBuilding, sdWall, sdPlatformBaseWall;
 
@@ -166,12 +167,16 @@ public class UIManager : MonoBehaviour
         if (postsTr != null) ddPosts = postsTr.gameObject;
 
         // 四个可搜索下拉：启动即建好搜索条，避免首次打开菜单时缺失（原先只在下拉框 PointerDown 惰性创建）
-        sdMesh = MakeSearchable(ddMt, () => MetaMap.instance.meshTemplates.Select(t => t.name).ToList());
+        sdMesh = MakeSearchable(ddMt, () => MetaMap.instance.meshTemplates.Select(t => t.name).ToList(),
+            onFilteredSelect: i => { if (ToolController.inste != null) ToolController.inste.setMeshScatterTool(i); });
         // Building 编辑器上方是按钮带（y≈70~150），下拉正上方放不下；改放下方空区（Draw Bush 下方），整宽
         sdBuilding = MakeSearchable(ddBT, () => MetaMap.instance.buildingTypes.Select(t => t.name).ToList(),
-            customPos: new Vector2(-0.4f, -90f), placeholder: "Search building...");
-        sdWall = MakeSearchable(ddWT, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList());
-        sdPlatformBaseWall = MakeSearchable(ddWTP, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList());
+            customPos: new Vector2(-0.4f, -90f), placeholder: "Search building...",
+            onFilteredSelect: changebtc);
+        sdWall = MakeSearchable(ddWT, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList(),
+            onFilteredSelect: changewtc);
+        sdPlatformBaseWall = MakeSearchable(ddWTP, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList(),
+            onFilteredSelect: changebwt);
 
         CreateIdSearchPanel();
         LayoutRightSubmenusBelowIdSearch();
@@ -612,7 +617,8 @@ public class UIManager : MonoBehaviour
     // ---------- 通用可搜索下拉 ----------
 
     SearchableDropdown MakeSearchable(GameObject ddGO, System.Func<List<string>> allOptions,
-        Vector2? customPos = null, float customWidth = 0f, string placeholder = "Search...")
+        Vector2? customPos = null, float customWidth = 0f, string placeholder = "Search...",
+        System.Action<int> onFilteredSelect = null)
     {
         var s = new SearchableDropdown
         {
@@ -620,7 +626,8 @@ public class UIManager : MonoBehaviour
             allOptions = allOptions,
             customAnchoredPos = customPos,
             customWidth = customWidth,
-            placeholder = placeholder
+            placeholder = placeholder,
+            onFilteredSelect = onFilteredSelect
         };
         EnsureSearchUI(s);
         return s;
@@ -733,6 +740,9 @@ public class UIManager : MonoBehaviour
             if (idx < 0) idx = 0;
             dd.SetValueWithoutNotify(idx);
             dd.RefreshShownValue();
+            // preferredText == null：来自搜索框输入，立即生效选择；RefreshSearchable 保选项时不切工具
+            if (preferredText == null)
+                s.onFilteredSelect?.Invoke(idx);
         }
     }
 

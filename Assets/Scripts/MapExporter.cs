@@ -337,7 +337,8 @@ public class MapExporter : MonoBehaviour
             else if (!isHeight && mi is MaterialPath mp)
             {
                 desc.InnerText = "width=" + mp.width.ToString(CultureInfo.InvariantCulture) + ";"
-                    + "material_index=" + mp.materialIndex + ";";
+                    + "material_index=" + mp.materialIndex + ";"
+                    + "hardness=" + mp.hardness.ToString(CultureInfo.InvariantCulture) + ";";
             }
             pathEl.AppendChild(desc);
             group.AppendChild(pathEl);

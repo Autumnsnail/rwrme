@@ -15,6 +15,7 @@ public class Syncer : MonoBehaviour
     public GameObject toggleMeshs;
     public GameObject toggleDecals;
 
+    Transform mapRangeRoot;
 
     // Start is called before the first frame update
     void Start()
@@ -23,6 +24,7 @@ public class Syncer : MonoBehaviour
         // ����Э��
         //StartCoroutine(StartupRoutine());
         runToInit();
+        EnsureMapRangeOverlays();
         updateMap();
         Debug.Log("SyncerInit");
     }
@@ -380,6 +382,78 @@ public class Syncer : MonoBehaviour
             {
                 mi.gameObject.SetActive(stat);
             }
+        }
+    }
+
+    public void changeMapRangeVisState(bool stat)
+    {
+        EnsureMapRangeOverlays();
+        if (mapRangeRoot != null)
+            mapRangeRoot.gameObject.SetActive(stat);
+    }
+
+    void EnsureMapRangeOverlays()
+    {
+        if (mapRangeRoot != null) return;
+
+        GameObject root = new GameObject("MapRangeOverlay");
+        mapRangeRoot = root.transform;
+
+        // SVG 边距条：x/y 的 0–60 与 1988–2048（满幅另一轴）
+        CreateMapRangeStrip("MapRange_X0", 0f, 0f, 60f, 2048f);
+        CreateMapRangeStrip("MapRange_Y0", 0f, 0f, 2048f, 60f);
+        CreateMapRangeStrip("MapRange_X1", 1988f, 0f, 60f, 2048f);
+        CreateMapRangeStrip("MapRange_Y1", 0f, 1988f, 2048f, 60f);
+    }
+
+    /// <summary>在 SVG 矩形 [x,y,w,h] 上铺一条水平半透明红 Quad（无碰撞）。</summary>
+    void CreateMapRangeStrip(string name, float svgX, float svgY, float svgW, float svgH)
+    {
+        Vector2 u0 = MathOfRwrme.SvgPosToU3dPos(new Vector2(svgX, svgY));
+        Vector2 u1 = MathOfRwrme.SvgPosToU3dPos(new Vector2(svgX + svgW, svgY + svgH));
+
+        float minX = Mathf.Min(u0.x, u1.x);
+        float maxX = Mathf.Max(u0.x, u1.x);
+        float minZ = Mathf.Min(u0.y, u1.y);
+        float maxZ = Mathf.Max(u0.y, u1.y);
+
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        go.name = name;
+        go.transform.SetParent(mapRangeRoot, false);
+
+        Collider col = go.GetComponent<Collider>();
+        if (col != null) Destroy(col);
+
+        go.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        go.transform.position = new Vector3((minX + maxX) * 0.5f, 1f, (minZ + maxZ) * 0.5f);
+        go.transform.localScale = new Vector3(Mathf.Max(0.01f, maxX - minX), Mathf.Max(0.01f, maxZ - minZ), 1f);
+
+        Renderer rend = go.GetComponent<Renderer>();
+        if (rend != null)
+        {
+            Shader sh = Shader.Find("Unlit/Color");
+            if (sh == null) sh = Shader.Find("Sprites/Default");
+            if (sh == null) sh = Shader.Find("Standard");
+            Material mat = new Material(sh);
+            Color c = new Color(1f, 0f, 0f, 0.35f);
+            mat.color = c;
+            if (mat.HasProperty("_Color")) mat.SetColor("_Color", c);
+            // 尽量开透明（Unlit/Color 可能不支持，颜色仍可见）
+            if (sh != null && sh.name.Contains("Standard"))
+            {
+                mat.SetFloat("_Mode", 3f);
+                mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                mat.SetInt("_ZWrite", 0);
+                mat.DisableKeyword("_ALPHATEST_ON");
+                mat.EnableKeyword("_ALPHABLEND_ON");
+                mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                mat.renderQueue = 3000;
+                mat.color = c;
+            }
+            rend.material = mat;
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            rend.receiveShadows = false;
         }
     }
 }

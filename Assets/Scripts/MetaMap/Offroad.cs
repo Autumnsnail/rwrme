@@ -141,7 +141,7 @@ public class Offroad : MePath
 
     void BuildPickColliders(Transform lineParent, List<Vector3> worldPts, int pinLayer)
     {
-        float halfW = Mathf.Max(lineWidth * pickWidthScale * 0.5f, 0.6f);
+        const float pickWidthX = 3f;
         for (int i = 0; i < worldPts.Count - 1; i++)
         {
             Vector3 a = worldPts[i];
@@ -164,7 +164,7 @@ public class Offroad : MePath
             BoxCollider box = pick.AddComponent<BoxCollider>();
             box.isTrigger = false;
             box.center = Vector3.zero;
-            box.size = new Vector3(halfW * 2f, pickColliderHeight, len);
+            box.size = new Vector3(pickWidthX, pickColliderHeight, len);
         }
     }
 

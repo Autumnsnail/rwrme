@@ -410,11 +410,13 @@ public class ToolController : MonoBehaviour
         {
             // 性能：MeRect 子类（Building/MeMesh）的每实例 offset UI 默认隐藏，仅给单选时的当前实例激活。
             if (lastMiS is MeRect oldR && oldR != null && oldR != miSelected) oldR.SetOffsetUiActive(false);
+            if (lastMiS is MaterialPath oldMp && oldMp != null && oldMp != miSelected) oldMp.SetParamUiActive(false);
 
             if (MultiSelectMode)
             {
                 // 多选时不显示任何单实例 offset UI
                 if (miSelected is MeRect curR && curR != null) curR.SetOffsetUiActive(false);
+                if (miSelected is MaterialPath curMp && curMp != null) curMp.SetParamUiActive(false);
                 UIManager.instance.changeShowingCanvas(null);
                 UIManager.instance.RefreshMultiSelectPanel(misSelected);
             }
@@ -424,6 +426,7 @@ public class ToolController : MonoBehaviour
                 if (miSelected != null)
                 {
                     if (miSelected is MeRect newR) newR.SetOffsetUiActive(true);
+                    if (miSelected is MaterialPath newMp) newMp.SetParamUiActive(true);
                     Transform can = miSelected.transform.Find("Canvas");
                     if (can != null)
                         UIManager.instance.changeShowingCanvas(can.gameObject.GetComponent<Canvas>());
@@ -627,6 +630,11 @@ public class ToolController : MonoBehaviour
             mpd.AdjustWidth(1f);
         if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus))
             mpd.AdjustWidth(-1f);
+
+        if (Input.GetKey(KeyCode.RightBracket))
+            mpd.AdjustHardness(0.05f);
+        if (Input.GetKey(KeyCode.LeftBracket))
+            mpd.AdjustHardness(-0.05f);
     }
 
     private void HandleToolShortcuts()
@@ -850,6 +858,17 @@ public class ToolController : MonoBehaviour
     {
         TerrainMaterialPainter tmp = tools[15] as TerrainMaterialPainter;
         tmp.radius = float.Parse(ran);
+    }
+
+    public void setTPterHar(string har)
+    {
+        TerrainMaterialPainter tmp = tools[15] as TerrainMaterialPainter;
+        if (tmp == null) return;
+        if (string.IsNullOrWhiteSpace(har)) return;
+        string normalized = har.Trim().Replace(',', '.');
+        if (float.TryParse(normalized, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float h))
+            tmp.hardness = Mathf.Clamp(h, 0f, 50f);
     }
     public void setMeshScatterTool(int index)
     {
@@ -1788,7 +1807,7 @@ public class DrawerTool : Tool
             }
         }
 
-        bd.material = "BuildingWhite2";
+        bd.material = MaterialChangerTool.ResolveBuildingPlaceMaterial();
         bd.height = 2;
         CtrlZer.instance.checkPoint();
         MetaMap.instance.defaultLayer.mapItems.Add(bd);
@@ -1952,6 +1971,26 @@ public class MaterialChangerTool : Tool
         bt = material;
     }
 
+    /// <summary>放置 Building：已选 BuildingType 用所选，否则用类型列表第一项。</summary>
+    public static string ResolveBuildingPlaceMaterial()
+    {
+        var mct = ToolController.inste?.tools[4] as MaterialChangerTool;
+        if (mct?.bt is BuildingType bt) return bt.name;
+        var list = MetaMap.instance?.buildingTypes;
+        if (list != null && list.Count > 0) return list[0].name;
+        return "BuildingWhite2";
+    }
+
+    /// <summary>放置 Wall：已选 WallType 用所选，否则用类型列表第一项。</summary>
+    public static string ResolveWallPlaceMaterial()
+    {
+        var mct = ToolController.inste?.tools[4] as MaterialChangerTool;
+        if (mct?.bt is WallType wt) return wt.name;
+        var list = MetaMap.instance?.wallTypes;
+        if (list != null && list.Count > 0) return list[0].name;
+        return "GardenWall1";
+    }
+
     public override void startUse(Vector3 position, GameObject hitO)
     {
         if (hitO != null && bt != null)
@@ -2064,8 +2103,42 @@ public class SideTool
 
         if (mis != null && mis.Count > 0)
         {
-            foreach (var item in mis)
-                ApplyTransform(item, offset, Pos);
+            if (state == 2)
+            {
+                Vector2 mid = new Vector2(0.5f, 0.5f);
+                Vector2 fromMid = Pos - mid;
+                float mag = fromMid.magnitude;
+                if (mag < 1e-6f) return;
+                float scaler = (offset.x * fromMid.y - offset.y * fromMid.x) / mag;
+
+                Vector2 center = Vector2.zero;
+                int n = 0;
+                foreach (var item in mis)
+                {
+                    if (item == null) continue;
+                    center += item.GetAnchor();
+                    n++;
+                }
+                if (n == 0) return;
+                center /= n;
+
+                foreach (var item in mis)
+                {
+                    if (item == null) continue;
+                    item.RotateAround(center, scaler);
+                    item.scatterThis();
+                    if (item is HeightPath || item is MaterialPath)
+                    {
+                        if (Syncer.instence != null)
+                            Syncer.instence.ApplyPreviewTerrain();
+                    }
+                }
+            }
+            else
+            {
+                foreach (var item in mis)
+                    ApplyTransform(item, offset, Pos);
+            }
         }
         else if (mi != null)
         {
@@ -2145,7 +2218,7 @@ public class WallDrawer : Tool
             GameObject go = ToolController.inste.InsOnePref(MapImporter.instate.WallPref);
             Wall wl = go.GetComponent<Wall>();
             wl.positionLine = new List<Vector2>(PathDrawed) ;
-            wl.material = "GardenWall1";
+            wl.material = MaterialChangerTool.ResolveWallPlaceMaterial();
             wl.id = MetaMap.instance.getNewItemId("wall");
             wl.layerIndex = lid;
             PathDrawed.Clear();
@@ -2447,6 +2520,7 @@ public class MaterialPathDrawer : Tool
     public List<Vector2> PathDrawed;
     public float width = 20f;
     public int materialIndex = 2;
+    public float hardness = 1.0f;
 
     public MaterialPathDrawer(string name) : base(name)
     {
@@ -2469,6 +2543,11 @@ public class MaterialPathDrawer : Tool
         width = Mathf.Clamp(width + delta, 1f, 200f);
     }
 
+    public void AdjustHardness(float delta)
+    {
+        hardness = Mathf.Clamp(hardness + delta, 0f, 50f);
+    }
+
     public static string MaterialName(int index)
     {
         switch (index)
@@ -2484,8 +2563,9 @@ public class MaterialPathDrawer : Tool
     {
         return "材质路径  |  材质:" + MaterialName(materialIndex) + "(" + materialIndex + ")"
             + "  |  宽度:" + width.ToString("F1")
+            + "  |  衰减指数:" + hardness.ToString("F2")
             + (drawing ? "  |  绘制中(" + PathDrawed.Count + "点)" : "")
-            + "\n[M]切换材质  [=/-]线宽  [Space]完成  [Esc]取消  [Ctrl+Z]撤销点";
+            + "\n[M]切换材质  [=/-]线宽  [[/]]衰减指数  [Space]完成  [Esc]取消  [Ctrl+Z]撤销点";
     }
 
     public override void startUse(Vector3 Position, GameObject hitO)
@@ -2514,13 +2594,14 @@ public class MaterialPathDrawer : Tool
         CtrlZer.instance.checkPoint();
         drawing = false;
 
-        MaterialPath mp = new GameObject("MaterialPath").AddComponent<MaterialPath>();
+        MaterialPath mp = MaterialPath.CreateInstance();
         mp.positionLine = new List<Vector2>(PathDrawed);
         mp.curve = new List<bool>();
         mp.controlPoints = new List<Vector2>();
         MePathCurve.ApplyAutoBezierCurveAnnotations(mp.positionLine, mp.curve, mp.controlPoints);
         mp.width = width;
         mp.materialIndex = materialIndex;
+        mp.hardness = hardness;
         mp.id = MetaMap.instance.getNewItemId("material_path");
         mp.layerIndex = 1;
 
@@ -3180,10 +3261,53 @@ public class TerrainMaterialPainter : Tool
     private Vector2 curPos;
     private Color tarCol;
     public float radius = 20;
+    /// <summary>中心→边缘衰减指数：w = (1 - d/R)^hardness；默认 0.5。</summary>
+    public float hardness = 0.5f;
     private Texture2D tex;
 
     public TerrainMaterialPainter(string name) : base(name)
     {
+        visPart = ToolController.inste.heightChangerVisPart;
+    }
+
+    public override void updateVisPart()
+    {
+        if (ToolController.inste.ToolVisPartInstance == null)
+            return;
+
+        Terrain terrain = Terrain.activeTerrain;
+        if (terrain == null || terrain.terrainData == null)
+            return;
+
+        TerrainData td = terrain.terrainData;
+        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : td.size.x;
+        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : td.size.z;
+        // 与 DrawCircleOnTexture 一致：radius 为 1024 画布单位上的半径 → 世界直径
+        float diamX = radius * 2f / 1024f * worldX;
+        float diamZ = radius * 2f / 1024f * worldZ;
+        ToolController.inste.ToolVisPartInstance.transform.localScale = new Vector3(diamX, 1f, diamZ);
+
+        Camera cam = ToolController.inste.orthographicCamera != null
+            ? ToolController.inste.orthographicCamera
+            : Camera.main;
+        if (cam == null)
+            return;
+
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        var hits = Physics.RaycastAll(ray, Mathf.Infinity);
+        if (hits == null || hits.Length == 0)
+            return;
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        foreach (var h in hits)
+        {
+            if (h.collider == null)
+                continue;
+            if (h.collider.GetComponent<Terrain>() == null && !(h.collider is TerrainCollider))
+                continue;
+            ToolController.inste.ToolVisPartInstance.transform.position = h.point;
+            break;
+        }
     }
 
     public void DrawCircleOnTexture(Texture2D texture,Vector2 pos ,float width,float height, Color color)
@@ -3195,6 +3319,7 @@ public class TerrainMaterialPainter : Tool
         int pixelCenterX = Mathf.RoundToInt(pos.x * scaleX);
         int pixelCenterY = Mathf.RoundToInt(pos.y * scaleY);
         int pixelRadius = Mathf.RoundToInt(radius * Mathf.Min(scaleX, scaleY));
+        if (pixelRadius <= 0) return;
 
         // 2. 计算边界
         int left = Mathf.Max(0, pixelCenterX - pixelRadius);
@@ -3202,10 +3327,8 @@ public class TerrainMaterialPainter : Tool
         int top = Mathf.Max(0, pixelCenterY - pixelRadius);
         int bottom = Mathf.Min(texture.height - 1, pixelCenterY + pixelRadius);
 
-        int regionWidth = right - left + 1;
-        int regionHeight = bottom - top + 1;
-
-        int radiusSquared = pixelRadius * pixelRadius;
+        float radiusF = pixelRadius;
+        float hard = Mathf.Max(hardness, 1e-4f);
 
         for (int y = top; y <= bottom; y++)
         {
@@ -3215,10 +3338,15 @@ public class TerrainMaterialPainter : Tool
             for (int x = left; x <= right; x++)
             {
                 int dx = x - pixelCenterX;
-                if (dx * dx + dySquared <= radiusSquared)
-                {
-                    texture.SetPixel(x, y, color);
-                }
+                float distSq = dx * dx + dySquared;
+                if (distSq > radiusF * radiusF) continue;
+
+                float d = Mathf.Sqrt(distSq) / radiusF;
+                float w = Mathf.Pow(Mathf.Clamp01(1f - d), hard);
+                if (w <= 0f) continue;
+
+                Color src = texture.GetPixel(x, y);
+                texture.SetPixel(x, y, Color.Lerp(src, color, w));
             }
         }
 
@@ -4557,6 +4685,8 @@ public class CurvedMePathHandle : MonoBehaviour
             ApplyDrag(n);
             if (Input.GetMouseButtonUp(0))
             {
+                if (Syncer.instence != null)
+                    Syncer.instence.ApplyPreviewTerrain();
                 IsDragging = false;
                 dragSlot = -1;
             }
@@ -4597,8 +4727,6 @@ public class CurvedMePathHandle : MonoBehaviour
         }
 
         target.scatterThis();
-        if (Syncer.instence != null)
-            Syncer.instence.ApplyPreviewTerrain();
     }
 
     void OnDestroy()

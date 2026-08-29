@@ -60,6 +60,7 @@ public class MapImporter : MonoBehaviour
     public GameObject OffroadPref;
     public GameObject PostPref;
     public GameObject TreePref;
+    public GameObject MaterialPathPref;
 
     public Material cbdTl;
 
@@ -1693,7 +1694,7 @@ public class MapImporter : MonoBehaviour
             for (int i = 0; i < cps.Count; i++)
                 cps[i] = rm * (cps[i] * sc) + ov;
 
-            MaterialPath mp = new GameObject("MaterialPath").AddComponent<MaterialPath>();
+            MaterialPath mp = MaterialPath.CreateInstance();
             mp.positionLine = anchors;
             mp.curve = curveFlags;
             mp.controlPoints = cps;
@@ -1712,6 +1713,9 @@ public class MapImporter : MonoBehaviour
                     case "road": mp.materialIndex = 4; break;
                 }
             }
+            if (props.TryGetValue("hardness", out string hardStr)
+                && float.TryParse(hardStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float hard))
+                mp.hardness = hard;
 
             mp.id = MetaMap.instance.getNewItemId("material_path");
             MetaMap.instance.materialPathLayer.mapItems.Add(mp);

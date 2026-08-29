@@ -12,7 +12,7 @@ public class Wall : MePath
     public bool reHighed = false;
     public float reHighedHeight = 0.0f;
 
-    public bool merged = false;
+    public bool merged = true;
 
     void Start()
     {
@@ -44,6 +44,9 @@ public class Wall : MePath
     {
         Wall c = Instantiate(MapImporter.instate.WallPref).GetComponent<Wall>();
         CopyMePathFieldsTo(c);
+        c.merged = merged;
+        c.reHighed = reHighed;
+        c.reHighedHeight = reHighedHeight;
         return c;
     }
 
@@ -70,6 +73,12 @@ public class Wall : MePath
         scatterThis();
     }
 
+    public void SetMerged(bool v)
+    {
+        merged = v;
+        scatterThis();
+    }
+
     public void SetReHighedHeight(string height)
     {
         if (float.TryParse(height, NumberStyles.Float, CultureInfo.InvariantCulture, out float h))
@@ -93,6 +102,17 @@ public class Wall : MePath
         heightInput.gameObject.SetActive(reHighed);
         if (reHighed)
             heightInput.SetTextWithoutNotify(reHighedHeight.ToString(CultureInfo.InvariantCulture));
+    }
+
+    void UpdateMergedUi()
+    {
+        Transform canvas = transform.Find("Canvas");
+        if (canvas == null) return;
+        MapItemParamUiLayout.Ensure(canvas);
+
+        Toggle toggle = MapItemParamUiLayout.Find(canvas, "Merged")?.GetComponent<Toggle>();
+        if (toggle != null)
+            toggle.SetIsOnWithoutNotify(merged);
     }
 
     public override void scatterThis()
@@ -160,6 +180,7 @@ public class Wall : MePath
             wall.transform.GetChild(0).gameObject.GetComponent<Renderer>().material = mtl;
         }
         UpdateHeightUi();
+        UpdateMergedUi();
     }
 
 }

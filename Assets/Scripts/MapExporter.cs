@@ -704,7 +704,7 @@ public class MapExporter : MonoBehaviour
                     wlEDesc.SetAttribute("id", "desc" + (mic+j).ToString());
                     wlEDesc.InnerText = "template = "+ wl.material+";";
                     if (wl.reHighed) wlEDesc.InnerText += "height = " + wl.reHighedHeight.ToString() + ";";
-                    if (wl.merged) wlEDesc.InnerText += "merge = true;";
+                    if (wl.merged) wlEDesc.InnerText += "merge = 1;";
                     wlE.AppendChild(wlEDesc);
                     WallLayer.AppendChild(wlE);
 

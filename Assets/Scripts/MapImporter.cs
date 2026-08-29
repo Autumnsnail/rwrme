@@ -840,10 +840,7 @@ public class MapImporter : MonoBehaviour
                                                             gs.reHighed = true;
                                                             gs.reHighedHeight = float.Parse(properties["height"]);
                                                         } 
-                                                        if (properties.ContainsKey("merge"))
-                                                        {
-                                                            gs.merged = true;
-                                                        }
+                                                        gs.merged = properties.ContainsKey("merge");
 
                                                         MetaMap.instance.defaultLayer.mapItems.Add(gs);
                                                         gs.id = MetaMap.instance.getNewItemId("wall");

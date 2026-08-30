@@ -29,6 +29,18 @@ public class Decal : MeRect
     {
         return "Decal\n" + "id = " + id + "\n" + "layer = " + layerIndex.ToString() + "\n" + "template = " + template_ref + "\n" + "length = "+length;
     }
+
+    public override string IdPrefix { get { return "decal"; } }
+
+    public override MapItem Duplicate()
+    {
+        Decal c = Instantiate(MapImporter.instate.DecalPref).GetComponent<Decal>();
+        CopyMeRectFieldsTo(c);
+        c.template_ref = template_ref;
+        c.length = length;
+        return c;
+    }
+
     // Update is called once per frame
     void Update()
     {

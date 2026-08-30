@@ -125,7 +125,8 @@ public class UIManager : MonoBehaviour
         public string placeholder = "Search...";
         public System.Action<int> onFilteredSelect;    // 搜索过滤后对当前 dd.value 生效
     }
-    SearchableDropdown sdMesh, sdBuilding, sdWall, sdPlatformBaseWall;
+    SearchableDropdown sdMesh, sdBuilding, sdWall, sdPlatformBaseWall, sdAssaumble;
+    GameObject ddAssaumble;
 
 
     Canvas showingCanvas;
@@ -178,6 +179,8 @@ public class UIManager : MonoBehaviour
         sdPlatformBaseWall = MakeSearchable(ddWTP, () => MetaMap.instance.wallTypes.Select(t => t.name).ToList(),
             onFilteredSelect: changebwt);
 
+        SetupAssaumblesEditor();
+
         CreateIdSearchPanel();
         LayoutRightSubmenusBelowIdSearch();
         LayoutLeftBottomManagers();
@@ -204,6 +207,77 @@ public class UIManager : MonoBehaviour
         mms.Add(rEM);//6
         gEM = transform.Find("settingManager").gameObject;
         */
+    }
+
+    void SetupAssaumblesEditor()
+    {
+        Transform editor = transform.Find("AssaumblesEditor");
+        if (editor == null) return;
+
+        editor.localScale = Vector3.zero;
+
+        Transform existing = editor.Find("AssaumbleTypes");
+        if (existing != null)
+            ddAssaumble = existing.gameObject;
+        else if (ddBT != null)
+        {
+            ddAssaumble = UnityEngine.Object.Instantiate(ddBT, editor);
+            ddAssaumble.name = "AssaumbleTypes";
+            foreach (var et in ddAssaumble.GetComponents<UnityEngine.EventSystems.EventTrigger>())
+                UnityEngine.Object.Destroy(et);
+            RectTransform rt = ddAssaumble.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.anchorMin = new Vector2(0.5f, 0.5f);
+                rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = new Vector2(0f, 80f);
+                rt.sizeDelta = new Vector2(220f, 30f);
+            }
+        }
+
+        if (ddAssaumble != null)
+        {
+            TMP_Dropdown dd = ddAssaumble.GetComponent<TMP_Dropdown>();
+            if (dd != null)
+            {
+                dd.onValueChanged.RemoveAllListeners();
+                dd.onValueChanged.AddListener(OnAssaumbleFilteredSelect);
+            }
+
+            if (AssaumbleStore.Loaded.Count == 0)
+                AssaumbleStore.LoadAll();
+            sdAssaumble = MakeSearchable(ddAssaumble, () => AssaumbleStore.GetDisplayNames(),
+                customPos: new Vector2(0f, 120f), placeholder: "Search assaumble...",
+                onFilteredSelect: OnAssaumbleFilteredSelect);
+            RefreshAssaumbleDropdown();
+        }
+    }
+
+    public void RefreshAssaumbleDropdown()
+    {
+        RefreshSearchable(sdAssaumble);
+    }
+
+    public void OnAddAssaumble()
+    {
+        Transform editor = transform.Find("AssaumblesEditor");
+        if (editor == null) return;
+        TMP_InputField nameInput = editor.Find("nameInput")?.GetComponent<TMP_InputField>();
+        string name = nameInput != null ? nameInput.text : "";
+        if (ToolController.inste == null) return;
+        if (AssaumbleStore.SaveFromSelection(name, ToolController.inste.misSelected))
+            RefreshAssaumbleDropdown();
+    }
+
+    void OnAssaumbleFilteredSelect(int filteredIndex)
+    {
+        string nm = GetDropdownText(ddAssaumble, filteredIndex);
+        if (string.IsNullOrEmpty(nm)) return;
+        int idx = AssaumbleStore.GetDisplayNames().IndexOf(nm);
+        AssaumbleStore.SetCurrentByIndex(idx);
+        if (ToolController.inste != null && idx >= 0)
+            ToolController.inste.setToolWithIndex(23);
     }
 
     // Update is called once per frame
@@ -419,7 +493,7 @@ public class UIManager : MonoBehaviour
         {
             "PinManager", "BuildingEditor", "WallEditor", "PlatformEditor",
             "FunctionObjectsEditor", "MeshEditor", "DecalEditor",
-            "TerrainMaterialEditor", "HeightMapEditor"
+            "TerrainMaterialEditor", "HeightMapEditor", "AssaumblesEditor"
         };
         foreach (string name in names)
         {

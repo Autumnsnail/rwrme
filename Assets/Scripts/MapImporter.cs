@@ -1314,6 +1314,7 @@ public class MapImporter : MonoBehaviour
         importPreTerrain();
         importTerrainCombinAplha();
         importPreCombinedAlpha();
+        AssaumbleStore.LoadAll();
     }
 
     public void importPreTerrain()

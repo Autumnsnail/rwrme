@@ -99,6 +99,7 @@ public class ToolController : MonoBehaviour
         tools.Add(new PostDrawer("PostDrawer")); //tool 20 = post path drawer
         tools.Add(new HeightPathDrawer("HeightPathDrawer")); //tool 21 = height path drawer
         tools.Add(new MaterialPathDrawer("MaterialPathDrawer")); //tool 22 = material path drawer
+        tools.Add(new AssaumblePlaceTool("AssaumblePlace")); //tool 23 = place assaumble
 
         currentTool = tools[0];
 
@@ -3150,6 +3151,35 @@ public class DecalScatter : Tool
     {
         templateName = name;
         ToolController.inste.setToolWithIndex(19);
+    }
+}
+
+public class AssaumblePlaceTool : Tool
+{
+    public AssaumblePlaceTool(string name) : base(name)
+    {
+    }
+
+    public override void startUse(Vector3 position, GameObject hitO)
+    {
+        if (AssaumbleStore.Current == null)
+        {
+            Debug.LogWarning("AssaumblePlaceTool: no assembly selected");
+            return;
+        }
+        CtrlZer.instance.checkPoint();
+        int baseLayer = 0;
+        if (hitO != null)
+        {
+            MapItem hit = hitO.GetComponent<MapItem>();
+            if (hit != null) baseLayer = hit.layerIndex;
+        }
+        AssaumbleStore.PlaceAt(MathOfRwrme.U3dPosToSvgPos(position), baseLayer);
+    }
+
+    public void Activate()
+    {
+        ToolController.inste.setToolWithIndex(23);
     }
 }
 

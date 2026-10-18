@@ -1,0 +1,437 @@
+"""Parse Ogre MeshSerializer_v1.x binary .mesh into positions/normals/uvs/indices."""
+
+from __future__ import annotations
+
+import struct
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+
+# Chunk IDs (Ogre MeshFileFormat.h)
+M_HEADER = 0x1000
+M_MESH = 0x3000
+M_SUBMESH = 0x4000
+M_SUBMESH_OPERATION = 0x4010
+M_SUBMESH_BONE_ASSIGNMENT = 0x4100
+M_SUBMESH_TEXTURE_ALIAS = 0x4200
+M_GEOMETRY = 0x5000
+M_GEOMETRY_VERTEX_DECLARATION = 0x5100
+M_GEOMETRY_VERTEX_ELEMENT = 0x5110
+M_GEOMETRY_VERTEX_BUFFER = 0x5200
+M_GEOMETRY_VERTEX_BUFFER_DATA = 0x5210
+M_MESH_SKELETON_LINK = 0x6000
+M_MESH_BONE_ASSIGNMENT = 0x7000
+M_MESH_LOD = 0x8000
+M_MESH_BOUNDS = 0x9000
+M_SUBMESH_NAME_TABLE = 0xA000
+M_SUBMESH_NAME_TABLE_ELEMENT = 0xA100
+M_EDGE_LISTS = 0xB000
+M_POSES = 0xC000
+M_ANIMATIONS = 0xD000
+M_TABLE_EXTREMES = 0xE000
+
+# Vertex element type
+VET_FLOAT1 = 0
+VET_FLOAT2 = 1
+VET_FLOAT3 = 2
+VET_FLOAT4 = 3
+VET_COLOUR = 4
+VET_SHORT1 = 5
+VET_SHORT2 = 6
+VET_SHORT3 = 7
+VET_SHORT4 = 8
+VET_UBYTE4 = 9
+VET_COLOUR_ARGB = 10
+VET_COLOUR_ABGR = 11
+
+# Vertex semantic
+VES_POSITION = 1
+VES_BLEND_WEIGHTS = 2
+VES_BLEND_INDICES = 3
+VES_NORMAL = 4
+VES_DIFFUSE = 5
+VES_SPECULAR = 6
+VES_TEXTURE_COORDINATES = 7
+VES_BINORMAL = 8
+VES_TANGENT = 9
+
+VET_SIZE = {
+    VET_FLOAT1: 4,
+    VET_FLOAT2: 8,
+    VET_FLOAT3: 12,
+    VET_FLOAT4: 16,
+    VET_COLOUR: 4,
+    VET_SHORT1: 2,
+    VET_SHORT2: 4,
+    VET_SHORT3: 6,
+    VET_SHORT4: 8,
+    VET_UBYTE4: 4,
+    VET_COLOUR_ARGB: 4,
+    VET_COLOUR_ABGR: 4,
+}
+
+
+class MeshReader:
+    def __init__(self, data: bytes):
+        self.data = data
+        self.pos = 0
+        self.flip = False  # file endian vs native; RWR meshes are little-endian
+
+    def remaining(self) -> int:
+        return len(self.data) - self.pos
+
+    def eof(self) -> bool:
+        return self.pos >= len(self.data)
+
+    def tell(self) -> int:
+        return self.pos
+
+    def seek(self, pos: int) -> None:
+        self.pos = pos
+
+    def skip(self, n: int) -> None:
+        self.pos += n
+
+    def read(self, n: int) -> bytes:
+        b = self.data[self.pos : self.pos + n]
+        if len(b) < n:
+            raise EOFError(f"need {n} bytes at {self.pos}, have {len(b)}")
+        self.pos += n
+        return b
+
+    def read_u8(self) -> int:
+        return self.read(1)[0]
+
+    def read_bool(self) -> bool:
+        return self.read_u8() != 0
+
+    def read_u16(self) -> int:
+        (v,) = struct.unpack("<H", self.read(2))
+        return v
+
+    def read_u32(self) -> int:
+        (v,) = struct.unpack("<I", self.read(4))
+        return v
+
+    def read_f32(self) -> float:
+        (v,) = struct.unpack("<f", self.read(4))
+        return v
+
+    def read_string_nl(self) -> str:
+        """Ogre Serializer::readString — read until '\\n' (consumed, not included)."""
+        start = self.pos
+        while self.pos < len(self.data) and self.data[self.pos] != 0x0A:
+            self.pos += 1
+        s = self.data[start : self.pos].decode("utf-8", errors="replace")
+        if self.pos < len(self.data):
+            self.pos += 1  # skip \n
+        return s
+
+    def peek_chunk_id(self) -> int | None:
+        if self.remaining() < 2:
+            return None
+        (v,) = struct.unpack_from("<H", self.data, self.pos)
+        return v
+
+    def read_chunk_header(self) -> tuple[int, int, int]:
+        """Return (id, length_including_header, data_end_pos)."""
+        start = self.pos
+        cid = self.read_u16()
+        length = self.read_u32()
+        end = start + length
+        return cid, length, end
+
+
+@dataclass
+class VertexElement:
+    source: int
+    type: int
+    semantic: int
+    offset: int
+    index: int
+
+
+@dataclass
+class Geometry:
+    vertex_count: int = 0
+    elements: list[VertexElement] = field(default_factory=list)
+    buffers: dict[int, bytes] = field(default_factory=dict)  # bind -> raw
+    vertex_sizes: dict[int, int] = field(default_factory=dict)
+
+
+@dataclass
+class SubMesh:
+    material: str = ""
+    use_shared_vertices: bool = True
+    indices: list[int] = field(default_factory=list)
+    operation: int = 4  # OT_TRIANGLE_LIST
+    geometry: Geometry | None = None
+
+
+@dataclass
+class OgreMesh:
+    version: str = ""
+    shared: Geometry | None = None
+    submeshes: list[SubMesh] = field(default_factory=list)
+    bounds_min: tuple[float, float, float] | None = None
+    bounds_max: tuple[float, float, float] | None = None
+    bounds_radius: float | None = None
+
+
+def _parse_geometry(r: MeshReader, end: int) -> Geometry:
+    geo = Geometry()
+    geo.vertex_count = r.read_u32()
+    while r.tell() < end:
+        cid, _length, cend = r.read_chunk_header()
+        if cid == M_GEOMETRY_VERTEX_DECLARATION:
+            while r.tell() < cend:
+                eid, _elength, eend = r.read_chunk_header()
+                if eid == M_GEOMETRY_VERTEX_ELEMENT:
+                    geo.elements.append(
+                        VertexElement(
+                            source=r.read_u16(),
+                            type=r.read_u16(),
+                            semantic=r.read_u16(),
+                            offset=r.read_u16(),
+                            index=r.read_u16(),
+                        )
+                    )
+                r.seek(eend)
+        elif cid == M_GEOMETRY_VERTEX_BUFFER:
+            bind = r.read_u16()
+            vsize = r.read_u16()
+            geo.vertex_sizes[bind] = vsize
+            # data chunk
+            if r.tell() < cend:
+                did, _dlength, dend = r.read_chunk_header()
+                if did == M_GEOMETRY_VERTEX_BUFFER_DATA:
+                    nbytes = geo.vertex_count * vsize
+                    geo.buffers[bind] = r.read(nbytes)
+                r.seek(dend)
+        r.seek(cend)
+    return geo
+
+
+def _parse_submesh(r: MeshReader, end: int) -> SubMesh:
+    sm = SubMesh()
+    sm.material = r.read_string_nl()
+    sm.use_shared_vertices = r.read_bool()
+    index_count = r.read_u32()
+    indexes_32 = r.read_bool()
+    if indexes_32:
+        sm.indices = list(struct.unpack(f"<{index_count}I", r.read(index_count * 4)))
+    else:
+        sm.indices = list(struct.unpack(f"<{index_count}H", r.read(index_count * 2)))
+
+    while r.tell() < end:
+        cid, _length, cend = r.read_chunk_header()
+        if cid == M_GEOMETRY:
+            sm.geometry = _parse_geometry(r, cend)
+        elif cid == M_SUBMESH_OPERATION:
+            sm.operation = r.read_u16()
+        # skip bone assignments / texture aliases
+        r.seek(cend)
+    return sm
+
+
+def parse_ogre_mesh(data: bytes) -> OgreMesh:
+    r = MeshReader(data)
+    mesh = OgreMesh()
+
+    hid = r.read_u16()
+    if hid != M_HEADER:
+        raise ValueError(f"expected M_HEADER 0x1000, got 0x{hid:04x}")
+    mesh.version = r.read_string_nl().strip()
+
+    if not mesh.version.startswith("[MeshSerializer_v"):
+        raise ValueError(f"unexpected version: {mesh.version!r}")
+
+    # Optional: some files may have only header (unlikely)
+    while not r.eof():
+        cid = r.peek_chunk_id()
+        if cid is None:
+            break
+        if cid != M_MESH:
+            # unexpected top-level; stop
+            break
+        _cid, _length, mend = r.read_chunk_header()
+        _skeletal = r.read_bool()
+
+        while r.tell() < mend:
+            scid, _slength, send = r.read_chunk_header()
+            if scid == M_GEOMETRY:
+                mesh.shared = _parse_geometry(r, send)
+            elif scid == M_SUBMESH:
+                mesh.submeshes.append(_parse_submesh(r, send))
+            elif scid == M_MESH_BOUNDS:
+                xmin, ymin, zmin = r.read_f32(), r.read_f32(), r.read_f32()
+                xmax, ymax, zmax = r.read_f32(), r.read_f32(), r.read_f32()
+                radius = r.read_f32()
+                mesh.bounds_min = (xmin, ymin, zmin)
+                mesh.bounds_max = (xmax, ymax, zmax)
+                mesh.bounds_radius = radius
+            # skip lod / skeleton / edges / poses / animations / extremes / name table
+            r.seek(send)
+        r.seek(mend)
+        break
+
+    return mesh
+
+
+def _extract_attr(geo: Geometry, semantic: int, components: int) -> list[float] | None:
+    el = next((e for e in geo.elements if e.semantic == semantic), None)
+    if el is None:
+        return None
+    buf = geo.buffers.get(el.source)
+    vsize = geo.vertex_sizes.get(el.source)
+    if buf is None or vsize is None:
+        return None
+    if el.type not in (VET_FLOAT1, VET_FLOAT2, VET_FLOAT3, VET_FLOAT4):
+        return None
+    nfloat = {VET_FLOAT1: 1, VET_FLOAT2: 2, VET_FLOAT3: 3, VET_FLOAT4: 4}[el.type]
+    take = min(components, nfloat)
+    out: list[float] = []
+    for vi in range(geo.vertex_count):
+        base = vi * vsize + el.offset
+        vals = struct.unpack_from(f"<{nfloat}f", buf, base)
+        out.extend(vals[:take])
+        if take < components:
+            out.extend([0.0] * (components - take))
+    return out
+
+
+def geometry_to_arrays(geo: Geometry) -> dict[str, Any]:
+    positions = _extract_attr(geo, VES_POSITION, 3)
+    if not positions:
+        raise ValueError("geometry has no positions")
+    normals = _extract_attr(geo, VES_NORMAL, 3)
+    uvs = _extract_attr(geo, VES_TEXTURE_COORDINATES, 2)
+    return {
+        "vertex_count": geo.vertex_count,
+        "positions": positions,
+        "normals": normals,
+        "uvs": uvs,
+    }
+
+
+def _pack_f32(values: list[float] | None) -> str | None:
+    if not values:
+        return None
+    import base64
+
+    return base64.b64encode(struct.pack(f"<{len(values)}f", *values)).decode("ascii")
+
+
+def _pack_indices(indices: list[int]) -> tuple[str, str]:
+    import base64
+
+    if not indices:
+        return "u16", base64.b64encode(b"").decode("ascii")
+    if max(indices) > 65535:
+        return "u32", base64.b64encode(struct.pack(f"<{len(indices)}I", *indices)).decode("ascii")
+    return "u16", base64.b64encode(struct.pack(f"<{len(indices)}H", *indices)).decode("ascii")
+
+
+def mesh_to_three_payload(mesh: OgreMesh, flip_v: bool = True, compact: bool = True) -> dict[str, Any]:
+    """Convert to a Three.js-friendly JSON payload (possibly multiple groups)."""
+    groups: list[dict[str, Any]] = []
+
+    def push(geo: Geometry, indices: list[int], material: str) -> None:
+        arrays = geometry_to_arrays(geo)
+        uvs = arrays["uvs"]
+        if uvs and flip_v:
+            # Ogre / D3D style often has V flipped vs WebGL
+            flipped = uvs[:]
+            for i in range(1, len(flipped), 2):
+                flipped[i] = 1.0 - flipped[i]
+            uvs = flipped
+        if compact:
+            idx_type, idx_b64 = _pack_indices(indices)
+            groups.append(
+                {
+                    "material": material,
+                    "vertex_count": arrays["vertex_count"],
+                    "index_count": len(indices),
+                    "index_type": idx_type,
+                    "positions_b64": _pack_f32(arrays["positions"]),
+                    "normals_b64": _pack_f32(arrays["normals"]),
+                    "uvs_b64": _pack_f32(uvs),
+                    "indices_b64": idx_b64,
+                }
+            )
+        else:
+            groups.append(
+                {
+                    "material": material,
+                    "vertex_count": arrays["vertex_count"],
+                    "positions": arrays["positions"],
+                    "normals": arrays["normals"],
+                    "uvs": uvs,
+                    "indices": indices,
+                }
+            )
+
+    if mesh.shared and any(sm.use_shared_vertices for sm in mesh.submeshes):
+        for sm in mesh.submeshes:
+            if sm.use_shared_vertices:
+                push(mesh.shared, sm.indices, sm.material)
+
+    for sm in mesh.submeshes:
+        if not sm.use_shared_vertices:
+            if sm.geometry is None:
+                continue
+            push(sm.geometry, sm.indices, sm.material)
+
+    # Rare: shared geometry with no submesh indices — synthesize empty
+    if not groups and mesh.shared:
+        push(mesh.shared, [], "")
+
+    bounds = None
+    if mesh.bounds_min and mesh.bounds_max:
+        bounds = {
+            "min": list(mesh.bounds_min),
+            "max": list(mesh.bounds_max),
+            "radius": mesh.bounds_radius,
+        }
+
+    return {
+        "version": mesh.version,
+        "bounds": bounds,
+        "groups": groups,
+        "submesh_count": len(mesh.submeshes),
+    }
+
+
+def load_mesh_file(path: Path) -> dict[str, Any]:
+    data = path.read_bytes()
+    mesh = parse_ogre_mesh(data)
+    payload = mesh_to_three_payload(mesh)
+    payload["file"] = path.name
+    payload["bytes"] = len(data)
+    return payload
+
+
+if __name__ == "__main__":
+    import json
+    import sys
+
+    p = Path(sys.argv[1] if len(sys.argv) > 1 else r"..\vanilla\models\apc_body.mesh")
+    payload = load_mesh_file(p)
+    summary = {
+        "file": payload["file"],
+        "version": payload["version"],
+        "bytes": payload["bytes"],
+        "bounds": payload["bounds"],
+        "groups": [
+            {
+                "material": g["material"],
+                "vertex_count": g["vertex_count"],
+                "index_count": g.get("index_count"),
+                "has_normals": bool(g.get("normals_b64") or g.get("normals")),
+                "has_uvs": bool(g.get("uvs_b64") or g.get("uvs")),
+            }
+            for g in payload["groups"]
+        ],
+    }
+    print(json.dumps(summary, indent=2))

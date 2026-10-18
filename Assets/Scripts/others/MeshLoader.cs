@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Xml;
@@ -28,10 +27,9 @@ public static class MeshLoader
         public bool FixWindingAfterFlipZ = true;
 
         /// <summary>
-        /// Optional path to OgreXMLConverter executable for converting .mesh -> .mesh.xml.
-        /// If null/empty, .mesh loading requires you to provide the .mesh.xml directly.
-        /// </summary>
-        public string OgreXmlConverterPath = null;
+    /// Optional legacy path to OgreXMLConverter (unused; binary .mesh is parsed built-in).
+    /// </summary>
+    public string OgreXmlConverterPath = null;
     }
 
     /// <summary>
@@ -88,8 +86,7 @@ public static class MeshLoader
     }
 
     /// <summary>
-    /// Convert .mesh -> .mesh.xml with OgreXMLConverter, then load the XML.
-    /// This does NOT use OgreMain.dll directly; it relies on OGRE's converter tool output.
+    /// 内置解析 Ogre 二进制 .mesh（MeshSerializer_v1.x），不依赖 OgreXMLConverter。
     /// </summary>
     public static List<Result> LoadFromOgreMesh(string meshPath, Options options = null)
     {
@@ -97,47 +94,94 @@ public static class MeshLoader
         if (!File.Exists(meshPath)) throw new FileNotFoundException("mesh not found", meshPath);
         options ??= new Options();
 
-        var converter = options.OgreXmlConverterPath;
-        if (string.IsNullOrWhiteSpace(converter) || !File.Exists(converter))
+        var parsed = OgreBinaryMeshParser.ParseFile(meshPath);
+        var results = new List<Result>();
+        string baseName = Path.GetFileNameWithoutExtension(meshPath);
+
+        foreach (var sm in parsed.SubMeshes)
         {
-            throw new FileNotFoundException(
-                "OgreXMLConverter not found. Provide Options.OgreXmlConverterPath, or call LoadFromOgreMeshXml() with a pre-converted .mesh.xml.",
-                converter ?? "(null)");
+            OgreBinaryMeshParser.Geometry geoSrc;
+            if (sm.UseSharedVertices)
+            {
+                if (parsed.Shared == null)
+                    throw new InvalidDataException(
+                        $"Submesh uses shared geometry but shared geometry is missing. version={parsed.Version} submeshes={parsed.SubMeshes.Count} material={sm.Material}");
+                geoSrc = parsed.Shared;
+            }
+            else
+            {
+                if (sm.Geometry == null)
+                    throw new InvalidDataException(
+                        $"Submesh has no geometry and does not use shared vertices. version={parsed.Version} submeshes={parsed.SubMeshes.Count} material={sm.Material} useShared={sm.UseSharedVertices}");
+                geoSrc = sm.Geometry;
+            }
+
+            var arrays = OgreBinaryMeshParser.GeometryToArrays(geoSrc);
+            var geom = ToGeometry(arrays, options);
+            var triangles = ToTriangles(sm.Indices, options);
+            var unityMesh = BuildUnityMesh(geom, triangles, options);
+            unityMesh.name = baseName + (string.IsNullOrEmpty(sm.Material) ? "" : $"_{sm.Material}");
+            results.Add(new Result { Mesh = unityMesh, MaterialName = sm.Material ?? "" });
         }
 
-        var tmpDir = Path.Combine(Application.temporaryCachePath, "ogre-mesh-import");
-        Directory.CreateDirectory(tmpDir);
-        var outXml = Path.Combine(tmpDir, Path.GetFileName(meshPath) + ".xml");
+        if (results.Count == 0 && parsed.Shared != null)
+        {
+            var arrays = OgreBinaryMeshParser.GeometryToArrays(parsed.Shared);
+            var geom = ToGeometry(arrays, options);
+            var unityMesh = BuildUnityMesh(geom, Array.Empty<int>(), options);
+            unityMesh.name = baseName;
+            results.Add(new Result { Mesh = unityMesh, MaterialName = "" });
+        }
 
-        RunConverter(converter, meshPath, outXml);
-        return LoadFromOgreMeshXml(outXml, options);
+        return results;
     }
 
-    private static void RunConverter(string converterExe, string meshPath, string outXml)
+    static Geometry ToGeometry(OgreBinaryMeshParser.GeometryArrays arrays, Options options)
     {
-        // OgreXMLConverter usage differs slightly by version; most accept:
-        //   OgreXMLConverter <input.mesh> <output.mesh.xml>
-        var psi = new ProcessStartInfo
+        var positions = new Vector3[arrays.Positions.Length];
+        for (int i = 0; i < arrays.Positions.Length; i++)
         {
-            FileName = converterExe,
-            Arguments = $"\"{meshPath}\" \"{outXml}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-
-        using var p = Process.Start(psi);
-        if (p == null) throw new InvalidOperationException("Failed to start OgreXMLConverter process.");
-        var stdout = p.StandardOutput.ReadToEnd();
-        var stderr = p.StandardError.ReadToEnd();
-        p.WaitForExit();
-        if (p.ExitCode != 0 || !File.Exists(outXml))
-        {
-            throw new InvalidOperationException(
-                $"OgreXMLConverter failed (exit {p.ExitCode}).\n" +
-                $"stdout:\n{stdout}\n\nstderr:\n{stderr}");
+            Vector3 p = arrays.Positions[i];
+            positions[i] = ConvertPosition(p.x, p.y, p.z, options);
         }
+
+        Vector3[] normals = null;
+        if (arrays.Normals != null && arrays.Normals.Length > 0)
+        {
+            normals = new Vector3[arrays.Normals.Length];
+            for (int i = 0; i < arrays.Normals.Length; i++)
+            {
+                Vector3 n = arrays.Normals[i];
+                normals[i] = ConvertNormal(n.x, n.y, n.z, options);
+            }
+        }
+
+        Vector2[] uv0 = null;
+        if (arrays.Uvs != null && arrays.Uvs.Length > 0)
+            uv0 = (Vector2[])arrays.Uvs.Clone();
+
+        return new Geometry(positions, normals, uv0);
+    }
+
+    static int[] ToTriangles(int[] indices, Options options)
+    {
+        if (indices == null || indices.Length == 0) return Array.Empty<int>();
+        if (indices.Length % 3 != 0)
+            throw new InvalidDataException($"Index count {indices.Length} is not a multiple of 3.");
+
+        var tris = new int[indices.Length];
+        for (int i = 0; i < indices.Length; i += 3)
+        {
+            int v1 = indices[i];
+            int v2 = indices[i + 1];
+            int v3 = indices[i + 2];
+            if (options.FlipZ && options.FixWindingAfterFlipZ)
+                (v2, v3) = (v3, v2);
+            tris[i] = v1;
+            tris[i + 1] = v2;
+            tris[i + 2] = v3;
+        }
+        return tris;
     }
 
     private readonly struct Geometry

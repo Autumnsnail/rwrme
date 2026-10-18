@@ -3340,8 +3340,11 @@ public class TerrainMaterialPainter : Tool
         }
     }
 
-    public void DrawCircleOnTexture(Texture2D texture,Vector2 pos ,float width,float height, Color color)
+    public void DrawCircleOnTexture(Texture2D texture,Vector2 pos ,float width,float height, Color color, out int dirtyX0, out int dirtyY0, out int dirtyX1, out int dirtyY1)
     {
+        dirtyX0 = dirtyY0 = 0;
+        dirtyX1 = dirtyY1 = -1;
+
         pos = new Vector2(pos.x/2, (1024 - pos.y)/2+512);
         float scaleX = texture.width / width;
         float scaleY = texture.height / height;
@@ -3351,11 +3354,20 @@ public class TerrainMaterialPainter : Tool
         int pixelRadius = Mathf.RoundToInt(radius * Mathf.Min(scaleX, scaleY));
         if (pixelRadius <= 0) return;
 
-        // 2. 计算边界
         int left = Mathf.Max(0, pixelCenterX - pixelRadius);
         int right = Mathf.Min(texture.width - 1, pixelCenterX + pixelRadius);
         int top = Mathf.Max(0, pixelCenterY - pixelRadius);
         int bottom = Mathf.Min(texture.height - 1, pixelCenterY + pixelRadius);
+        if (right < left || bottom < top) return;
+
+        dirtyX0 = left;
+        dirtyY0 = top;
+        dirtyX1 = right;
+        dirtyY1 = bottom;
+
+        int w = right - left + 1;
+        int h = bottom - top + 1;
+        Color[] pixels = texture.GetPixels(left, top, w, h);
 
         float radiusF = pixelRadius;
         float hard = Mathf.Max(hardness, 1e-4f);
@@ -3364,7 +3376,6 @@ public class TerrainMaterialPainter : Tool
         {
             int dy = y - pixelCenterY;
             int dySquared = dy * dy;
-
             for (int x = left; x <= right; x++)
             {
                 int dx = x - pixelCenterX;
@@ -3372,15 +3383,16 @@ public class TerrainMaterialPainter : Tool
                 if (distSq > radiusF * radiusF) continue;
 
                 float d = Mathf.Sqrt(distSq) / radiusF;
-                float w = Mathf.Pow(Mathf.Clamp01(1f - d), hard);
-                if (w <= 0f) continue;
+                float weight = Mathf.Pow(Mathf.Clamp01(1f - d), hard);
+                if (weight <= 0f) continue;
 
-                Color src = texture.GetPixel(x, y);
-                texture.SetPixel(x, y, Color.Lerp(src, color, w));
+                int li = (y - top) * w + (x - left);
+                pixels[li] = Color.Lerp(pixels[li], color, weight);
             }
         }
 
-        texture.Apply();
+        texture.SetPixels(left, top, w, h, pixels);
+        texture.Apply(false);
     }
 
     public override void startUse(Vector3 position, GameObject hitO)
@@ -3395,21 +3407,25 @@ public class TerrainMaterialPainter : Tool
         tex = MetaMap.instance.preCombinedAlpha;
         underUse = true;
         curPos = MathOfRwrme.U3dPosToSvgPos(position);
-        DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol);
-        if (Syncer.instence != null) Syncer.instence.ApplyPreAlphaToTerrain();
+        DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol, out int x0, out int y0, out int x1, out int y1);
+        if (Syncer.instence != null && x1 >= x0)
+            Syncer.instence.ApplyBrushAlphaPreview(x0, y0, x1, y1);
     }
 
     public override void OnDragging(Vector3 position)
     {
         if (!underUse) return;
         curPos = MathOfRwrme.U3dPosToSvgPos(position);
-        DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol);
-        if (Syncer.instence != null) Syncer.instence.ApplyPreAlphaToTerrain();
+        DrawCircleOnTexture(tex, curPos, 1024, 1024, tarCol, out int x0, out int y0, out int x1, out int y1);
+        if (Syncer.instence != null && x1 >= x0)
+            Syncer.instence.ApplyBrushAlphaPreview(x0, y0, x1, y1);
     }
 
     public override void EndUse()
     {
         underUse = false;
+        if (Syncer.instence != null)
+            Syncer.instence.ApplyPreAlphaToTerrain();
     }
 }
 
@@ -3512,13 +3528,13 @@ public class HeightBush : Tool
         int radiusInPixels = Mathf.CeilToInt(range / 2);
 
         int startX = Mathf.Max(0, centerCoord.x - radiusInPixels);
-        int endX = Mathf.Min(res, centerCoord.x + radiusInPixels);
+        int endX = Mathf.Min(res - 1, centerCoord.x + radiusInPixels);
         int startY = Mathf.Max(0, centerCoord.y - radiusInPixels);
-        int endY = Mathf.Min(res, centerCoord.y + radiusInPixels);
+        int endY = Mathf.Min(res - 1, centerCoord.y + radiusInPixels);
 
-        for (int y = startY; y < endY; y++)
+        for (int y = startY; y <= endY; y++)
         {
-            for (int x = startX; x < endX; x++)
+            for (int x = startX; x <= endX; x++)
             {
                 float distance = Vector2.Distance(new Vector2(x, y),
                     new Vector2(centerCoord.x, centerCoord.y)) / radiusInPixels;
@@ -3533,7 +3549,14 @@ public class HeightBush : Tool
             }
         }
 
-        if (Syncer.instence != null) Syncer.instence.ApplyPreHeightToTerrain();
+        if (Syncer.instence != null)
+            Syncer.instence.ApplyBrushHeightPreview(startX, startY, endX, endY);
+    }
+
+    public override void EndUse()
+    {
+        if (Syncer.instence != null)
+            Syncer.instence.ApplyPreHeightToTerrain();
     }
 }
 public class HeightSmudge : Tool
@@ -3575,9 +3598,13 @@ public class HeightSmudge : Tool
         int lcy = (int)(lastLocalPos.z / worldZ * res);
 
         int radius = Mathf.CeilToInt(range / 2);
+        int startX = Mathf.Max(0, cx - radius);
+        int endX = Mathf.Min(res - 1, cx + radius);
+        int startY = Mathf.Max(0, cy - radius);
+        int endY = Mathf.Min(res - 1, cy + radius);
 
-        for (int y = Mathf.Max(0, cy - radius); y < Mathf.Min(res, cy + radius); y++)
-            for (int x = Mathf.Max(0, cx - radius); x < Mathf.Min(res, cx + radius); x++)
+        for (int y = startY; y <= endY; y++)
+            for (int x = startX; x <= endX; x++)
             {
                 int srcY = lcy + (y - cy);
                 int srcX = lcx + (x - cx);
@@ -3586,8 +3613,15 @@ public class HeightSmudge : Tool
                     img[y, x] = Mathf.Lerp(img[y, x], img[srcY, srcX], strength);
             }
 
-        if (Syncer.instence != null) Syncer.instence.ApplyPreHeightToTerrain();
+        if (Syncer.instence != null)
+            Syncer.instence.ApplyBrushHeightPreview(startX, startY, endX, endY);
         lastPos = currentPos;
+    }
+
+    public override void EndUse()
+    {
+        if (Syncer.instence != null)
+            Syncer.instence.ApplyPreHeightToTerrain();
     }
 }
 public class SelectionTint : MonoBehaviour

@@ -17,6 +17,12 @@ public class Syncer : MonoBehaviour
 
     Transform mapRangeRoot;
 
+    GrayScaleImage _heightPreviewCache;
+    Texture2D _alphaPreviewCache;
+    float[,] _heightsUploadBuffer;
+    bool _heightCacheReady;
+    bool _alphaCacheReady;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -126,70 +132,160 @@ public class Syncer : MonoBehaviour
     void ApplyPreviewHeightmap()
     {
         if (m_mm == null || m_terrain == null) return;
+        m_mm.EnsurePreTerrain();
+        GrayScaleImage pre = m_mm.m_preTerrain.data;
+        if (pre == null || pre.Width <= 0) return;
 
-        GrayScaleImage preview = m_mm.BakePreviewHeightmap();
-        if (preview == null || preview.Width <= 0) return;
-
-        TerrainData terrainData = m_terrain.terrainData;
-        terrainData.heightmapResolution = preview.Width;
-        int resolution = terrainData.heightmapResolution;
-        float[,] heights = new float[resolution, resolution];
-
-        for (int y = 0; y < resolution; y++)
-            for (int x = 0; x < resolution; x++)
-                heights[y, x] = preview[y, x];
-
-        float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : terrainData.size.x;
-        float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : terrainData.size.z;
-        terrainData.size = new Vector3(worldX, m_mm.m_metaTerrain.maxHeight, worldZ);
-        terrainData.SetHeights(0, 0, heights);
+        if (_heightPreviewCache == null) _heightPreviewCache = new GrayScaleImage(pre.Width, pre.Height);
+        TerrainPathRasterizer.BakeHeightmapInto(_heightPreviewCache, pre, m_mm.GetHeightPaths());
+        _heightCacheReady = true;
+        UploadHeightCacheFull();
     }
 
     void ApplyPreviewCombinedAlpha()
     {
         if (m_mm == null || m_terrain == null || MapImporter.instate == null) return;
+        m_mm.EnsurePreCombinedAlpha();
+        Texture2D pre = m_mm.preCombinedAlpha;
+        if (pre == null) return;
 
-        Texture2D baked = m_mm.BakePreviewCombinedAlpha();
-        if (baked == null) return;
-
-        Material mat = m_terrain.materialTemplate;
-        if (mat == null) mat = MapImporter.instate.cbdTl;
-        if (mat == null) return;
-
-        mat.SetTexture("_Mask", baked);
+        EnsureAlphaPreviewCache(pre);
+        TerrainPathRasterizer.BakeAlphaInto(_alphaPreviewCache, pre, m_mm.GetMaterialPaths());
+        _alphaCacheReady = true;
+        BindAlphaPreviewMask();
     }
 
+    /// <summary>笔刷即时预览：与成品一致，pre_ + HeightPath。</summary>
     public void ApplyPreHeightToTerrain()
+    {
+        ApplyPreviewHeightmap();
+    }
+
+    /// <summary>笔刷即时预览：与成品一致，pre_ + MaterialPath。</summary>
+    public void ApplyPreAlphaToTerrain()
+    {
+        ApplyPreviewCombinedAlpha();
+    }
+
+    /// <summary>笔刷脏矩形局部预览（含路径叠层）。坐标为高度图索引，含端点。</summary>
+    public void ApplyBrushHeightPreview(int x0, int y0, int x1, int y1)
     {
         if (m_mm == null || m_terrain == null) return;
         m_mm.EnsurePreTerrain();
         GrayScaleImage pre = m_mm.m_preTerrain.data;
         if (pre == null || pre.Width <= 0) return;
 
+        if (!_heightCacheReady || _heightPreviewCache == null
+            || _heightPreviewCache.Width != pre.Width || _heightPreviewCache.Height != pre.Height)
+        {
+            ApplyPreviewHeightmap();
+            return;
+        }
+
+        int res = pre.Width;
+        x0 = Mathf.Clamp(x0, 0, res - 1);
+        x1 = Mathf.Clamp(x1, 0, res - 1);
+        y0 = Mathf.Clamp(y0, 0, res - 1);
+        y1 = Mathf.Clamp(y1, 0, res - 1);
+        if (x1 < x0 || y1 < y0) return;
+
+        TerrainPathRasterizer.RebakeHeightRect(
+            _heightPreviewCache, pre, m_mm.GetHeightPaths(), x0, y0, x1, y1);
+        UploadHeightCacheRect(x0, y0, x1, y1);
+    }
+
+    /// <summary>材质笔刷脏矩形局部预览（含路径叠层）。</summary>
+    public void ApplyBrushAlphaPreview(int x0, int y0, int x1, int y1)
+    {
+        if (m_mm == null || MapImporter.instate == null) return;
+        m_mm.EnsurePreCombinedAlpha();
+        Texture2D pre = m_mm.preCombinedAlpha;
+        if (pre == null) return;
+
+        if (!_alphaCacheReady || _alphaPreviewCache == null
+            || _alphaPreviewCache.width != pre.width || _alphaPreviewCache.height != pre.height)
+        {
+            ApplyPreviewCombinedAlpha();
+            return;
+        }
+
+        x0 = Mathf.Clamp(x0, 0, pre.width - 1);
+        x1 = Mathf.Clamp(x1, 0, pre.width - 1);
+        y0 = Mathf.Clamp(y0, 0, pre.height - 1);
+        y1 = Mathf.Clamp(y1, 0, pre.height - 1);
+        if (x1 < x0 || y1 < y0) return;
+
+        TerrainPathRasterizer.RebakeAlphaRect(
+            _alphaPreviewCache, pre, m_mm.GetMaterialPaths(), x0, y0, x1, y1);
+        BindAlphaPreviewMask();
+    }
+
+    void EnsureAlphaPreviewCache(Texture2D pre)
+    {
+        if (_alphaPreviewCache != null
+            && _alphaPreviewCache.width == pre.width
+            && _alphaPreviewCache.height == pre.height)
+            return;
+
+        if (_alphaPreviewCache != null)
+            Destroy(_alphaPreviewCache);
+
+        _alphaPreviewCache = new Texture2D(pre.width, pre.height, TextureFormat.RGBA32, false);
+        _alphaPreviewCache.wrapMode = TextureWrapMode.Clamp;
+        _alphaPreviewCache.filterMode = FilterMode.Bilinear;
+        _alphaCacheReady = false;
+    }
+
+    void UploadHeightCacheFull()
+    {
+        if (_heightPreviewCache == null || m_terrain == null) return;
+        int resolution = _heightPreviewCache.Width;
         TerrainData terrainData = m_terrain.terrainData;
-        terrainData.heightmapResolution = pre.Width;
-        int resolution = terrainData.heightmapResolution;
-        float[,] heights = new float[resolution, resolution];
+        terrainData.heightmapResolution = resolution;
+        EnsureHeightsBuffer(resolution, resolution);
         for (int y = 0; y < resolution; y++)
             for (int x = 0; x < resolution; x++)
-                heights[y, x] = pre[y, x];
+                _heightsUploadBuffer[y, x] = _heightPreviewCache[y, x];
 
         float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : terrainData.size.x;
         float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : terrainData.size.z;
         terrainData.size = new Vector3(worldX, m_mm.m_metaTerrain.maxHeight, worldZ);
-        terrainData.SetHeights(0, 0, heights);
+        terrainData.SetHeights(0, 0, _heightsUploadBuffer);
     }
 
-    public void ApplyPreAlphaToTerrain()
+    void UploadHeightCacheRect(int x0, int y0, int x1, int y1)
     {
-        if (m_mm == null || MapImporter.instate == null) return;
-        m_mm.EnsurePreCombinedAlpha();
-        if (m_mm.preCombinedAlpha == null) return;
+        if (_heightPreviewCache == null || m_terrain == null) return;
+        int w = x1 - x0 + 1;
+        int h = y1 - y0 + 1;
+        EnsureHeightsBuffer(h, w);
+        _heightPreviewCache.FillHeightsPatch(_heightsUploadBuffer, x0, y0, x1, y1);
+        m_terrain.terrainData.SetHeights(x0, y0, _heightsUploadBuffer);
+    }
 
+    void EnsureHeightsBuffer(int rows, int cols)
+    {
+        if (_heightsUploadBuffer != null
+            && _heightsUploadBuffer.GetLength(0) == rows
+            && _heightsUploadBuffer.GetLength(1) == cols)
+            return;
+        _heightsUploadBuffer = new float[rows, cols];
+    }
+
+    void BindAlphaPreviewMask()
+    {
+        if (_alphaPreviewCache == null || MapImporter.instate == null) return;
         Material mat = m_terrain != null ? m_terrain.materialTemplate : null;
         if (mat == null) mat = MapImporter.instate.cbdTl;
         if (mat == null) return;
-        mat.SetTexture("_Mask", m_mm.preCombinedAlpha);
+
+        Texture old = mat.GetTexture("_Mask");
+        mat.SetTexture("_Mask", _alphaPreviewCache);
+        if (old != null && old != _alphaPreviewCache
+            && old != m_mm.preCombinedAlpha
+            && old != m_mm.referenceCombinedAlpha
+            && old != m_mm.CombinedAlpha)
+            Destroy(old);
     }
 
     /// <summary>从地图数据中移除非法路径：锚点数小于 2 的 <see cref="Wall"/>、<see cref="Offroad"/>。</summary>
@@ -391,6 +487,46 @@ public class Syncer : MonoBehaviour
         if (mapRangeRoot != null)
             mapRangeRoot.gameObject.SetActive(stat);
     }
+
+    /// <summary>VisualChanger / Stuck：开启时扫描全部层路径碰撞问题并标出；关闭清除标记。</summary>
+    public void changeStuckDetectState(bool stat)
+    {
+        if (_stuckScanCo != null)
+        {
+            StopCoroutine(_stuckScanCo);
+            _stuckScanCo = null;
+        }
+
+        var markers = PathDetectionMarkers.Ensure();
+        if (!stat)
+        {
+            markers.Clear();
+            markers.SetEnabled(false);
+            return;
+        }
+
+        markers.SetEnabled(true);
+        _stuckScanCo = StartCoroutine(StuckScanRoutine(markers));
+    }
+
+    IEnumerator StuckScanRoutine(PathDetectionMarkers markers)
+    {
+        PathCollisionDetector.ScanResult result = null;
+        yield return PathCollisionDetector.ScanCoroutine(
+            new PathCollisionDetector.ScanOptions
+            {
+                LayerFilter = null, // 逐层全部
+                MinWidthWorld = PathCollisionDetector.DefaultMinWidthWorld,
+                Progress = msg => Debug.Log("[StuckDetect] " + msg),
+            },
+            r => result = r);
+
+        markers.Show(result?.Issues);
+        Debug.Log("[StuckDetect] " + (result != null ? result.Message : "empty"));
+        _stuckScanCo = null;
+    }
+
+    Coroutine _stuckScanCo;
 
     void EnsureMapRangeOverlays()
     {

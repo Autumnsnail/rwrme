@@ -37,7 +37,11 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
 
         // Initialize UI from saved values
         if (ogreXmlConverterInput != null)
+        {
             ogreXmlConverterInput.SetTextWithoutNotify(OgreRuntimeSettings.OgreXmlConverterPath);
+            if (ogreXmlConverterInput.placeholder is TextMeshProUGUI ph)
+                ph.text = "optional (built-in .mesh parse)";
+        }
         if (meshSearchPathInput != null)
             meshSearchPathInput.SetTextWithoutNotify(OgreRuntimeSettings.MeshSearchPath);
         if (texturesPathInput != null)
@@ -151,12 +155,17 @@ public sealed class ThirdSettingsManagerPanel : MonoBehaviour
             importAllMeshesButton.interactable = false;
         SetImportStatus("importing mesh");
 
+        var progress = new Progress<(int current, int total, string relativePath)>(p =>
+        {
+            SetImportStatus($"mesh {p.current}/{p.total}");
+        });
+
         var meshTask = OgreRuntimeImporter.ImportDirectoryAsync(
             meshPath,
             recursive: true,
             mergeIntoRuntimeLibrary: true,
             options: null,
-            progress: null);
+            progress: progress);
 
         while (!meshTask.IsCompleted)
             yield return null;

@@ -202,21 +202,11 @@ public class MetaMap : MonoBehaviour
         return TerrainPathRasterizer.BakeAlpha(preCombinedAlpha, GetMaterialPaths());
     }
 
-    /// <summary>预览基准高度：terrain5 标准 + 路径（不读 pre_ 刷痕）。</summary>
-    public GrayScaleImage BakePreviewHeightmap()
-    {
-        if (m_metaTerrain?.data == null || m_metaTerrain.data.Width <= 0)
-            return BakeFinalHeightmap();
-        return TerrainPathRasterizer.BakeHeightmap(m_metaTerrain.data, GetHeightPaths());
-    }
+    /// <summary>编辑器预览高度：与成品一致，pre_ 刷痕 + 路径覆盖。</summary>
+    public GrayScaleImage BakePreviewHeightmap() => BakeFinalHeightmap();
 
-    /// <summary>预览基准材质：terrain5 标准 + 路径。</summary>
-    public Texture2D BakePreviewCombinedAlpha()
-    {
-        if (referenceCombinedAlpha == null)
-            return BakeFinalCombinedAlpha();
-        return TerrainPathRasterizer.BakeAlpha(referenceCombinedAlpha, GetMaterialPaths());
-    }
+    /// <summary>编辑器预览材质：与成品一致，pre_ 刷痕 + 路径覆盖。</summary>
+    public Texture2D BakePreviewCombinedAlpha() => BakeFinalCombinedAlpha();
 
     // manual add is abborded now
     private void setBts()
@@ -330,6 +320,44 @@ public class GrayScaleImage
         if (src == null) return;
         data = new float[src.GetLength(0), src.GetLength(1)];
         System.Array.Copy(src, data, src.Length);
+    }
+
+    public void EnsureSize(int width, int height)
+    {
+        if (data != null && Width == width && Height == height) return;
+        data = new float[height, width];
+    }
+
+    public void CopyFrom(GrayScaleImage src)
+    {
+        if (src == null || src.data == null) return;
+        EnsureSize(src.Width, src.Height);
+        System.Array.Copy(src.data, data, src.data.Length);
+    }
+
+    /// <summary>拷贝闭区间矩形 [x0,x1]×[y0,y1]（含端点）。</summary>
+    public void CopyRectFrom(GrayScaleImage src, int x0, int y0, int x1, int y1)
+    {
+        if (src == null || src.data == null || data == null) return;
+        x0 = Mathf.Clamp(x0, 0, Width - 1);
+        x1 = Mathf.Clamp(x1, 0, Width - 1);
+        y0 = Mathf.Clamp(y0, 0, Height - 1);
+        y1 = Mathf.Clamp(y1, 0, Height - 1);
+        if (x1 < x0 || y1 < y0) return;
+        for (int y = y0; y <= y1; y++)
+            for (int x = x0; x <= x1; x++)
+                data[y, x] = src.data[y, x];
+    }
+
+    public void FillHeightsPatch(float[,] patch, int x0, int y0, int x1, int y1)
+    {
+        int w = x1 - x0 + 1;
+        int h = y1 - y0 + 1;
+        if (patch == null || patch.GetLength(0) != h || patch.GetLength(1) != w)
+            return;
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                patch[y, x] = data[y0 + y, x0 + x];
     }
 
     public byte[] convToPng()
@@ -1204,9 +1232,7 @@ public static class TerrainPathRasterizer
     {
         if (src == null) return new GrayScaleImage(0, 0);
         var copy = new GrayScaleImage(src.Width, src.Height);
-        for (int y = 0; y < src.Height; y++)
-            for (int x = 0; x < src.Width; x++)
-                copy[y, x] = src[y, x];
+        copy.CopyFrom(src);
         return copy;
     }
 
@@ -1214,8 +1240,10 @@ public static class TerrainPathRasterizer
     {
         if (src == null) return null;
         var tex = new Texture2D(src.width, src.height, src.format, false);
+        tex.wrapMode = src.wrapMode;
+        tex.filterMode = src.filterMode;
         tex.SetPixels(src.GetPixels());
-        tex.Apply();
+        tex.Apply(false);
         return tex;
     }
 
@@ -1225,36 +1253,92 @@ public static class TerrainPathRasterizer
             return baseline ?? new GrayScaleImage(0, 0);
 
         GrayScaleImage result = Clone(baseline);
-        GrayScaleImage offsetReference = Clone(baseline);
-        if (paths == null) return result;
+        BakeHeightPathsOnto(result, baseline, paths);
+        return result;
+    }
 
+    /// <summary>将 baseline 拷入 dst 后叠 HeightPath；offset 参考用 baseline（只读，不再全图 Clone）。</summary>
+    public static void BakeHeightmapInto(GrayScaleImage dst, GrayScaleImage baseline, IEnumerable<HeightPath> paths)
+    {
+        if (dst == null || baseline == null || baseline.Width <= 0) return;
+        dst.EnsureSize(baseline.Width, baseline.Height);
+        dst.CopyFrom(baseline);
+        BakeHeightPathsOnto(dst, baseline, paths);
+    }
+
+    /// <summary>脏矩形：从 baseline 拷回 dst，再叠路径（可裁剪到脏区）。</summary>
+    public static void RebakeHeightRect(
+        GrayScaleImage dst, GrayScaleImage baseline, IEnumerable<HeightPath> paths,
+        int x0, int y0, int x1, int y1)
+    {
+        if (dst == null || baseline == null) return;
+        dst.EnsureSize(baseline.Width, baseline.Height);
+        dst.CopyRectFrom(baseline, x0, y0, x1, y1);
+        BakeHeightPathsOnto(dst, baseline, paths, x0, y0, x1, y1);
+    }
+
+    static void BakeHeightPathsOnto(
+        GrayScaleImage img, GrayScaleImage offsetReference, IEnumerable<HeightPath> paths,
+        int clipX0 = int.MinValue, int clipY0 = int.MinValue, int clipX1 = int.MaxValue, int clipY1 = int.MaxValue)
+    {
+        if (paths == null || img == null) return;
         float worldX = MapImporter.instate != null ? MapImporter.instate.pageWorldX : 1536f;
         float worldZ = MapImporter.instate != null ? MapImporter.instate.pageWorldZ : 1536f;
-        int res = result.Width;
-
+        int res = img.Width;
         foreach (HeightPath path in paths)
         {
             if (path?.positionLine == null || path.positionLine.Count < 2) continue;
-            ApplyHeightPath(result, offsetReference, path, res, worldX, worldZ);
+            ApplyHeightPath(img, offsetReference, path, res, worldX, worldZ, clipX0, clipY0, clipX1, clipY1);
         }
-
-        return result;
     }
 
     public static Texture2D BakeAlpha(Texture2D baseline, IEnumerable<MaterialPath> paths)
     {
         if (baseline == null) return null;
-
         Texture2D result = CloneTexture(baseline);
-        if (paths == null) return result;
+        BakeMaterialPathsOnto(result, paths, applyAtEnd: true);
+        return result;
+    }
 
+    public static void BakeAlphaInto(Texture2D dst, Texture2D baseline, IEnumerable<MaterialPath> paths)
+    {
+        if (dst == null || baseline == null) return;
+        if (dst.width != baseline.width || dst.height != baseline.height)
+            return;
+        dst.SetPixels(baseline.GetPixels());
+        BakeMaterialPathsOnto(dst, paths, applyAtEnd: true);
+    }
+
+    public static void RebakeAlphaRect(
+        Texture2D dst, Texture2D baseline, IEnumerable<MaterialPath> paths,
+        int x0, int y0, int x1, int y1)
+    {
+        if (dst == null || baseline == null) return;
+        x0 = Mathf.Clamp(x0, 0, dst.width - 1);
+        x1 = Mathf.Clamp(x1, 0, dst.width - 1);
+        y0 = Mathf.Clamp(y0, 0, dst.height - 1);
+        y1 = Mathf.Clamp(y1, 0, dst.height - 1);
+        if (x1 < x0 || y1 < y0) return;
+
+        int w = x1 - x0 + 1;
+        int h = y1 - y0 + 1;
+        Color[] block = baseline.GetPixels(x0, y0, w, h);
+        dst.SetPixels(x0, y0, w, h, block);
+        BakeMaterialPathsOnto(dst, paths, applyAtEnd: false, x0, y0, x1, y1);
+        dst.Apply(false);
+    }
+
+    static void BakeMaterialPathsOnto(
+        Texture2D tex, IEnumerable<MaterialPath> paths, bool applyAtEnd,
+        int clipX0 = int.MinValue, int clipY0 = int.MinValue, int clipX1 = int.MaxValue, int clipY1 = int.MaxValue)
+    {
+        if (tex == null || paths == null) return;
         foreach (MaterialPath path in paths)
         {
             if (path?.positionLine == null || path.positionLine.Count < 2) continue;
-            ApplyMaterialPath(result, path);
+            ApplyMaterialPath(tex, path, clipX0, clipY0, clipX1, clipY1);
         }
-
-        return result;
+        if (applyAtEnd) tex.Apply(false);
     }
 
     static List<Vector2> BuildStrokePolygonForMePath(MePath path, float halfWidthSvg, int samplesPerSegment)
@@ -1264,7 +1348,9 @@ public static class TerrainPathRasterizer
         return BuildHardStrokePolygon(sampled, halfWidthSvg);
     }
 
-    static void ApplyHeightPath(GrayScaleImage img, GrayScaleImage offsetReference, HeightPath path, int res, float worldX, float worldZ)
+    static void ApplyHeightPath(
+        GrayScaleImage img, GrayScaleImage offsetReference, HeightPath path, int res, float worldX, float worldZ,
+        int clipX0 = int.MinValue, int clipY0 = int.MinValue, int clipX1 = int.MaxValue, int clipY1 = int.MaxValue)
     {
         float halfWidthSvg = path.width * 0.5f;
         List<Vector2> strokePoly = BuildStrokePolygonForMePath(path, halfWidthSvg, path.samplesPerCubicSegment);
@@ -1277,6 +1363,12 @@ public static class TerrainPathRasterizer
         int right = Mathf.Min(res - 1, Mathf.Max(x0, x1));
         int bottom = Mathf.Max(0, Mathf.Min(y0, y1));
         int top = Mathf.Min(res - 1, Mathf.Max(y0, y1));
+
+        left = Mathf.Max(left, clipX0);
+        right = Mathf.Min(right, clipX1);
+        bottom = Mathf.Max(bottom, clipY0);
+        top = Mathf.Min(top, clipY1);
+        if (right < left || top < bottom) return;
 
         for (int y = bottom; y <= top; y++)
         {
@@ -1311,7 +1403,9 @@ public static class TerrainPathRasterizer
         }
     }
 
-    static void ApplyMaterialPath(Texture2D tex, MaterialPath path)
+    static void ApplyMaterialPath(
+        Texture2D tex, MaterialPath path,
+        int clipX0 = int.MinValue, int clipY0 = int.MinValue, int clipX1 = int.MaxValue, int clipY1 = int.MaxValue)
     {
         float halfWidthSvg = path.width * 0.5f;
         if (halfWidthSvg <= 0f) return;
@@ -1329,6 +1423,16 @@ public static class TerrainPathRasterizer
         int bottom = Mathf.Max(0, Mathf.Min((int)pMin.y, (int)pMax.y));
         int top = Mathf.Min(tex.height - 1, Mathf.Max((int)pMin.y, (int)pMax.y));
 
+        left = Mathf.Max(left, clipX0);
+        right = Mathf.Min(right, clipX1);
+        bottom = Mathf.Max(bottom, clipY0);
+        top = Mathf.Min(top, clipY1);
+        if (right < left || top < bottom) return;
+
+        int w = right - left + 1;
+        int h = top - bottom + 1;
+        Color[] pixels = tex.GetPixels(left, bottom, w, h);
+
         Color paint = MaterialIndexToColor(path.materialIndex);
         float hardness = Mathf.Max(path.hardness, 1e-4f);
 
@@ -1338,19 +1442,18 @@ public static class TerrainPathRasterizer
             {
                 Vector2 svg = TexturePixelToSvg(new Vector2(px + 0.5f, py + 0.5f), tex.width, tex.height);
                 float dist = DistanceToPolyline(svg, sampled);
-                if (dist > halfWidthSvg) continue; // 不外扩：仅半宽内上色
+                if (dist > halfWidthSvg) continue;
 
-                // 中心→边缘衰减指数：w = (1 - dist/R)^hardness（与 HeightBush 同语义）
                 float t = 1f - dist / halfWidthSvg;
-                float w = Mathf.Pow(Mathf.Clamp01(t), hardness);
-                if (w <= 0f) continue;
+                float weight = Mathf.Pow(Mathf.Clamp01(t), hardness);
+                if (weight <= 0f) continue;
 
-                Color src = tex.GetPixel(px, py);
-                tex.SetPixel(px, py, Color.Lerp(src, paint, w));
+                int li = (py - bottom) * w + (px - left);
+                pixels[li] = Color.Lerp(pixels[li], paint, weight);
             }
         }
 
-        tex.Apply();
+        tex.SetPixels(left, bottom, w, h, pixels);
     }
 
     static Color MaterialIndexToColor(int materialIndex)

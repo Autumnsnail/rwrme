@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -28,21 +26,13 @@ public class OgreRuntimeImporter : MonoBehaviour
 
     public sealed class Options
     {
-        /// <summary>
-        /// Absolute path to OgreXMLConverter.exe (Windows Standalone only).
-        /// If null/empty, runtime can only import already-converted .mesh.xml files.
-        /// </summary>
+        /// <summary>Legacy unused: formerly OgreXMLConverter.exe path. Binary .mesh is parsed built-in.</summary>
         public string OgreXmlConverterPath;
 
-        /// <summary>
-        /// Cache directory under persistentDataPath.
-        /// </summary>
+        /// <summary>Legacy unused cache folder name.</summary>
         public string CacheFolderName = "OgreMeshCache";
 
-        /// <summary>
-        /// If true, keep intermediate .mesh.xml in cache.
-        /// If false, importer may delete xml after creating Mesh (but will keep it if needed for debugging).
-        /// </summary>
+        /// <summary>Legacy unused: keep intermediate converter XML.</summary>
         public bool KeepIntermediateXml = true;
 
         /// <summary>
@@ -205,9 +195,8 @@ public class OgreRuntimeImporter : MonoBehaviour
 
     /// <summary>
     /// Runtime import from a file path.
-    /// - If path ends with .xml: treated as OgreXMLConverter output and parsed directly.
-    /// - If path ends with .mesh: will use OgreXMLConverter (if available on this platform) and cache the .xml.
-    /// Returns the converted submeshes (Mesh + material name) in-memory.
+    /// - .xml / .mesh.xml: parse Ogre mesh XML directly.
+    /// - .mesh: built-in binary MeshSerializer_v1.x parse (no OgreXMLConverter).
     /// </summary>
     public static Task<List<MeshLoader.Result>> ImportAsync(string meshOrXmlPath, Options options = null)
     {
@@ -215,8 +204,6 @@ public class OgreRuntimeImporter : MonoBehaviour
         options ??= new Options();
 
         // Fill from saved runtime settings if not provided explicitly.
-        if (string.IsNullOrWhiteSpace(options.OgreXmlConverterPath))
-            options.OgreXmlConverterPath = OgreRuntimeSettings.OgreXmlConverterPath;
         if (string.IsNullOrWhiteSpace(options.MeshSearchPath))
             options.MeshSearchPath = OgreRuntimeSettings.MeshSearchPath;
 
@@ -235,15 +222,7 @@ public class OgreRuntimeImporter : MonoBehaviour
             throw new NotSupportedException($"Unsupported extension '{ext}'. Expected .mesh or .xml (.mesh.xml).");
         }
 
-        // RunConverter 与 ImportFromXml 在同一线程执行，避免 await Task.Run 后延续落到线程池导致 Mesh 非主线程创建。
-        var xmlPath = EnsureConvertedXml(resolved, options);
-        var results = ImportFromXml(xmlPath, options);
-
-        if (!options.KeepIntermediateXml)
-        {
-            TryDelete(xmlPath);
-        }
-
+        var results = ImportFromMesh(resolved, options);
         return Task.FromResult(results);
     }
 /*
@@ -333,8 +312,6 @@ public class OgreRuntimeImporter : MonoBehaviour
             throw new DirectoryNotFoundException($"Directory not found: {specifiedRoot}");
 
         options ??= new Options();
-        if (string.IsNullOrWhiteSpace(options.OgreXmlConverterPath))
-            options.OgreXmlConverterPath = OgreRuntimeSettings.OgreXmlConverterPath;
         if (string.IsNullOrWhiteSpace(options.MeshSearchPath))
             options.MeshSearchPath = OgreRuntimeSettings.MeshSearchPath;
 
@@ -393,6 +370,9 @@ public class OgreRuntimeImporter : MonoBehaviour
             {
                 Debug.LogWarning($"[OgreRuntimeImporter] Skip or fail: {job.abs}\n{ex.Message}");
             }
+
+            // ImportAsync 是同步 Task.FromResult；每文件让出一帧，避免大批量导入卡死主线程
+            await Task.Yield();
         }
 
         return result;
@@ -473,7 +453,6 @@ public class OgreRuntimeImporter : MonoBehaviour
     {
         var loaderOptions = new MeshLoader.Options
         {
-            OgreXmlConverterPath = options.OgreXmlConverterPath,
             FlipZ = options.FlipZ,
             FixWindingAfterFlipZ = options.FixWindingAfterFlipZ,
         };
@@ -481,85 +460,15 @@ public class OgreRuntimeImporter : MonoBehaviour
         return MeshLoader.LoadFromOgreMeshXml(xmlPath, loaderOptions);
     }
 
-    /// <summary>
-    /// 同步调用 OgreXMLConverter。故意不在后台线程跑，以便后续 <see cref="ImportFromXml"/> 仍在主线程执行（Unity Mesh 要求）。
-    /// 批量导入时可能造成短暂卡顿。
-    /// </summary>
-    private static string EnsureConvertedXml(string meshPath, Options options)
+    private static List<MeshLoader.Result> ImportFromMesh(string meshPath, Options options)
     {
-        // On most platforms (WebGL, iOS, consoles) you can't spawn processes.
-        // This runtime converter path is mainly for Windows Standalone builds.
-#if !(UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN)
-        throw new PlatformNotSupportedException("Runtime conversion from .mesh requires OgreXMLConverter and a platform that supports starting processes (Windows Standalone). Provide pre-converted .mesh.xml instead.");
-#else
-        if (string.IsNullOrWhiteSpace(options.OgreXmlConverterPath) || !File.Exists(options.OgreXmlConverterPath))
+        var loaderOptions = new MeshLoader.Options
         {
-            throw new FileNotFoundException("OgreXMLConverterPath is not set or invalid; cannot convert .mesh at runtime.", options.OgreXmlConverterPath ?? "(null)");
-        }
-
-        var cacheRoot = Path.Combine(Application.persistentDataPath, options.CacheFolderName);
-        Directory.CreateDirectory(cacheRoot);
-
-        var sha1 = ComputeSha1(meshPath);
-        var dir = Path.Combine(cacheRoot, sha1.Substring(0, 2), sha1.Substring(2, 2));
-        Directory.CreateDirectory(dir);
-
-        var xmlPath = Path.Combine(dir, Path.GetFileName(meshPath) + ".xml");
-
-        if (File.Exists(xmlPath) && File.GetLastWriteTimeUtc(xmlPath) >= File.GetLastWriteTimeUtc(meshPath))
-        {
-            return xmlPath;
-        }
-
-        RunConverter(options.OgreXmlConverterPath, meshPath, xmlPath);
-        return xmlPath;
-#endif
-    }
-
-    private static void RunConverter(string converterExe, string inputMeshPath, string outputXmlPath)
-    {
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = converterExe,
-            Arguments = $"\"{inputMeshPath}\" \"{outputXmlPath}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
+            FlipZ = options.FlipZ,
+            FixWindingAfterFlipZ = options.FixWindingAfterFlipZ,
         };
 
-        using var p = System.Diagnostics.Process.Start(psi);
-        if (p == null) throw new InvalidOperationException("Failed to start OgreXMLConverter process.");
-        var stdout = p.StandardOutput.ReadToEnd();
-        var stderr = p.StandardError.ReadToEnd();
-        p.WaitForExit();
-        if (p.ExitCode != 0 || !File.Exists(outputXmlPath))
-        {
-            throw new InvalidOperationException(
-                $"OgreXMLConverter failed (exit {p.ExitCode}).\nstdout:\n{stdout}\n\nstderr:\n{stderr}");
-        }
-    }
-
-    private static string ComputeSha1(string path)
-    {
-        using var sha1 = SHA1.Create();
-        using var fs = File.OpenRead(path);
-        var hash = sha1.ComputeHash(fs);
-        var sb = new StringBuilder(hash.Length * 2);
-        foreach (var b in hash) sb.Append(b.ToString("x2"));
-        return sb.ToString();
-    }
-
-    private static void TryDelete(string path)
-    {
-        try
-        {
-            if (File.Exists(path)) File.Delete(path);
-        }
-        catch
-        {
-            // ignore
-        }
+        return MeshLoader.LoadFromOgreMesh(meshPath, loaderOptions);
     }
 
     private static string ResolvePath(string input, string searchDir)

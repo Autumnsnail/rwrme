@@ -304,6 +304,7 @@ public class ToolController : MonoBehaviour
         // Update is called once per frame
     void Update()
     {
+        if (CollaborationPanel.IsOpen) return;
         // F5：刷新整张地图。放在输入框 early-return 之前，避免编辑搜索框/坐标框时按 F5 失效。
         if (Input.GetKeyDown(KeyCode.F5)
             && !Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)
@@ -2536,7 +2537,7 @@ public class MaterialPathDrawer : Tool
 
     public void CycleMaterial()
     {
-        materialIndex = materialIndex >= 4 ? 1 : materialIndex + 1;
+        materialIndex = materialIndex >= 4 ? 0 : materialIndex + 1;
     }
 
     public void AdjustWidth(float delta)
@@ -2551,13 +2552,7 @@ public class MaterialPathDrawer : Tool
 
     public static string MaterialName(int index)
     {
-        switch (index)
-        {
-            case 1: return "sand";
-            case 3: return "asphalt";
-            case 4: return "road";
-            default: return "grass";
-        }
+        return MaterialPath.MaterialName(index);
     }
 
     public string GetHintText()
@@ -3168,11 +3163,11 @@ public class AssaumblePlaceTool : Tool
             return;
         }
         CtrlZer.instance.checkPoint();
-        int baseLayer = 0;
+        int baseLayer = 1;
         if (hitO != null)
         {
             MapItem hit = hitO.GetComponent<MapItem>();
-            if (hit != null) baseLayer = hit.layerIndex;
+            if (hit != null) baseLayer = hit.layerIndex + 1;
         }
         AssaumbleStore.PlaceAt(MathOfRwrme.U3dPosToSvgPos(position), baseLayer);
     }

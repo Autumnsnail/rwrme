@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Unity MCP: Start server",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/Tools/UnityMcp/Start-UnityMcp.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Unity MCP: Check connection",
+      "type": "process",
+      "command": "${workspaceFolder}/.unity-mcp-source/Server/.venv/Scripts/python.exe",
+      "args": [
+        "${workspaceFolder}/Tools/UnityMcp/Check-UnityMcp.py"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Unity MCP: Install dependencies",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/Tools/UnityMcp/Setup-UnityMcp.ps1"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

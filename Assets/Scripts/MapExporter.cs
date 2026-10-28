@@ -302,7 +302,7 @@ public class MapExporter : MonoBehaviour
 
             XmlElement pathEl = xmlDoc.CreateElement("path");
             pathEl.SetAttribute("label", inkscapeNs, isHeight ? "height_path" : "material_path");
-            pathEl.SetAttribute("id", (isHeight ? "height_path_" : "material_path_") + idx);
+            pathEl.SetAttribute("id", mi.id);
             pathEl.SetAttribute("d", pcd);
             pathEl.SetAttribute("style", isHeight
                 ? "fill:none;stroke:#33ccff;stroke-width:1px;stroke-opacity:1"
@@ -480,8 +480,9 @@ public class MapExporter : MonoBehaviour
 
         //export map items(constructions)
         MetaMap.instance.defaultLayer.sortByIndex();
-        int layC =  MetaMap.instance.defaultLayer.mapItems[MetaMap.instance.defaultLayer.mapItems.Count - 1].layerIndex;
-        int mic = MetaMap.instance.defaultLayer.mapItems.Count;
+        int layC = MetaMap.instance.defaultLayer.mapItems.Count == 0
+            ? 0
+            : MetaMap.instance.defaultLayer.mapItems[MetaMap.instance.defaultLayer.mapItems.Count - 1].layerIndex;
         for (int i =1;i<=layC;i++)
         {
             XmlElement layer = xmlDoc.CreateElement("g");
@@ -505,7 +506,7 @@ public class MapExporter : MonoBehaviour
                 if (plt != null)
                 {
                     XmlElement pair = xmlDoc.CreateElement("g");
-                    pair.SetAttribute("id", "gp" + (j + mic * 2).ToString());
+                    pair.SetAttribute("id", "group_" + plt.id);
 
                     XmlElement stp = xmlDoc.CreateElement("path");
                     string cmdStart = new string('c', plt.positinLineR.Count);
@@ -525,7 +526,7 @@ public class MapExporter : MonoBehaviour
                     stp.SetAttribute("style", "fill:none;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new");
 
                     XmlElement stpDesc = xmlDoc.CreateElement("desc");
-                    stpDesc.SetAttribute("id", "desc" + (mic*2 + j).ToString());
+                    stpDesc.SetAttribute("id", "desc_" + plt.id + "_s");
                     stpDesc.InnerText = "type = start;";
                     if(plt.isDeck)stpDesc.InnerText = "type = deck_start;";
                     stp.AppendChild(stpDesc);
@@ -553,7 +554,7 @@ public class MapExporter : MonoBehaviour
                     end.SetAttribute("style", "fill:none;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new");
 
                     XmlElement endDesc = xmlDoc.CreateElement("desc");
-                    endDesc.SetAttribute("id", "desc" + (mic * 2 + j).ToString());
+                    endDesc.SetAttribute("id", "desc_" + plt.id);
                     endDesc.InnerText = "type = end;";
                     if (plt.isDeck) { 
                         endDesc.InnerText = "type = deck_end;";
@@ -641,10 +642,10 @@ public class MapExporter : MonoBehaviour
 
                     buiE.SetAttribute("x", "0");
                     buiE.SetAttribute("y", "0");
-                    buiE.SetAttribute("label", inkscapeNs, "#rect6406" + j.ToString());
+                    buiE.SetAttribute("label", inkscapeNs, "#rect_" + bd.id);
                     buiE.SetAttribute("transform", MathOfRwrme.angleToTransform(bd.rotation, bd.position));
                     XmlElement buiEDesc = xmlDoc.CreateElement("desc");
-                    buiEDesc.SetAttribute("id", "desc" + j.ToString());
+                    buiEDesc.SetAttribute("id", "desc_" + bd.id);
                     string baseDescStr = $"height={bd.height};material={bd.material};";
                     if (bd.roof)
                     {
@@ -701,7 +702,7 @@ public class MapExporter : MonoBehaviour
                     wlE.SetAttribute("style", "fill:none;stroke:#008000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;enable-background:new");
 
                     XmlElement wlEDesc = xmlDoc.CreateElement("desc");
-                    wlEDesc.SetAttribute("id", "desc" + (mic+j).ToString());
+                    wlEDesc.SetAttribute("id", "desc_" + wl.id);
                     wlEDesc.InnerText = "template = "+ wl.material+";";
                     if (wl.reHighed) wlEDesc.InnerText += "height = " + wl.reHighedHeight.ToString() + ";";
                     if (wl.merged) wlEDesc.InnerText += "merge = 1;";
@@ -1008,7 +1009,7 @@ public class MapExporter : MonoBehaviour
                         spE.SetAttribute("label", "");
                         spE.SetAttribute("transform", MathOfRwrme.angleToTransform(vc.rotation, vc.position));
                         XmlElement vehiDesc = xmlDoc.CreateElement("desc");
-                        vehiDesc.SetAttribute("id", "desc_vehicle" + j.ToString());
+                        vehiDesc.SetAttribute("id", "desc_" + vc.id);
                         if(vc.taged)
                         {
                             vehiDesc.InnerText = "type = vehicle;tag = " +vc.key+ ";";
@@ -1045,10 +1046,10 @@ public class MapExporter : MonoBehaviour
 
             cbs.SetAttribute("x", "0");
             cbs.SetAttribute("y", "0");
-            cbs.SetAttribute("label", inkscapeNs, "#rect"+ i.ToString() + "_base"  );
+            cbs.SetAttribute("label", inkscapeNs, "#rect_" + cbsi.id + "_base");
             cbs.SetAttribute("transform", MathOfRwrme.angleToTransform(cbsi.rotation, cbsi.position));
             XmlElement cbsEDesc = xmlDoc.CreateElement("desc");
-            cbsEDesc.SetAttribute("id", "desc_base" + i.ToString());
+            cbsEDesc.SetAttribute("id", "desc_" + cbsi.id);
             string baseDescStr = "name=" + cbsi._name + ";";
             if(cbsi.factionIndex!=-1)
             {
@@ -1082,7 +1083,7 @@ public class MapExporter : MonoBehaviour
                 ofrE.SetAttribute("nodetypes", sodipodiNs, nodetypes);
                 ofrE.SetAttribute("label", inkscapeNs, ofr.id + "_offroad");
                 ofrE.SetAttribute("connector-curvature", inkscapeNs, "0");
-                ofrE.SetAttribute("id", "path"+(i+1)+"_navigation");
+                ofrE.SetAttribute("id", ofr.id);
                 ofrE.SetAttribute("d", pcd);
                 ofrE.SetAttribute("style", "fill:none;stroke:#00aa44;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;enable-background:new");
                 offroadGroup.AppendChild(ofrE);
@@ -1173,7 +1174,8 @@ public class MapExporter : MonoBehaviour
                     case 1: value = srcPixels[p].r; break;
                     case 2: value = srcPixels[p].g; break;
                     case 3: value = srcPixels[p].b; break;
-                    case 4: value = srcPixels[p].a; break;
+                    // Layer 4 uses inverse alpha in the combined mask (lerp(layer4, result, A)).
+                    case 4: value = (byte)(255 - srcPixels[p].a); break;
                 }
                 channelPixels[p] = new Color32(value, value, value, 255);
             }

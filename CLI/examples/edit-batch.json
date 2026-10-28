@@ -1,0 +1,7 @@
+[
+  ["item-add", "--type", "building", "--template", "BuildingFactory1", "--id", "building_batch_example", "--x", "1000", "--y", "1000", "--width", "40", "--depth", "30", "--set", "height=2"],
+  ["item-edit", "building_batch_example", "--dx", "10", "--dy", "-5"],
+  ["pixel-set", "--target", "height", "--x", "20", "--y", "30", "--value", "123"],
+  ["pixel-set", "--target", "alpha", "--x", "20", "--y", "30", "--channel", "road", "--value", "200"],
+  ["item-get", "building_batch_example"]
+]

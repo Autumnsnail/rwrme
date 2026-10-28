@@ -50,6 +50,7 @@ public class CtrlZer : MonoBehaviour
 
     void Update()
     {
+        if (CollaborationPanel.IsOpen) return;
         if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))
         {
             if (Input.GetKeyDown(KeyCode.Z))

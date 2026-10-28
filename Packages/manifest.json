@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#d49ae2953580f3481beb1e084a1da2682f0b5610",
     "com.boxqkrtm.ide.cursor": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
     "com.unity.collab-proxy": "2.9.3",
     "com.unity.feature.development": "1.0.1",

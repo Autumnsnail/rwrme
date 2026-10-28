@@ -189,16 +189,41 @@ public static class AssaumbleStore
             return;
         }
 
+        // Construction layers start at 1; layer 0 is never exported.
+        baseLayer = Mathf.Max(1, baseLayer);
         var pending = new List<MapItem>();
         bool terrainPaths = false;
         foreach (var member in Current.members.OrderBy(m => m.relLayer))
         {
             MapItem mi = FromMember(member, worldOrigin, baseLayer);
             if (mi == null) continue;
-            MetaMap.instance.defaultLayer.mapItems.Add(mi);
-            pending.Add(mi);
-            if (mi is HeightPath || mi is MaterialPath)
+            MetaMap map = MetaMap.instance;
+            if (mi is Base)
+            {
+                if (map.baseLayer == null) map.baseLayer = new Layer();
+                map.baseLayer.mapItems.Add(mi);
+            }
+            else if (mi is Offroad)
+            {
+                if (map.offroadLayer == null) map.offroadLayer = new Layer();
+                mi.layerIndex = map.offroadHeightSampleLayer;
+                map.offroadLayer.mapItems.Add(mi);
+            }
+            else if (mi is HeightPath)
+            {
+                if (map.heightPathLayer == null) map.heightPathLayer = new Layer();
+                map.heightPathLayer.mapItems.Add(mi);
                 terrainPaths = true;
+            }
+            else if (mi is MaterialPath)
+            {
+                if (map.materialPathLayer == null) map.materialPathLayer = new Layer();
+                map.materialPathLayer.mapItems.Add(mi);
+                terrainPaths = true;
+            }
+            else
+                map.defaultLayer.mapItems.Add(mi);
+            pending.Add(mi);
         }
 
         pending.Sort((a, b) =>

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class MaterialPath : MePath
 {
     public float width = 20f;
-    /// <summary>1=sand, 2=grass, 3=asphalt, 4=road</summary>
+    /// <summary>0=base, 1=sand, 2=grass, 3=asphalt, 4=road</summary>
     public int materialIndex = 2;
     /// <summary>
     /// 半宽内中心→边缘权重曲线的幂指数：w = (1 - dist/R)^hardness。
@@ -41,6 +41,7 @@ public class MaterialPath : MePath
     {
         switch (index)
         {
+            case 0: return "base";
             case 1: return "sand";
             case 3: return "asphalt";
             case 4: return "road";
@@ -130,7 +131,7 @@ public class MaterialPath : MePath
 
     public void CycleMaterial()
     {
-        materialIndex = materialIndex >= 4 ? 1 : materialIndex + 1;
+        materialIndex = materialIndex >= 4 ? 0 : materialIndex + 1;
         scatterThis();
         if (Syncer.instence != null) Syncer.instence.ApplyPreviewTerrain();
     }

@@ -104,6 +104,7 @@ public class DualModeCameraController : MonoBehaviour
 
     void Update()
     {
+        if (CollaborationPanel.IsOpen) return;
         // 在文本输入框打字时，键盘交给输入框，不驱动相机
         bool typing = UIManager.IsTypingInInputField();
 

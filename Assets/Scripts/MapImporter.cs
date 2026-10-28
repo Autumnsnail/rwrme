@@ -286,7 +286,7 @@ public class MapImporter : MonoBehaviour
                                     Base gc = go.GetComponent<Base>();
                                     gc._name = name;
                                     gc.factionIndex = factionIndex;
-                                    gc.id = MetaMap.instance.getNewItemId("base");
+                                    gc.id = MetaMap.instance.getImportedItemId(baseXml.GetAttribute("id"), "base");
                                     gc.position = position;
                                     gc.rotation = angle;
                                     gc.size = new Vector2(cWidth, cHeight);
@@ -416,7 +416,7 @@ public class MapImporter : MonoBehaviour
                                                     Building gc = go.GetComponent<Building>();
                                                     gc.offset = offset;
                                                     //if (number == 1) Debug.Log("i got this ");
-                                                    gc.reinit(BheightF, bmaterial, position, angle, new Vector2(cWidth, cHeight), MetaMap.instance.getNewItemId("building"), number);
+                                                    gc.reinit(BheightF, bmaterial, position, angle, new Vector2(cWidth, cHeight), MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "building"), number);
                                                     gc.roof = roof;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(gc);
                                                     continue;
@@ -448,7 +448,7 @@ public class MapImporter : MonoBehaviour
                                                                 stspl.type = 0;
                                                             }
                                                             stspl.position = position;
-                                                            stspl.id = MetaMap.instance.getNewItemId("item_supply");
+                                                            stspl.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "item_supply");
                                                             stspl.size = new Vector2(cWidth, cHeight);
                                                             stspl.rotation = angle;
                                                             stspl.layerIndex = number;
@@ -466,7 +466,7 @@ public class MapImporter : MonoBehaviour
                                                     
                                                             Crate cT = Instantiate(CratePref).GetComponent<Crate>();
                                                         cT.position = position;
-                                                        cT.id = MetaMap.instance.getNewItemId("crate");
+                                                        cT.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "crate");
                                                         cT.size = new Vector2(cWidth, cHeight);
                                                         cT.rotation = angle;
                                                         cT.layerIndex = number;
@@ -503,7 +503,7 @@ public class MapImporter : MonoBehaviour
                                                                 if(!properties.ContainsKey("key"))continue;
                                                                 vc.key = properties["key"];
                                                             }
-                                                            vc.id = MetaMap.instance.getNewItemId("spawn_vehicle");
+                                                            vc.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "spawn_vehicle");
 
                                                             vc.position = position;
                                                             vc.layerIndex = 4;
@@ -536,7 +536,7 @@ public class MapImporter : MonoBehaviour
                                                         decal.size = new Vector2(cWidth, cHeight);
                                                         decal.length = Mathf.Max(cWidth, cHeight);
                                                         decal.template_ref = properties["template"];
-                                                        decal.id = MetaMap.instance.getNewItemId("decal");
+                                                        decal.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "decal");
                                                         decal.position = position;
                                                         decal.layerIndex = number;
                                                         decal.rotation = angle;
@@ -553,7 +553,7 @@ public class MapImporter : MonoBehaviour
                                                         //solider SpawnPoint
                                                         SpawnPoint sp = Instantiate(SpawnPointPref).GetComponent<SpawnPoint>();
 
-                                                        sp.id = MetaMap.instance.getNewItemId("#spawnrect");
+                                                        sp.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "#spawnrect");
 
 
                                                         sp.position = position;
@@ -570,7 +570,7 @@ public class MapImporter : MonoBehaviour
                                                     Rock rc = go.GetComponent<Rock>();
                                                     rc.rotation = angle;
                                                     rc.position = position;
-                                                    rc.id = MetaMap.instance.getNewItemId("#rock");
+                                                    rc.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "#rock");
                                                     rc.layerIndex = number;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(rc);
                                                     rc.scatterThis();
@@ -583,7 +583,7 @@ public class MapImporter : MonoBehaviour
                                                     Ladder ldr = ld.GetComponent<Ladder>();
                                                     ldr.position = position;
                                                     ldr.rotation  = angle;
-                                                    ldr.id = MetaMap.instance.getNewItemId("#ladder");
+                                                    ldr.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "#ladder");
                                                     ldr.layerIndex = number;
                                                     MetaMap.instance.defaultLayer.mapItems.Add(ldr);
                                                     continue;
@@ -642,7 +642,7 @@ public class MapImporter : MonoBehaviour
 
                                                         ms.position = position;
                                                         ms.rotation = angle;
-                                                        ms.id = MetaMap.instance.getNewItemId("#mesh");
+                                                        ms.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "#mesh");
                                                         ms.layerIndex = number;
                                                         ms.template_ref = properties["template"];
                                                         ms.size = new Vector2(cWidth, cHeight);
@@ -667,7 +667,7 @@ public class MapImporter : MonoBehaviour
                                                 MeTree tree = tro.GetComponent<MeTree>();
                                                 tree.position = position;
                                                 tree.rotation = angle;
-                                                tree.id = MetaMap.instance.getNewItemId("tree");
+                                                tree.id = MetaMap.instance.getImportedItemId(bRect.GetAttribute("id"), "tree");
                                                 tree.layerIndex = number;
                                                 MetaMap.instance.defaultLayer.mapItems.Add(tree);
                                                 tree.scatterThis();
@@ -728,7 +728,8 @@ public class MapImporter : MonoBehaviour
                                                 Platform pf = go.GetComponent<Platform>();
                                                 MetaMap.instance.defaultLayer.mapItems.Add(pf);
 
-                                                pf.id = MetaMap.instance.getNewItemId("platform");
+                                                // pnl[0] is the end path; its ID owns the platform. The start path adds _s.
+                                                pf.id = MetaMap.instance.getImportedItemId(((XmlElement)pnl[0]).GetAttribute("id"), "platform");
 
                                                 string pathData1 = pnl[0].Attributes["d"].Value;
                                                 pf.positinLineL = SvgPathParser.Parse(pathData1);
@@ -843,7 +844,7 @@ public class MapImporter : MonoBehaviour
                                                         gs.merged = properties.ContainsKey("merge");
 
                                                         MetaMap.instance.defaultLayer.mapItems.Add(gs);
-                                                        gs.id = MetaMap.instance.getNewItemId("wall");
+                                                        gs.id = MetaMap.instance.getImportedItemId(bPath.GetAttribute("id"), "wall");
                                                         gs.layerIndex = number;
                                                     }
                                                 }
@@ -902,7 +903,7 @@ public class MapImporter : MonoBehaviour
                                                         if (!string.IsNullOrEmpty(templateRef))
                                                             ps.template_ref = templateRef;
 
-                                                        ps.id = MetaMap.instance.getNewItemId("post");
+                                                        ps.id = MetaMap.instance.getImportedItemId(bPath.GetAttribute("id"), "post");
                                                         ps.layerIndex = number;
                                                         MetaMap.instance.defaultLayer.mapItems.Add(ps);
                                                     }
@@ -1575,7 +1576,7 @@ public class MapImporter : MonoBehaviour
                 if (ofr == null) ofr = go.AddComponent<Offroad>();
 
                 ofr.positionLine = anchors;
-                ofr.id = MetaMap.instance.getNewItemId("offroad");
+                ofr.id = MetaMap.instance.getImportedItemId(xe.GetAttribute("id"), "offroad");
                 ofr.layerIndex = MetaMap.instance.offroadHeightSampleLayer;
                 ofr.curve = curveFlags;
                 ofr.controlPoints = cps;
@@ -1662,7 +1663,7 @@ public class MapImporter : MonoBehaviour
                 else if (modeStr == "raise") hp.mode = HeightPathMode.Raise;
             }
 
-            hp.id = MetaMap.instance.getNewItemId("height_path");
+            hp.id = MetaMap.instance.getImportedItemId(xe.GetAttribute("id"), "height_path");
             MetaMap.instance.heightPathLayer.mapItems.Add(hp);
         }
     }
@@ -1705,6 +1706,7 @@ public class MapImporter : MonoBehaviour
             {
                 switch (matStr.Trim().ToLowerInvariant())
                 {
+                    case "base": mp.materialIndex = 0; break;
                     case "sand": mp.materialIndex = 1; break;
                     case "grass": mp.materialIndex = 2; break;
                     case "asphalt": mp.materialIndex = 3; break;
@@ -1715,7 +1717,7 @@ public class MapImporter : MonoBehaviour
                 && float.TryParse(hardStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float hard))
                 mp.hardness = hard;
 
-            mp.id = MetaMap.instance.getNewItemId("material_path");
+            mp.id = MetaMap.instance.getImportedItemId(xe.GetAttribute("id"), "material_path");
             MetaMap.instance.materialPathLayer.mapItems.Add(mp);
         }
     }

@@ -1,0 +1,16 @@
+{
+  "base": "13b4996dc5268e3d987a17497b2192ff822060d8efc5c9d514120a1c61984321",
+  "left": "937b1d72f7368eef94ec3f0aa3293f8f6611d39a48c94065ae7402b9dae5af9d",
+  "right": "652bb690af07a42d7f73ad59513757d2612814cfb26a97781e4e60a81775c839",
+  "svgConflicts": 36,
+  "rolePatterns": {
+    "start -> end -> missing": 2,
+    "missing -> start -> end": 2,
+    "deck_start -> deck_end -> missing": 16,
+    "missing -> deck_start -> deck_end": 16
+  },
+  "samplePlatformGeometryUnchanged": true,
+  "rootCause": "Platform importer took the start-path ID as the platform ID, adding _s on every round trip.",
+  "clientFix": "Use the end-path ID after start/end reordering.",
+  "historicalNodesModified": false
+}

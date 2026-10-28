@@ -1,0 +1,19 @@
+{
+  "left": "652bb690af07a42d7f73ad59513757d2612814cfb26a97781e4e60a81775c839",
+  "right": "55588bfd7f0d0933c75bf1a314ec0a84b4ff94fa9489e096243473fe972af700",
+  "ancestor": "1a25a43c2d5fc16896601c40f0881d17d601153b2e37fde64d29613059017c7d",
+  "previewId": "3aacbd2246dd96d484108311b200415b69d719160bc30144c60e3d287b0273dd",
+  "unresolved": 1,
+  "conflicts": [
+    {
+      "key": "element:objects.svg#base1468rwrme",
+      "path": "objects.svg",
+      "element": "base1468rwrme",
+      "kind": "element",
+      "resolved": false,
+      "choice": ""
+    }
+  ],
+  "automaticFiles": 31,
+  "fileCount": 32
+}

@@ -1,0 +1,8 @@
+﻿{
+  "projects": ["my-map"],
+  "max_snapshot_bytes": 67108864,
+  "users": {
+    "alice": {"token": "REPLACE_WITH_A_RANDOM_TOKEN_AT_LEAST_32_CHARACTERS", "projects": ["my-map"]},
+    "bob": {"token": "REPLACE_WITH_A_DIFFERENT_RANDOM_TOKEN_AT_LEAST_32_CHARACTERS", "projects": ["my-map"]}
+  }
+}

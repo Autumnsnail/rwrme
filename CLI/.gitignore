@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.work/
+*.rwrmap
+*.rwrmap.lock
+dist/
+*.egg-info/

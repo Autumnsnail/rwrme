@@ -108,7 +108,7 @@ public static class CoverUiLayout
                 return true;
 
             float btnRight = cr.xMin + LeftButtonX + LeftButtonSize + Border;
-            float btnTop = cr.yMin + Border + LeftButtonSize * 3f + Border;
+            float btnTop = cr.yMin + Border + LeftButtonSize * 4f + Border;
             if (local.x >= cr.xMin && local.x <= btnRight
                 && local.y >= cr.yMin && local.y <= btnTop)
                 return true;
@@ -122,7 +122,7 @@ public static class CoverUiLayout
         float ny = screenPos.y / Screen.height;
         if (nx >= CoverLeftNorm) return true;
         float maxX = (LeftButtonX + LeftButtonSize + Border) / RefW;
-        float maxY = (Border + LeftButtonSize * 3f + Border) / RefH;
+        float maxY = (Border + LeftButtonSize * 4f + Border) / RefH;
         return nx <= maxX && ny <= maxY;
     }
 

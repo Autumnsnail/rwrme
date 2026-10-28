@@ -80,7 +80,26 @@ public class MetaMap : MonoBehaviour
             n += heightPathLayer.mapItems.Count;
         if (materialPathLayer != null && materialPathLayer.mapItems != null)
             n += materialPathLayer.mapItems.Count;
-        return startWith + n.ToString() + "rwrme";
+        var usedIds = new HashSet<string>(EnumerateAllMapItems().Select(mi => mi.id), StringComparer.Ordinal);
+        string candidate;
+        do
+        {
+            candidate = startWith + n.ToString() + "rwrme" + CollaborationIdentity.NewItemSuffix();
+            n++;
+        } while (usedIds.Contains(candidate));
+        return candidate;
+    }
+
+    /// <summary>Keep a valid, unused imported ID; otherwise allocate a new ID.</summary>
+    public string getImportedItemId(string sourceId, string prefix)
+    {
+        // Accept SVG editor suffixes as well as the generated numeric + rwrme suffix.
+        if (!string.IsNullOrEmpty(sourceId)
+            && System.Text.RegularExpressions.Regex.IsMatch(sourceId,
+                "\\A" + System.Text.RegularExpressions.Regex.Escape(prefix) + "[A-Za-z0-9_.-]+\\z")
+            && !EnumerateAllMapItems().Any(mi => string.Equals(mi.id, sourceId, StringComparison.Ordinal)))
+            return sourceId;
+        return getNewItemId(prefix);
     }
 
     public IEnumerable<MapItem> EnumerateAllMapItems()
